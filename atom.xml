@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://everlasting-elysium.github.io</id>
+    <title>Elysian Realm</title>
+    <updated>2024-10-20T08:19:44.061Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://everlasting-elysium.github.io"/>
+    <link rel="self" href="https://everlasting-elysium.github.io/atom.xml"/>
+    <subtitle>知行合一，学以致用</subtitle>
+    <logo>https://everlasting-elysium.github.io/images/avatar.png</logo>
+    <icon>https://everlasting-elysium.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2024, Elysian Realm</rights>
+    <entry>
+        <title type="html"><![CDATA[Chrome等浏览器图片加载不出来]]></title>
+        <id>https://everlasting-elysium.github.io/chrome-deng-liu-lan-qi-xia-chu-xian-neterr_blocked_by_client/</id>
+        <link href="https://everlasting-elysium.github.io/chrome-deng-liu-lan-qi-xia-chu-xian-neterr_blocked_by_client/">
+        </link>
+        <updated>2024-09-23T03:46:26.000Z</updated>
+        <summary type="html"><![CDATA[<p>今天调试前端时，发现部分图片展示不出来，但图片链接没有问题，后发现控制台报错：<code>net::ERR_BLOCKED_BY_CLIENT</code></p>
+]]></summary>
+        <content type="html"><![CDATA[<p>今天调试前端时，发现部分图片展示不出来，但图片链接没有问题，后发现控制台报错：<code>net::ERR_BLOCKED_BY_CLIENT</code></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[功能未动，测试先行]]></title>
+        <id>https://everlasting-elysium.github.io/gong-neng-wei-dong-ce-shi-xian-xing/</id>
+        <link href="https://everlasting-elysium.github.io/gong-neng-wei-dong-ce-shi-xian-xing/">
+        </link>
+        <updated>2024-04-25T09:12:49.000Z</updated>
+        <summary type="html"><![CDATA[<p>最近在看了《测试驱动开发》一书，对其中的观点深以为然。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>最近在看了《测试驱动开发》一书，对其中的观点深以为然。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[服务性能优化：从 Redis 到 Memcache 的降本增效之路]]></title>
+        <id>https://everlasting-elysium.github.io/fu-wu-xing-neng-you-hua-cong-redis-dao-memcache-de-jiang-ben-zeng-xiao-zhi-lu/</id>
+        <link href="https://everlasting-elysium.github.io/fu-wu-xing-neng-you-hua-cong-redis-dao-memcache-de-jiang-ben-zeng-xiao-zhi-lu/">
+        </link>
+        <updated>2023-11-20T12:12:36.000Z</updated>
+        <summary type="html"><![CDATA[<p>近期，所负责的服务在性能方面遭遇严峻挑战，难以支撑当前业务的 QPS。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>近期，所负责的服务在性能方面遭遇严峻挑战，难以支撑当前业务的 QPS。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[关于一次优化]]></title>
+        <id>https://everlasting-elysium.github.io/guan-yu-yi-ci-you-hua/</id>
+        <link href="https://everlasting-elysium.github.io/guan-yu-yi-ci-you-hua/">
+        </link>
+        <updated>2022-11-20T10:06:57.000Z</updated>
+        <summary type="html"><![CDATA[<p>还是炸了，果然一个东西，如果要改到基本看不出原来的样子，最好的方案还是重做，轻装前行。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>还是炸了，果然一个东西，如果要改到基本看不出原来的样子，最好的方案还是重做，轻装前行。</p>
+]]></content>
+    </entry>
+</feed>
