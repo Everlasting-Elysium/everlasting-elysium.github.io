@@ -18,10 +18,12 @@ albums:
     cover: /img/gallery/photography_life/1.jpg
     description: 日常的碎片
     photos:
-      - url: /img/gallery/photography_life/1.jpg
-        alt: 我也是有海景房的人啦
+      - url: /img/gallery/photography_life/3.jpg
+        alt: 脱非入欧
       - url: /img/gallery/photography_life/2.jpg
         alt: 偷得浮生半日闲
+      - url: /img/gallery/photography_life/1.jpg
+        alt: 我也是有海景房的人啦
 
   - id: photography_works
     name: 拾人记
