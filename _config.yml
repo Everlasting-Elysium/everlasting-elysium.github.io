@@ -1,0 +1,72 @@
+# ============================================
+# Hexo Site Configuration
+# ============================================
+
+# Site
+title: Elysian Realm
+subtitle: ''
+description: ''
+author: Everlasting Elysium
+language: zh-CN
+timezone: Asia/Shanghai
+
+# URL
+url: https://everlasting-elysium.github.io
+root: /
+
+# Directory
+source_dir: source
+public_dir: public
+tag_dir: tags
+archive_dir: archives
+category_dir: categories
+skip_render:
+
+# Writing
+new_post_name: :title.md
+default_layout: post
+titlecase: false
+external_link:
+  enable: true
+  field: site
+filename_case: 0
+render_drafts: false
+post_asset_folder: false
+relative_link: false
+future: true
+
+# Highlight
+highlight:
+  enable: true
+  line_number: true
+  auto_detect: false
+  tab_replace: '  '
+  wrap: true
+  hljs: false
+prismjs:
+  enable: false
+
+# Index
+index_generator:
+  path: ''
+  per_page: 10
+  order_by: -date
+
+# Date format
+date_format: YYYY-MM-DD
+time_format: HH:mm:ss
+updated_option: 'mtime'
+
+# Pagination
+per_page: 10
+pagination_dir: page
+
+# Theme
+theme: HollowLight
+
+# hexo-generator-searchdb
+search:
+  path: search.json
+  field: post
+  content: true
+  format: striptags

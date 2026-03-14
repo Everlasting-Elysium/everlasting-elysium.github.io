@@ -1,0 +1,8 @@
+sections:
+  - title: 伙伴
+    subtitle: FRIENDS & LINKS
+    items:
+      - name: 示例友链
+        url: https://example.com
+        avatar: https://example.com/favicon.ico
+        desc: 在这里添加你的朋友
