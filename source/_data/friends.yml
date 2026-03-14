@@ -4,7 +4,7 @@ sections:
     items:
       - name: Hexo主题-HollowLight
         url: https://github.com/Everlasting-Elysium/HollowLight
-        icon: https://hexo.io/icon/favicon-196x196.png
+        avatar: https://hexo.io/icon/favicon-196x196.png
         desc: 一个深度致敬《绝区零》「绳网」论坛 UI 的 Hexo 主题。
       - name: 拾人记
         url: /album/#photography_works
