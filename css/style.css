@@ -498,6 +498,11 @@ body > main.has-curtain {
   margin-top: 0;
 }
 
+/* ---- Post page with hero cover: extend cover image under transparent header ---- */
+body > main.has-hero {
+  margin-top: 0;
+}
+
 
 /* ---- Card System ---- */
 .card {

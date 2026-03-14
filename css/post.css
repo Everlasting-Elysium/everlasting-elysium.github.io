@@ -208,11 +208,11 @@
 /* Hero Cover */
 .post-hero {
   width: 100%;
-  height: 55vh;
-  min-height: 380px;
-  max-height: 560px;
+  height: calc(55vh + var(--hl-header-height));
+  min-height: calc(380px + var(--hl-header-height));
+  max-height: calc(560px + var(--hl-header-height));
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   position: relative;
   overflow: hidden;
 }
