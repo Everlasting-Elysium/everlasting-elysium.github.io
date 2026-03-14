@@ -630,8 +630,8 @@
     0 24px 60px rgba(0, 0, 0, 0.45);
   transform: translateZ(26px);
   pointer-events: none;
-  backdrop-filter: blur(0.5px);
-  -webkit-backdrop-filter: blur(0.5px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   outline: 2.5px solid rgba(201, 166, 78, 0.6);
   outline-offset: -8px;
 }
