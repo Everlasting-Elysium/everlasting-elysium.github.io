@@ -9,121 +9,92 @@ albums:
         alt: 在上海，导航说：前方斑马线，请树先生让行。
       - url: /img/gallery/photography_city/2.jpg
         thumb: /img/gallery/photography_city/2.jpg
-        alt: 街拍 2
+        alt: 在上海，信号塔说：我好像被树绑架了。
       - url: /img/gallery/photography_city/3.jpg
         thumb: /img/gallery/photography_city/3.jpg
-        alt: 街拍 3
+        alt: 在上海，捡到一片会画画的树影。
       - url: /img/gallery/photography_city/4.jpg
         thumb: /img/gallery/photography_city/4.jpg
-        alt: 街拍 4
+        alt: 在上海，共享单车也有单身狗
 
-  - id: photography_life
-    name: 生活
-    cover: /img/gallery/life/1.jpg
+  - id: photography_photography_life
+    name: 半日闲情
+    cover: /img/gallery/photography_life/1.jpg
     description: 日常的碎片
     photos:
-      - url: /img/gallery/life/1.jpg
-        thumb: /img/gallery/life/1.jpg
-        alt: 生活 1
-      - url: /img/gallery/life/2.jpg
-        thumb: /img/gallery/life/2.jpg
-        alt: 生活 2
+      - url: /img/gallery/photography_life/1.jpg
+        thumb: /img/gallery/photography_life/1.jpg
+        alt: 我也是有海景房的人啦
+      - url: /img/gallery/photography_life/2.jpg
+        thumb: /img/gallery/photography_life/2.jpg
+        alt: 偷得浮生半日闲
 
   - id: photography_works
-    name: 摄影作品
+    name: 拾人记
     cover: /img/gallery/photography_works/1.jpg
     description: 镜头下的光与影
     photos:
       - url: /img/gallery/photography_works/1.jpg
         thumb: /img/gallery/photography_works/1.jpg
-        alt: 摄影作品 1
+        alt: 方小同-明日香·礼服
+        link: http://xhslink.com/o/63Vtct5O9Ed
       - url: /img/gallery/photography_works/2.jpg
         thumb: /img/gallery/photography_works/2.jpg
-        alt: 摄影作品 2
+        alt: 怡宝-红绿蓝
         link: http://xhslink.com/m/5IuTViYlpER
       - url: /img/gallery/photography_works/3.jpg
         thumb: /img/gallery/photography_works/3.jpg
-        alt: 摄影作品 3
+        alt: 星月-初音未来·公式服
         link: https://xhslink.com/m/7gtIzlhlJCx
       - url: /img/gallery/photography_works/4.jpg
         thumb: /img/gallery/photography_works/4.jpg
-        alt: 摄影作品 4
+        alt: 鱼京-琳妮特
         link: https://xhslink.com/m/1Gm9bVvTs8a
       - url: /img/gallery/photography_works/5.jpg
         thumb: /img/gallery/photography_works/5.jpg
-        alt: 摄影作品 5
+        alt: 怡宝-等待的车站
         link: http://xhslink.com/o/6BavALFpbMf
       - url: /img/gallery/photography_works/6.jpg
         thumb: /img/gallery/photography_works/6.jpg
-        alt: 摄影作品 6
+        alt: 方小同-镇海·潋滟水色
         link: http://xhslink.com/o/5eSdODgjXjz
       - url: /img/gallery/photography_works/7.jpg
         thumb: /img/gallery/photography_works/7.jpg
-        alt: 摄影作品 7
+        alt: 方小同-镇海·潋滟水色
         link: http://xhslink.com/o/5eSdODgjXjz
 
   - id: photography_cosplay
-    name: 摄影作品
-    cover: /img/gallery/photography_works/1.jpg
-    description: 镜头下的光与影
+    name: 次元之约
+    cover: /img/gallery/photography_cosplay/1.jpg
+    description: Cosplay大作战!
     photos:
-      - url: /img/gallery/photography_works/1.jpg
-        thumb: /img/gallery/photography_works/1.jpg
-        alt: 摄影作品 1
-      - url: /img/gallery/photography_works/2.jpg
-        thumb: /img/gallery/photography_works/2.jpg
-        alt: 摄影作品 2
-        link: http://xhslink.com/m/5IuTViYlpER
-      - url: /img/gallery/photography_works/3.jpg
-        thumb: /img/gallery/photography_works/3.jpg
-        alt: 摄影作品 3
+      - url: /img/gallery/photography_cosplay/1.jpg
+        thumb: /img/gallery/photography_cosplay/1.jpg
+        alt: 方小同-明日香·礼服
+        link: http://xhslink.com/o/63Vtct5O9Ed
+      - url: /img/gallery/photography_cosplay/2.jpg
+        thumb: /img/gallery/photography_cosplay/2.jpg
+        alt: 星月-初音未来·公式服
         link: https://xhslink.com/m/7gtIzlhlJCx
-      - url: /img/gallery/photography_works/4.jpg
-        thumb: /img/gallery/photography_works/4.jpg
-        alt: 摄影作品 4
+      - url: /img/gallery/photography_cosplay/3.jpg
+        thumb: /img/gallery/photography_cosplay/3.jpg
+        alt: 鱼京-琳妮特
         link: https://xhslink.com/m/1Gm9bVvTs8a
-      - url: /img/gallery/photography_works/5.jpg
-        thumb: /img/gallery/photography_works/5.jpg
-        alt: 摄影作品 5
-        link: http://xhslink.com/o/6BavALFpbMf
-      - url: /img/gallery/photography_works/6.jpg
-        thumb: /img/gallery/photography_works/6.jpg
-        alt: 摄影作品 6
+      - url: /img/gallery/photography_cosplay/4.jpg
+        thumb: /img/gallery/photography_cosplay/4.jpg
+        alt: 方小同-镇海·潋滟水色
         link: http://xhslink.com/o/5eSdODgjXjz
-      - url: /img/gallery/photography_works/7.jpg
-        thumb: /img/gallery/photography_works/7.jpg
-        alt: 摄影作品 7
+      - url: /img/gallery/photography_cosplay/5.jpg
+        thumb: /img/gallery/photography_cosplay/5.jpg
+        alt: 方小同-镇海·潋滟水色
         link: http://xhslink.com/o/5eSdODgjXjz
 
   - id: photography_mihoyo
-    name: 摄影作品
-    cover: /img/gallery/photography_works/1.jpg
-    description: 镜头下的光与影
+    name: 逐火之旅
+    cover: /img/gallery/photography_mihoyo/1.jpg
+    description:
     photos:
-      - url: /img/gallery/photography_works/1.jpg
-        thumb: /img/gallery/photography_works/1.jpg
-        alt: 摄影作品 1
-      - url: /img/gallery/photography_works/2.jpg
-        thumb: /img/gallery/photography_works/2.jpg
-        alt: 摄影作品 2
-        link: http://xhslink.com/m/5IuTViYlpER
-      - url: /img/gallery/photography_works/3.jpg
-        thumb: /img/gallery/photography_works/3.jpg
-        alt: 摄影作品 3
-        link: https://xhslink.com/m/7gtIzlhlJCx
-      - url: /img/gallery/photography_works/4.jpg
-        thumb: /img/gallery/photography_works/4.jpg
-        alt: 摄影作品 4
+      - url: /img/gallery/photography_mihoyo/1.jpg
+        thumb: /img/gallery/photography_mihoyo/1.jpg
+        alt: 鱼京-琳妮特
         link: https://xhslink.com/m/1Gm9bVvTs8a
-      - url: /img/gallery/photography_works/5.jpg
-        thumb: /img/gallery/photography_works/5.jpg
-        alt: 摄影作品 5
-        link: http://xhslink.com/o/6BavALFpbMf
-      - url: /img/gallery/photography_works/6.jpg
-        thumb: /img/gallery/photography_works/6.jpg
-        alt: 摄影作品 6
-        link: http://xhslink.com/o/5eSdODgjXjz
-      - url: /img/gallery/photography_works/7.jpg
-        thumb: /img/gallery/photography_works/7.jpg
-        alt: 摄影作品 7
-        link: http://xhslink.com/o/5eSdODgjXjz

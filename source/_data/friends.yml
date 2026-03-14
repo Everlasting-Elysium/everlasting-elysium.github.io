@@ -1,8 +1,20 @@
 sections:
-  - title: 伙伴
-    subtitle: FRIENDS & LINKS
+  - title: 个人作品
+    subtitle: PORTFOLIO
     items:
-      - name: 示例友链
-        url: https://example.com
-        avatar: https://example.com/favicon.ico
-        desc: 在这里添加你的朋友
+      - name: Hexo主题-HollowLight
+        url: https://github.com/Everlasting-Elysium/HollowLight
+        icon: https://hexo.io/icon/favicon-196x196.png
+        desc: 一个深度致敬《绝区零》「绳网」论坛 UI 的 Hexo 主题。
+  - title: 伙伴
+    subtitle: INTER-KNOT LINKS
+    items:
+      - name: Hexo
+        url: https://hexo.io
+        avatar: https://hexo.io/icon/favicon-196x196.png
+        desc: 快速、简洁且高效的博客框架
+
+      - name: GitHub
+        url: https://github.com
+        avatar: https://github.githubassets.com/favicons/favicon.svg
+        desc: 全球最大的代码托管平台
