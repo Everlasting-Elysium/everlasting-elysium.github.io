@@ -1,6 +1,7 @@
 ---
 title: "Kubernetes调度排查：隐藏的标签需求导致Pod调度失败"
 date: 2025-07-16
+headimg: https://images.unsplash.com/photo-1536148935331-408321065b18?w=400&q=75
 categories:
   - Troubleshooting & Solutions
 tags:

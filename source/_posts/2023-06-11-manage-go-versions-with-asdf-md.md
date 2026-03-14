@@ -1,6 +1,7 @@
 ---
 title: "使用 asdf 管理 Go 多版本：一站式解决开发环境难题"
 date: 2023-06-11
+headimg: https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=400&q=75
 categories:
   - Development tools
 tags:

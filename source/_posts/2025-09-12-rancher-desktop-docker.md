@@ -1,6 +1,7 @@
 ---
 title: "Rancher Desktop配置Docker源"
 date: 2025-09-12
+headimg: https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&q=80
 categories:
   - Development tools
 tags:

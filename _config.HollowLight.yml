@@ -4,9 +4,9 @@
 
 # 博主信息
 author:
-  name: "Everlasting Elysium"
+  name: "Elysio"
   avatar: /img/avatar.svg
-  bio: "这里是我的博客"
+  bio: "知行合一,学以致用；但行好事，莫问前程。"
   level: 1
   credit_score: 900
 
@@ -27,7 +27,7 @@ social:
   email: ""
 
 # 背景图
-background: ""   # 替换为你的背景图路径，如 /img/bg.png，留空则无背景
+background: "" # 替换为你的背景图路径，如 /img/bg.png，留空则无背景
 
 # 相册配置
 album:
@@ -56,9 +56,8 @@ curtain:
   enable: true
   background:
     type: image
-    url: "/img/elysia.jpg"        # 替换为幕布背景图路径，如 /img/curtain-bg.jpg
+    url: "/img/elysia.jpg" # 替换为幕布背景图路径，如 /img/curtain-bg.jpg
   typewriter:
-    - "这里是我的博客"
     - "记录代码与生活"
     - "探索未知的边界"
 

@@ -1,6 +1,7 @@
 ---
 title: "github 无法链接问题排查"
 date: 2025-07-01
+headimg: /img/post/github.png
 categories:
   - Troubleshooting & Solutions
 tags:
