@@ -1,6 +1,7 @@
 name: Compress Album Images
 
 on:
+  workflow_dispatch:    # 支持手动触发（首次 / 补生成）
   push:
     branches: [main]
     paths:
