@@ -1,4 +1,34 @@
 albums:
+  - id: photography_city
+    name: 城事掠影
+    cover: /img/gallery/photography_city/1.jpg
+    description: 城市角落里的瞬间
+    photos:
+      - url: /img/gallery/photography_city/1.jpg
+        thumb: /img/gallery/photography_city/1.jpg
+        alt: 在上海，导航说：前方斑马线，请树先生让行。
+      - url: /img/gallery/photography_city/2.jpg
+        thumb: /img/gallery/photography_city/2.jpg
+        alt: 街拍 2
+      - url: /img/gallery/photography_city/3.jpg
+        thumb: /img/gallery/photography_city/3.jpg
+        alt: 街拍 3
+      - url: /img/gallery/photography_city/4.jpg
+        thumb: /img/gallery/photography_city/4.jpg
+        alt: 街拍 4
+
+  - id: photography_life
+    name: 生活
+    cover: /img/gallery/life/1.jpg
+    description: 日常的碎片
+    photos:
+      - url: /img/gallery/life/1.jpg
+        thumb: /img/gallery/life/1.jpg
+        alt: 生活 1
+      - url: /img/gallery/life/2.jpg
+        thumb: /img/gallery/life/2.jpg
+        alt: 生活 2
+
   - id: photography_works
     name: 摄影作品
     cover: /img/gallery/photography_works/1.jpg
@@ -32,32 +62,68 @@ albums:
         alt: 摄影作品 7
         link: http://xhslink.com/o/5eSdODgjXjz
 
-  - id: street_photography
-    name: 街拍
-    cover: /img/gallery/street_photography/1.jpg
-    description: 城市角落里的瞬间
+  - id: photography_cosplay
+    name: 摄影作品
+    cover: /img/gallery/photography_works/1.jpg
+    description: 镜头下的光与影
     photos:
-      - url: /img/gallery/street_photography/1.jpg
-        thumb: /img/gallery/street_photography/1.jpg
-        alt: 街拍 1
-      - url: /img/gallery/street_photography/2.jpg
-        thumb: /img/gallery/street_photography/2.jpg
-        alt: 街拍 2
-      - url: /img/gallery/street_photography/3.jpg
-        thumb: /img/gallery/street_photography/3.jpg
-        alt: 街拍 3
-      - url: /img/gallery/street_photography/4.jpg
-        thumb: /img/gallery/street_photography/4.jpg
-        alt: 街拍 4
+      - url: /img/gallery/photography_works/1.jpg
+        thumb: /img/gallery/photography_works/1.jpg
+        alt: 摄影作品 1
+      - url: /img/gallery/photography_works/2.jpg
+        thumb: /img/gallery/photography_works/2.jpg
+        alt: 摄影作品 2
+        link: http://xhslink.com/m/5IuTViYlpER
+      - url: /img/gallery/photography_works/3.jpg
+        thumb: /img/gallery/photography_works/3.jpg
+        alt: 摄影作品 3
+        link: https://xhslink.com/m/7gtIzlhlJCx
+      - url: /img/gallery/photography_works/4.jpg
+        thumb: /img/gallery/photography_works/4.jpg
+        alt: 摄影作品 4
+        link: https://xhslink.com/m/1Gm9bVvTs8a
+      - url: /img/gallery/photography_works/5.jpg
+        thumb: /img/gallery/photography_works/5.jpg
+        alt: 摄影作品 5
+        link: http://xhslink.com/o/6BavALFpbMf
+      - url: /img/gallery/photography_works/6.jpg
+        thumb: /img/gallery/photography_works/6.jpg
+        alt: 摄影作品 6
+        link: http://xhslink.com/o/5eSdODgjXjz
+      - url: /img/gallery/photography_works/7.jpg
+        thumb: /img/gallery/photography_works/7.jpg
+        alt: 摄影作品 7
+        link: http://xhslink.com/o/5eSdODgjXjz
 
-  - id: life
-    name: 生活
-    cover: /img/gallery/life/1.jpg
-    description: 日常的碎片
+  - id: photography_mihoyo
+    name: 摄影作品
+    cover: /img/gallery/photography_works/1.jpg
+    description: 镜头下的光与影
     photos:
-      - url: /img/gallery/life/1.jpg
-        thumb: /img/gallery/life/1.jpg
-        alt: 生活 1
-      - url: /img/gallery/life/2.jpg
-        thumb: /img/gallery/life/2.jpg
-        alt: 生活 2
+      - url: /img/gallery/photography_works/1.jpg
+        thumb: /img/gallery/photography_works/1.jpg
+        alt: 摄影作品 1
+      - url: /img/gallery/photography_works/2.jpg
+        thumb: /img/gallery/photography_works/2.jpg
+        alt: 摄影作品 2
+        link: http://xhslink.com/m/5IuTViYlpER
+      - url: /img/gallery/photography_works/3.jpg
+        thumb: /img/gallery/photography_works/3.jpg
+        alt: 摄影作品 3
+        link: https://xhslink.com/m/7gtIzlhlJCx
+      - url: /img/gallery/photography_works/4.jpg
+        thumb: /img/gallery/photography_works/4.jpg
+        alt: 摄影作品 4
+        link: https://xhslink.com/m/1Gm9bVvTs8a
+      - url: /img/gallery/photography_works/5.jpg
+        thumb: /img/gallery/photography_works/5.jpg
+        alt: 摄影作品 5
+        link: http://xhslink.com/o/6BavALFpbMf
+      - url: /img/gallery/photography_works/6.jpg
+        thumb: /img/gallery/photography_works/6.jpg
+        alt: 摄影作品 6
+        link: http://xhslink.com/o/5eSdODgjXjz
+      - url: /img/gallery/photography_works/7.jpg
+        thumb: /img/gallery/photography_works/7.jpg
+        alt: 摄影作品 7
+        link: http://xhslink.com/o/5eSdODgjXjz
