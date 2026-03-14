@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>用 GitHub Actions 自动部署 Hexo 博客到 GitHub Pages | Elysian Realm</title>
+  <meta name="description" content="">
+  
+  <!-- Font: MaoKen Assorted Sans (unpkg CDN, same as interknot reference) -->
+  <style>@import url('https://unpkg.com/@chinese-fonts/mksjh@1.4.0/dist/MaokenAssortedSans1.30/result.css');</style>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="description" content="每次写完文章都要手动 hexo g &amp;&amp; hexo d，烦了之后就研究了一下 GitHub Actions 自动部署。折腾了一个下午，踩了几个坑，现在记下来。 前置条件在开始之前，确认以下几点已经就绪：  本地 Hexo 项目能正常跑，hexo g 不报错 GitHub 账号，且已建好 username.github.io 仓库 主题建议用 git submodule 引入，而不是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用 GitHub Actions 自动部署 Hexo 博客到 GitHub Pages">
+<meta property="og:url" content="https://everlasting-elysium.github.io/2026/03/13/2026-03-14-hexo-github-actions-deploy/index.html">
+<meta property="og:site_name" content="Elysian Realm">
+<meta property="og:description" content="每次写完文章都要手动 hexo g &amp;&amp; hexo d，烦了之后就研究了一下 GitHub Actions 自动部署。折腾了一个下午，踩了几个坑，现在记下来。 前置条件在开始之前，确认以下几点已经就绪：  本地 Hexo 项目能正常跑，hexo g 不报错 GitHub 账号，且已建好 username.github.io 仓库 主题建议用 git submodule 引入，而不是">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-13T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-03-14T09:52:33.580Z">
+<meta property="article:author" content="Everlasting Elysium">
+<meta property="article:tag" content="Hexo">
+<meta property="article:tag" content="GitHub Actions">
+<meta property="article:tag" content="CI&#x2F;CD">
+<meta property="article:tag" content="GitHub Pages">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading" id="hl-loading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading</span>
+  </div>
+
+  <!-- _0kd Page Transition Layer -->
+  <div class="_0kd" id="hl-0kd"></div>
+
+  <!-- Background Layer -->
+  
+  <div class="bg" style="background-image: url('/img/bg.png');"></div>
+
+  <!-- Header -->
+  
+  <header>
+  <!-- Personal Info Card -->
+  <a href="/" class="personal">
+    <span class="avatar-link">
+      <img
+        src="/img/avatar.svg"
+        alt="Elysio"
+        class="avatar"
+        onerror="this.onerror=null;this.style.background='#333';"
+      >
+    </span>
+    <span class="info-bar">
+      <span class="info-bio">知行合一,学以致用；但行好事，莫问前程。</span>
+      <span class="info-url">
+        <span class="info-url-lock">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/>
+            <path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        https://everlasting-elysium.github.io/
+      </span>
+    </span>
+  </a>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    
+      
+      <span class="tab">
+        <a href="/">推送</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/archives/">归档</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/tags/">标签</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/album/">相册</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/friends/">伙伴</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/about/">关于</a>
+      </span>
+    
+  </div>
+
+  <!-- Search Button -->
+  
+  <button class="hl-search-btn" id="hl-search-btn"
+          title="搜索 (Ctrl+K)" aria-label="搜索">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+  
+</header>
+
+
+  <!-- Main Content -->
+  <main>
+    <link rel="stylesheet" href="/css/post.css">
+<link rel="stylesheet" href="/css/post-window.css">
+
+<script>
+(function () {
+  var isWindow = false;
+  try { isWindow = new URLSearchParams(window.location.search).get('window') === 'true'; } catch(e) {}
+  if (!isWindow) { try { isWindow = window.self !== window.top; } catch(e) { isWindow = true; } }
+  if (isWindow) document.documentElement.classList.add('window-mode');
+})();
+</script>
+
+
+
+<!-- ═══════════ Normal Mode ═══════════ -->
+<article class="post-article">
+
+  
+  <div class="post-hero" style="background-image:url('https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=1200&q=80')">
+    <div class="post-hero-overlay">
+      <div class="post-hero-inner">
+        <h1 class="post-title">用 GitHub Actions 自动部署 Hexo 博客到 GitHub Pages</h1>
+        <div class="post-meta">
+          <time datetime="2026-03-14">
+            2026 / 03 / 14
+          </time>
+          
+          <div class="post-tags">
+            
+            <a class="tag-pill" href="/tags/Hexo/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/Hexo/')}else{window.location.href=this.href}">
+              Hexo
+            </a>
+            
+            <a class="tag-pill" href="/tags/GitHub-Actions/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/GitHub-Actions/')}else{window.location.href=this.href}">
+              GitHub Actions
+            </a>
+            
+            <a class="tag-pill" href="/tags/CI-CD/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/CI-CD/')}else{window.location.href=this.href}">
+              CI/CD
+            </a>
+            
+            <a class="tag-pill" href="/tags/GitHub-Pages/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/GitHub-Pages/')}else{window.location.href=this.href}">
+              GitHub Pages
+            </a>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="post-body">
+    <div class="markdown-content">
+      <p>每次写完文章都要手动 <code>hexo g &amp;&amp; hexo d</code>，烦了之后就研究了一下 GitHub Actions 自动部署。折腾了一个下午，踩了几个坑，现在记下来。</p>
+<h3 id="前置条件"><a href="#前置条件" class="headerlink" title="前置条件"></a>前置条件</h3><p>在开始之前，确认以下几点已经就绪：</p>
+<ul>
+<li>本地 Hexo 项目能正常跑，<code>hexo g</code> 不报错</li>
+<li>GitHub 账号，且已建好 <code>username.github.io</code> 仓库</li>
+<li>主题<strong>建议用 git submodule 引入</strong>，而不是直接把主题文件夹复制进来</li>
+</ul>
+<p>关于主题的问题，说一下为什么推荐 submodule：直接复制进来会导致主题更新麻烦，而且会把一堆主题文件混进你的博客提交记录里，非常乱。用 submodule 的话，主题是一个独立的 git 引用，升级也只需要一条命令。</p>
+<p>添加 submodule 的方式：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git submodule add https://github.com/theme-author/hexo-theme-xxx themes/xxx</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="两种常见的仓库结构"><a href="#两种常见的仓库结构" class="headerlink" title="两种常见的仓库结构"></a>两种常见的仓库结构</h3><p><strong>方案 A（推荐，最简单）</strong></p>
+<p>一个仓库，两个分支：</p>
+<ul>
+<li><code>main</code> 分支：放 Hexo 源码（<code>_config.yml</code>、<code>source/</code>、<code>themes/</code> 等）</li>
+<li><code>gh-pages</code> 分支：放构建产物（<code>public/</code> 里的内容）</li>
+</ul>
+<p>Actions 负责把 <code>main</code> 上的源码构建后，推送到 <code>gh-pages</code> 分支。Pages 从 <code>gh-pages</code> 分支提供服务。</p>
+<p><strong>方案 B（两个仓库）</strong></p>
+<p>源码放私有仓库，构建产物推送到公开的 <code>username.github.io</code> 仓库。适合不想暴露源码的场景，但有个致命问题：<strong>GitHub Free 账户不支持私有仓库开启 GitHub Pages</strong>，所以方案 B 实际上要么源码仓库是公开的，要么你有 GitHub Pro。</p>
+<p>大多数人直接用方案 A 就行了，下面只讲方案 A。</p>
+<hr>
+<h3 id="核心-Workflow-配置"><a href="#核心-Workflow-配置" class="headerlink" title="核心 Workflow 配置"></a>核心 Workflow 配置</h3><p>在博客仓库根目录创建 <code>.github/workflows/deploy.yml</code>，内容如下：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">name:</span> <span class="string">Deploy</span> <span class="string">Hexo</span> <span class="string">to</span> <span class="string">GitHub</span> <span class="string">Pages</span></span><br><span class="line"></span><br><span class="line"><span class="attr">on:</span></span><br><span class="line">  <span class="attr">push:</span></span><br><span class="line">    <span class="attr">branches:</span> [<span class="string">main</span>]</span><br><span class="line"></span><br><span class="line"><span class="attr">jobs:</span></span><br><span class="line">  <span class="attr">build-deploy:</span></span><br><span class="line">    <span class="attr">runs-on:</span> <span class="string">ubuntu-latest</span></span><br><span class="line">    <span class="attr">steps:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Checkout（含</span> <span class="string">submodule）</span></span><br><span class="line">        <span class="attr">uses:</span> <span class="string">actions/checkout@v4</span></span><br><span class="line">        <span class="attr">with:</span></span><br><span class="line">          <span class="attr">submodules:</span> <span class="string">recursive</span>   <span class="comment"># 拉取主题 submodule</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Setup</span> <span class="string">Node</span></span><br><span class="line">        <span class="attr">uses:</span> <span class="string">actions/setup-node@v4</span></span><br><span class="line">        <span class="attr">with:</span></span><br><span class="line">          <span class="attr">node-version:</span> <span class="string">&#x27;20&#x27;</span></span><br><span class="line">          <span class="attr">cache:</span> <span class="string">npm</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">dependencies</span></span><br><span class="line">        <span class="attr">run:</span> <span class="string">npm</span> <span class="string">ci</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Build</span></span><br><span class="line">        <span class="attr">run:</span> <span class="string">npx</span> <span class="string">hexo</span> <span class="string">generate</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Deploy</span> <span class="string">to</span> <span class="string">GitHub</span> <span class="string">Pages</span></span><br><span class="line">        <span class="attr">uses:</span> <span class="string">peaceiris/actions-gh-pages@v4</span></span><br><span class="line">        <span class="attr">with:</span></span><br><span class="line">          <span class="attr">github_token:</span> <span class="string">$&#123;&#123;</span> <span class="string">secrets.GITHUB_TOKEN</span> <span class="string">&#125;&#125;</span></span><br><span class="line">          <span class="attr">publish_dir:</span> <span class="string">./public</span></span><br><span class="line">          <span class="attr">publish_branch:</span> <span class="string">gh-pages</span></span><br></pre></td></tr></table></figure>
+
+<p>几个细节说一下：</p>
+<ul>
+<li><code>npm ci</code> 比 <code>npm install</code> 更适合 CI 环境，它严格按 <code>package-lock.json</code> 安装，不会悄悄升级依赖</li>
+<li><code>peaceiris/actions-gh-pages</code> 是这类场景的标准做法，<code>GITHUB_TOKEN</code> 是 Actions 自带的，不需要额外配置</li>
+<li>Node 版本选 <code>20</code>，Hexo 对太旧的 Node 有兼容问题</li>
+</ul>
+<hr>
+<h3 id="GitHub-Pages-设置"><a href="#GitHub-Pages-设置" class="headerlink" title="GitHub Pages 设置"></a>GitHub Pages 设置</h3><p>Workflow 跑完之后，去仓库的 <strong>Settings → Pages</strong>，把 Source 改成：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Deploy from a branch → gh-pages → / (root)</span><br></pre></td></tr></table></figure>
+
+<p>保存之后，GitHub 会从 <code>gh-pages</code> 分支提供网站服务。第一次配置完大概等一两分钟就能访问了。</p>
+<hr>
+<h3 id="submodule-的坑"><a href="#submodule-的坑" class="headerlink" title="submodule 的坑"></a>submodule 的坑</h3><p>这是我踩得最深的一个坑，记录一下。</p>
+<p><strong>坑一：忘加 <code>submodules: recursive</code></strong></p>
+<p>普通的 <code>actions/checkout</code> 默认<strong>不拉 submodule</strong>，如果主题是 submodule，构建时会发现 <code>themes/xxx</code> 是个空文件夹，然后 <code>hexo g</code> 报错说找不到主题。解决方法就是加上 <code>submodules: recursive</code>，如上面的 workflow 所示。</p>
+<p><strong>坑二：主题仓库是私有的</strong></p>
+<p>如果你的主题 fork 了一个私有副本，<code>submodules: recursive</code> 会因为没有权限拉取而失败。这种情况需要配置 SSH deploy key：</p>
+<ol>
+<li>本地生成密钥对：<code>ssh-keygen -t ed25519 -C &quot;hexo-deploy&quot; -f hexo_deploy_key</code></li>
+<li>公钥（<code>hexo_deploy_key.pub</code>）加到<strong>主题仓库</strong>的 Settings → Deploy Keys</li>
+<li>私钥（<code>hexo_deploy_key</code>）加到<strong>博客仓库</strong>的 Settings → Secrets，命名比如 <code>THEME_DEPLOY_KEY</code></li>
+<li>Workflow 里的 checkout 步骤改为使用这个 key：</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">uses:</span> <span class="string">actions/checkout@v4</span></span><br><span class="line">  <span class="attr">with:</span></span><br><span class="line">    <span class="attr">submodules:</span> <span class="string">recursive</span></span><br><span class="line">    <span class="attr">ssh-key:</span> <span class="string">$&#123;&#123;</span> <span class="string">secrets.THEME_DEPLOY_KEY</span> <span class="string">&#125;&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>如果主题用的是公开仓库（大多数情况），直接用 <code>submodules: recursive</code> 就行，不需要额外配置密钥。</p>
+<hr>
+<h3 id="如何触发构建"><a href="#如何触发构建" class="headerlink" title="如何触发构建"></a>如何触发构建</h3><p>配置好之后，每次把改动 push 到 <code>main</code> 分支，Actions 就会自动跑起来，几分钟后网站就更新了。</p>
+<p>有一个情况容易忘：<strong>更新主题 submodule 后</strong>，需要在博客仓库执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">git submodule update --remote themes/xxx</span><br><span class="line">git add themes/xxx</span><br><span class="line">git commit -m <span class="string">&quot;chore: update theme submodule&quot;</span></span><br><span class="line">git push</span><br></pre></td></tr></table></figure>
+
+<p>单纯进主题文件夹改了东西再 push，博客仓库不会感知到，因为 submodule 记录的是一个 commit hash，需要显式更新。</p>
+<hr>
+<h3 id="常见问题排查"><a href="#常见问题排查" class="headerlink" title="常见问题排查"></a>常见问题排查</h3><p><strong>Build 步骤失败</strong></p>
+<p>先在本地跑一遍 <code>hexo g</code>，90% 的情况本地就能复现，修好之后再推。Actions 的报错信息有时候不够直白，本地调试更快。</p>
+<p><strong>Pages 没更新</strong></p>
+<p>检查两件事：一是 <code>gh-pages</code> 分支是否有新的 commit（去仓库的 branches 页面看），二是 Settings 里 Pages 的 Source 是否对上了。有时候第一次创建 <code>gh-pages</code> 分支之后，Pages 设置还停在默认的 <code>main</code> 分支，需要手动改过来。</p>
+<p><strong>submodule 拉取失败（权限问题）</strong></p>
+<p>错误信息一般是 <code>fatal: clone of &#39;https://github.com/...&#39; into submodule path &#39;...&#39; failed</code>。先确认 <code>submodules: recursive</code> 有没有写，再确认主题仓库是不是私有的。私有仓库走上面说的 SSH deploy key 流程。</p>
+<hr>
+<p>整个流程跑通之后，写文章的体验好了很多，push 上去就不用管了，泡杯茶回来网站已经更新了。</p>
+
+    </div>
+  </div>
+
+</article>
+
+<!-- ═══════════ Window Mode ═══════════ -->
+<article class="post-window">
+
+  <!-- Header: avatar + name (left) | close button (right) -->
+  <div class="post-window-header">
+    <div class="post-window-author">
+      <img class="post-window-avatar" src="/img/avatar.svg" alt=""
+           onerror="this.onerror=null;this.style.display='none'">
+      <div class="post-window-author-info">
+        <span class="post-window-author-name">Elysio</span>
+      </div>
+    </div>
+    <button class="pw-close" onclick="try{window.parent.closeWindow()}catch(e){}" title="关闭">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 130">
+        <path fill-rule="evenodd" fill="rgb(196,34,9)"
+          d="M0.373,65.000 C0.087,51.609 3.792,38.466 11.131,27.293
+             C19.671,14.293 32.558,4.832 47.439,0.360
+             C90.023,0.360 132.606,0.360 175.190,0.360
+             C183.245,1.482 190.671,5.694 195.361,12.480
+             C201.498,21.357 202.014,33.317 196.706,43.453
+             C185.052,65.000 173.397,86.547 161.743,108.094
+             C156.410,114.144 150.041,119.160 142.916,122.907
+             C136.598,126.230 129.798,128.498 122.745,129.640
+             C99.884,129.640 77.024,129.640 54.163,129.640
+             C38.778,126.247 24.988,117.749 15.165,105.400
+             C6.284,94.236 0.695,80.120 0.373,65.000
+             ZM51.473,11.133 L171.156,11.133
+             C175.707,11.408 180.022,13.285 183.259,16.520
+             C187.160,20.420 189.059,25.857 188.637,31.333
+             C177.880,52.431 167.122,73.529 156.364,94.627
+             C152.903,101.201 147.810,106.769 141.571,110.787
+             C135.517,114.686 128.583,116.999 121.400,117.520
+             C98.988,117.520 76.575,117.520 54.163,117.520
+             C28.223,111.309 10.366,87.869 11.131,62.307
+             C11.831,38.916 28.017,17.942 51.473,11.133
+             ZM54.538,17.998
+             C91.618,17.954 128.697,17.910 165.777,17.866
+             C171.772,16.637 177.788,19.453 180.569,24.600
+             C183.069,29.227 182.591,35.067 179.224,39.413
+             C168.466,58.716 157.708,78.018 146.950,97.320
+             C144.417,101.017 141.229,104.211 137.537,106.747
+             C133.865,109.270 129.766,111.094 125.434,112.134
+             C102.574,112.134 79.713,112.134 56.852,112.134
+             C33.925,106.570 18.183,85.813 18.891,63.215
+             C19.538,42.562 33.826,24.045 54.538,17.998
+             ZM79.713,63.653
+             C74.334,58.267 68.955,52.880 63.576,47.493
+             C60.994,44.908 60.994,40.652 63.576,38.066
+             C66.158,35.481 70.407,35.481 72.989,38.066
+             C78.368,43.453 83.747,48.840 89.126,54.227
+             C94.505,48.840 99.884,43.453 105.263,38.066
+             C107.957,36.746 111.211,37.289 113.332,39.413
+             C115.452,41.537 115.995,44.796 114.676,47.493
+             C109.297,52.880 103.918,58.267 98.539,63.653
+             C103.918,69.040 109.297,74.427 114.676,79.813
+             C117.258,82.399 117.258,86.654 114.676,89.240
+             C112.094,91.826 107.845,91.826 105.263,89.240
+             C99.884,83.853 94.505,78.467 89.126,73.080
+             C83.299,78.916 77.472,84.751 71.645,90.587
+             C68.951,91.907 65.697,91.364 63.576,89.240
+             C61.455,87.116 60.913,83.858 62.231,81.160
+             C68.059,75.325 73.886,69.489 79.713,63.653 Z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Body: cover card (left) + scrollable content (right) -->
+  <div class="post-window-body">
+    
+    <aside class="post-window-cover-panel">
+      <div class="post-window-cover-card">
+        <img src="https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=1200&q=80" alt="用 GitHub Actions 自动部署 Hexo 博客到 GitHub Pages"
+             onerror="this.onerror=null;this.style.display='none'">
+      </div>
+    </aside>
+    
+
+    <section class="post-window-main">
+      <h1 class="post-window-title">用 GitHub Actions 自动部署 Hexo 博客到 GitHub Pages</h1>
+      <div class="post-window-content">
+        <div class="markdown-content">
+          <p>每次写完文章都要手动 <code>hexo g &amp;&amp; hexo d</code>，烦了之后就研究了一下 GitHub Actions 自动部署。折腾了一个下午，踩了几个坑，现在记下来。</p>
+<h3 id="前置条件"><a href="#前置条件" class="headerlink" title="前置条件"></a>前置条件</h3><p>在开始之前，确认以下几点已经就绪：</p>
+<ul>
+<li>本地 Hexo 项目能正常跑，<code>hexo g</code> 不报错</li>
+<li>GitHub 账号，且已建好 <code>username.github.io</code> 仓库</li>
+<li>主题<strong>建议用 git submodule 引入</strong>，而不是直接把主题文件夹复制进来</li>
+</ul>
+<p>关于主题的问题，说一下为什么推荐 submodule：直接复制进来会导致主题更新麻烦，而且会把一堆主题文件混进你的博客提交记录里，非常乱。用 submodule 的话，主题是一个独立的 git 引用，升级也只需要一条命令。</p>
+<p>添加 submodule 的方式：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git submodule add https://github.com/theme-author/hexo-theme-xxx themes/xxx</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="两种常见的仓库结构"><a href="#两种常见的仓库结构" class="headerlink" title="两种常见的仓库结构"></a>两种常见的仓库结构</h3><p><strong>方案 A（推荐，最简单）</strong></p>
+<p>一个仓库，两个分支：</p>
+<ul>
+<li><code>main</code> 分支：放 Hexo 源码（<code>_config.yml</code>、<code>source/</code>、<code>themes/</code> 等）</li>
+<li><code>gh-pages</code> 分支：放构建产物（<code>public/</code> 里的内容）</li>
+</ul>
+<p>Actions 负责把 <code>main</code> 上的源码构建后，推送到 <code>gh-pages</code> 分支。Pages 从 <code>gh-pages</code> 分支提供服务。</p>
+<p><strong>方案 B（两个仓库）</strong></p>
+<p>源码放私有仓库，构建产物推送到公开的 <code>username.github.io</code> 仓库。适合不想暴露源码的场景，但有个致命问题：<strong>GitHub Free 账户不支持私有仓库开启 GitHub Pages</strong>，所以方案 B 实际上要么源码仓库是公开的，要么你有 GitHub Pro。</p>
+<p>大多数人直接用方案 A 就行了，下面只讲方案 A。</p>
+<hr>
+<h3 id="核心-Workflow-配置"><a href="#核心-Workflow-配置" class="headerlink" title="核心 Workflow 配置"></a>核心 Workflow 配置</h3><p>在博客仓库根目录创建 <code>.github/workflows/deploy.yml</code>，内容如下：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">name:</span> <span class="string">Deploy</span> <span class="string">Hexo</span> <span class="string">to</span> <span class="string">GitHub</span> <span class="string">Pages</span></span><br><span class="line"></span><br><span class="line"><span class="attr">on:</span></span><br><span class="line">  <span class="attr">push:</span></span><br><span class="line">    <span class="attr">branches:</span> [<span class="string">main</span>]</span><br><span class="line"></span><br><span class="line"><span class="attr">jobs:</span></span><br><span class="line">  <span class="attr">build-deploy:</span></span><br><span class="line">    <span class="attr">runs-on:</span> <span class="string">ubuntu-latest</span></span><br><span class="line">    <span class="attr">steps:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Checkout（含</span> <span class="string">submodule）</span></span><br><span class="line">        <span class="attr">uses:</span> <span class="string">actions/checkout@v4</span></span><br><span class="line">        <span class="attr">with:</span></span><br><span class="line">          <span class="attr">submodules:</span> <span class="string">recursive</span>   <span class="comment"># 拉取主题 submodule</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Setup</span> <span class="string">Node</span></span><br><span class="line">        <span class="attr">uses:</span> <span class="string">actions/setup-node@v4</span></span><br><span class="line">        <span class="attr">with:</span></span><br><span class="line">          <span class="attr">node-version:</span> <span class="string">&#x27;20&#x27;</span></span><br><span class="line">          <span class="attr">cache:</span> <span class="string">npm</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Install</span> <span class="string">dependencies</span></span><br><span class="line">        <span class="attr">run:</span> <span class="string">npm</span> <span class="string">ci</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Build</span></span><br><span class="line">        <span class="attr">run:</span> <span class="string">npx</span> <span class="string">hexo</span> <span class="string">generate</span></span><br><span class="line"></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">Deploy</span> <span class="string">to</span> <span class="string">GitHub</span> <span class="string">Pages</span></span><br><span class="line">        <span class="attr">uses:</span> <span class="string">peaceiris/actions-gh-pages@v4</span></span><br><span class="line">        <span class="attr">with:</span></span><br><span class="line">          <span class="attr">github_token:</span> <span class="string">$&#123;&#123;</span> <span class="string">secrets.GITHUB_TOKEN</span> <span class="string">&#125;&#125;</span></span><br><span class="line">          <span class="attr">publish_dir:</span> <span class="string">./public</span></span><br><span class="line">          <span class="attr">publish_branch:</span> <span class="string">gh-pages</span></span><br></pre></td></tr></table></figure>
+
+<p>几个细节说一下：</p>
+<ul>
+<li><code>npm ci</code> 比 <code>npm install</code> 更适合 CI 环境，它严格按 <code>package-lock.json</code> 安装，不会悄悄升级依赖</li>
+<li><code>peaceiris/actions-gh-pages</code> 是这类场景的标准做法，<code>GITHUB_TOKEN</code> 是 Actions 自带的，不需要额外配置</li>
+<li>Node 版本选 <code>20</code>，Hexo 对太旧的 Node 有兼容问题</li>
+</ul>
+<hr>
+<h3 id="GitHub-Pages-设置"><a href="#GitHub-Pages-设置" class="headerlink" title="GitHub Pages 设置"></a>GitHub Pages 设置</h3><p>Workflow 跑完之后，去仓库的 <strong>Settings → Pages</strong>，把 Source 改成：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Deploy from a branch → gh-pages → / (root)</span><br></pre></td></tr></table></figure>
+
+<p>保存之后，GitHub 会从 <code>gh-pages</code> 分支提供网站服务。第一次配置完大概等一两分钟就能访问了。</p>
+<hr>
+<h3 id="submodule-的坑"><a href="#submodule-的坑" class="headerlink" title="submodule 的坑"></a>submodule 的坑</h3><p>这是我踩得最深的一个坑，记录一下。</p>
+<p><strong>坑一：忘加 <code>submodules: recursive</code></strong></p>
+<p>普通的 <code>actions/checkout</code> 默认<strong>不拉 submodule</strong>，如果主题是 submodule，构建时会发现 <code>themes/xxx</code> 是个空文件夹，然后 <code>hexo g</code> 报错说找不到主题。解决方法就是加上 <code>submodules: recursive</code>，如上面的 workflow 所示。</p>
+<p><strong>坑二：主题仓库是私有的</strong></p>
+<p>如果你的主题 fork 了一个私有副本，<code>submodules: recursive</code> 会因为没有权限拉取而失败。这种情况需要配置 SSH deploy key：</p>
+<ol>
+<li>本地生成密钥对：<code>ssh-keygen -t ed25519 -C &quot;hexo-deploy&quot; -f hexo_deploy_key</code></li>
+<li>公钥（<code>hexo_deploy_key.pub</code>）加到<strong>主题仓库</strong>的 Settings → Deploy Keys</li>
+<li>私钥（<code>hexo_deploy_key</code>）加到<strong>博客仓库</strong>的 Settings → Secrets，命名比如 <code>THEME_DEPLOY_KEY</code></li>
+<li>Workflow 里的 checkout 步骤改为使用这个 key：</li>
+</ol>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">uses:</span> <span class="string">actions/checkout@v4</span></span><br><span class="line">  <span class="attr">with:</span></span><br><span class="line">    <span class="attr">submodules:</span> <span class="string">recursive</span></span><br><span class="line">    <span class="attr">ssh-key:</span> <span class="string">$&#123;&#123;</span> <span class="string">secrets.THEME_DEPLOY_KEY</span> <span class="string">&#125;&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>如果主题用的是公开仓库（大多数情况），直接用 <code>submodules: recursive</code> 就行，不需要额外配置密钥。</p>
+<hr>
+<h3 id="如何触发构建"><a href="#如何触发构建" class="headerlink" title="如何触发构建"></a>如何触发构建</h3><p>配置好之后，每次把改动 push 到 <code>main</code> 分支，Actions 就会自动跑起来，几分钟后网站就更新了。</p>
+<p>有一个情况容易忘：<strong>更新主题 submodule 后</strong>，需要在博客仓库执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">git submodule update --remote themes/xxx</span><br><span class="line">git add themes/xxx</span><br><span class="line">git commit -m <span class="string">&quot;chore: update theme submodule&quot;</span></span><br><span class="line">git push</span><br></pre></td></tr></table></figure>
+
+<p>单纯进主题文件夹改了东西再 push，博客仓库不会感知到，因为 submodule 记录的是一个 commit hash，需要显式更新。</p>
+<hr>
+<h3 id="常见问题排查"><a href="#常见问题排查" class="headerlink" title="常见问题排查"></a>常见问题排查</h3><p><strong>Build 步骤失败</strong></p>
+<p>先在本地跑一遍 <code>hexo g</code>，90% 的情况本地就能复现，修好之后再推。Actions 的报错信息有时候不够直白，本地调试更快。</p>
+<p><strong>Pages 没更新</strong></p>
+<p>检查两件事：一是 <code>gh-pages</code> 分支是否有新的 commit（去仓库的 branches 页面看），二是 Settings 里 Pages 的 Source 是否对上了。有时候第一次创建 <code>gh-pages</code> 分支之后，Pages 设置还停在默认的 <code>main</code> 分支，需要手动改过来。</p>
+<p><strong>submodule 拉取失败（权限问题）</strong></p>
+<p>错误信息一般是 <code>fatal: clone of &#39;https://github.com/...&#39; into submodule path &#39;...&#39; failed</code>。先确认 <code>submodules: recursive</code> 有没有写，再确认主题仓库是不是私有的。私有仓库走上面说的 SSH deploy key 流程。</p>
+<hr>
+<p>整个流程跑通之后，写文章的体验好了很多，push 上去就不用管了，泡杯茶回来网站已经更新了。</p>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+</article>
+
+  </main>
+
+  <!-- Window Popup (article iframe viewer) -->
+  <div class="window" id="hl-window">
+    <div class="window-content">
+      <iframe class="window-frame" id="hl-window-frame"></iframe>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ---- Loading overlay: fade out on page load ---- */
+    window.addEventListener('load', function() {
+      var loading = document.getElementById('hl-loading');
+      if (!loading) return;
+      loading.classList.add('fade-out');
+      setTimeout(function() {
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+      }, 400);
+    });
+
+    /* ---- _0kd page transition (globally callable) ---- */
+    window._0kd = function(callback) {
+      var el = document.getElementById('hl-0kd');
+      if (!el) return;
+      el.style.display = 'block';
+      el.style.animationPlayState = 'running';
+      setTimeout(function() {
+        if (typeof callback === 'function') callback();
+        setTimeout(function() {
+          el.style.animationPlayState = 'paused';
+          el.style.display = 'none';
+        }, 500);
+      }, 1000);
+    };
+
+    /* ---- Window popup controls (globally callable) ---- */
+    var _windowPrevUrl = null;
+
+    window.openWindow = function(url) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win || !frame) return;
+      _windowPrevUrl = window.location.href;   // remember where we came from
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      frame.src = url + sep + 'window=true';
+      history.pushState({ hollowWindow: true }, '', url);
+      win.style.display = 'flex';
+    };
+
+    window.closeWindow = function(fromPopstate) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win) return;
+      win.style.display = 'none';
+      if (frame) frame.src = '';
+      if (!fromPopstate) {
+        // Replace article URL with original page URL — no popstate, no navigation side-effects
+        history.replaceState(null, '', _windowPrevUrl || window.location.pathname);
+      }
+      _windowPrevUrl = null;
+    };
+
+    /* Close window on Escape key */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.closeWindow();
+    });
+
+    /* Close window when clicking backdrop (outside content) */
+    var winEl = document.getElementById('hl-window');
+    if (winEl) {
+      winEl.addEventListener('click', function(e) {
+        if (e.target === winEl) window.closeWindow();
+      });
+    }
+
+    /* Close window on browser back */
+    window.addEventListener('popstate', function() {
+      var win = document.getElementById('hl-window');
+      if (win && win.style.display !== 'none') closeWindow(true);
+    });
+  })();
+  </script>
+
+  
+<!-- HL Search Modal -->
+<div class="hl-search-overlay" id="hl-search-overlay" hidden>
+  <div class="hl-search-backdrop" id="hl-search-backdrop"></div>
+  <div class="hl-search-modal" role="dialog" aria-label="搜索">
+    <div class="hl-search-header">
+      <svg class="hl-search-icon-prefix" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="hl-search-input" id="hl-search-input"
+             type="search" placeholder="搜索文章…"
+             autocomplete="off" spellcheck="false" aria-label="搜索关键字">
+      <button class="hl-search-close" id="hl-search-close" title="关闭 (Esc)" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hl-search-divider"></div>
+
+    <div class="hl-search-body" id="hl-search-body">
+      <div class="hl-search-hint" id="hl-search-hint">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>输入关键字开始搜索</span>
+      </div>
+      <div class="hl-search-results" id="hl-search-results" role="listbox" aria-label="搜索结果"></div>
+    </div>
+
+    <div class="hl-search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/search.css">
+<script>window.__HL_SEARCH_PATH__ = '/search.json';</script>
+<script src="/js/search.js"></script>
+
+
+  <script src="/js/code-copy.js"></script>
+
+</body>
+</html>

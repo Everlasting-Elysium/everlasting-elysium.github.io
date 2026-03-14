@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>HollowLight：一个致敬《绝区零》绳网论坛的 Hexo 主题 | Elysian Realm</title>
+  <meta name="description" content="">
+  
+  <!-- Font: MaoKen Assorted Sans (unpkg CDN, same as interknot reference) -->
+  <style>@import url('https://unpkg.com/@chinese-fonts/mksjh@1.4.0/dist/MaokenAssortedSans1.30/result.css');</style>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="description" content="玩《绝区零》的时候，我一直很喜欢游戏内那个「绳网」论坛的 UI 设计。纯黑背景，荧光黄高亮，字体干净利落，整体氛围很赛博，但又不会眼花缭乱。某天刷着帖子突然想，能不能把这个风格做成 Hexo 主题？ 于是就有了 HollowLight。 仓库地址：https:&#x2F;&#x2F;github.com&#x2F;Everlasting-Elysium&#x2F;HollowLight  先说几句这个主题是我边玩游戏边写出来的，算是个人">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HollowLight：一个致敬《绝区零》绳网论坛的 Hexo 主题">
+<meta property="og:url" content="https://everlasting-elysium.github.io/2026/03/13/2026-03-14-hollowlight-hexo-theme/index.html">
+<meta property="og:site_name" content="Elysian Realm">
+<meta property="og:description" content="玩《绝区零》的时候，我一直很喜欢游戏内那个「绳网」论坛的 UI 设计。纯黑背景，荧光黄高亮，字体干净利落，整体氛围很赛博，但又不会眼花缭乱。某天刷着帖子突然想，能不能把这个风格做成 Hexo 主题？ 于是就有了 HollowLight。 仓库地址：https:&#x2F;&#x2F;github.com&#x2F;Everlasting-Elysium&#x2F;HollowLight  先说几句这个主题是我边玩游戏边写出来的，算是个人">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-13T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-03-14T09:52:33.580Z">
+<meta property="article:author" content="Everlasting Elysium">
+<meta property="article:tag" content="Hexo">
+<meta property="article:tag" content="HollowLight">
+<meta property="article:tag" content="主题">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading" id="hl-loading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading</span>
+  </div>
+
+  <!-- _0kd Page Transition Layer -->
+  <div class="_0kd" id="hl-0kd"></div>
+
+  <!-- Background Layer -->
+  
+  <div class="bg" style="background-image: url('/img/bg.png');"></div>
+
+  <!-- Header -->
+  
+  <header>
+  <!-- Personal Info Card -->
+  <a href="/" class="personal">
+    <span class="avatar-link">
+      <img
+        src="/img/avatar.svg"
+        alt="Elysio"
+        class="avatar"
+        onerror="this.onerror=null;this.style.background='#333';"
+      >
+    </span>
+    <span class="info-bar">
+      <span class="info-bio">知行合一,学以致用；但行好事，莫问前程。</span>
+      <span class="info-url">
+        <span class="info-url-lock">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/>
+            <path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        https://everlasting-elysium.github.io/
+      </span>
+    </span>
+  </a>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    
+      
+      <span class="tab">
+        <a href="/">推送</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/archives/">归档</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/tags/">标签</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/album/">相册</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/friends/">伙伴</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/about/">关于</a>
+      </span>
+    
+  </div>
+
+  <!-- Search Button -->
+  
+  <button class="hl-search-btn" id="hl-search-btn"
+          title="搜索 (Ctrl+K)" aria-label="搜索">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+  
+</header>
+
+
+  <!-- Main Content -->
+  <main>
+    <link rel="stylesheet" href="/css/post.css">
+<link rel="stylesheet" href="/css/post-window.css">
+
+<script>
+(function () {
+  var isWindow = false;
+  try { isWindow = new URLSearchParams(window.location.search).get('window') === 'true'; } catch(e) {}
+  if (!isWindow) { try { isWindow = window.self !== window.top; } catch(e) { isWindow = true; } }
+  if (isWindow) document.documentElement.classList.add('window-mode');
+})();
+</script>
+
+
+
+<!-- ═══════════ Normal Mode ═══════════ -->
+<article class="post-article">
+
+  
+  <div class="post-hero" style="background-image:url('https://images.unsplash.com/photo-1545670723-196ed0954986?w=1200&q=80')">
+    <div class="post-hero-overlay">
+      <div class="post-hero-inner">
+        <h1 class="post-title">HollowLight：一个致敬《绝区零》绳网论坛的 Hexo 主题</h1>
+        <div class="post-meta">
+          <time datetime="2026-03-14">
+            2026 / 03 / 14
+          </time>
+          
+          <div class="post-tags">
+            
+            <a class="tag-pill" href="/tags/Hexo/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/Hexo/')}else{window.location.href=this.href}">
+              Hexo
+            </a>
+            
+            <a class="tag-pill" href="/tags/HollowLight/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/HollowLight/')}else{window.location.href=this.href}">
+              HollowLight
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E4%B8%BB%E9%A2%98/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E4%B8%BB%E9%A2%98/')}else{window.location.href=this.href}">
+              主题
+            </a>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="post-body">
+    <div class="markdown-content">
+      <p>玩《绝区零》的时候，我一直很喜欢游戏内那个「绳网」论坛的 UI 设计。纯黑背景，荧光黄高亮，字体干净利落，整体氛围很赛博，但又不会眼花缭乱。某天刷着帖子突然想，能不能把这个风格做成 Hexo 主题？</p>
+<p>于是就有了 HollowLight。</p>
+<p>仓库地址：<a target="_blank" rel="noopener" href="https://github.com/Everlasting-Elysium/HollowLight">https://github.com/Everlasting-Elysium/HollowLight</a></p>
+<hr>
+<h3 id="先说几句"><a href="#先说几句" class="headerlink" title="先说几句"></a>先说几句</h3><p>这个主题是我边玩游戏边写出来的，算是个人向的产物。设计上深度参考了绳网论坛的视觉语言，核心 accent 色用的是 <code>#fbfe00</code> 那个荧光黄，字体用的是猫啃什锦黑，整体就是追求那种暗黑+霓虹的感觉。</p>
+<p>功能上我尽量做了该有的都有，首页幕布、瀑布流卡片、相册、友链、标签球、本地搜索……不算多花哨，但够用。</p>
+<hr>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>主题通过 git submodule 安装，这样方便后续拉取更新：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git submodule add git@github.com:Everlasting-Elysium/HollowLight.git themes/HollowLight</span><br></pre></td></tr></table></figure>
+
+<p>然后在 Hexo 根目录的 <code>_config.yml</code> 里改一下主题：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">theme:</span> <span class="string">HollowLight</span></span><br></pre></td></tr></table></figure>
+
+<p>把主题目录里的 <code>_config.HollowLight.yml</code> 复制一份到 Hexo 根目录，后续所有配置都在这里改。</p>
+<p>如果你需要搜索功能，还要额外装一个插件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-generator-searchdb</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="配置概览"><a href="#配置概览" class="headerlink" title="配置概览"></a>配置概览</h3><p><code>_config.HollowLight.yml</code> 里主要的字段长这样：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">author:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">&quot;你的名字&quot;</span></span><br><span class="line">  <span class="attr">avatar:</span> <span class="string">/img/avatar.svg</span></span><br><span class="line">  <span class="attr">bio:</span> <span class="string">&quot;个人简介&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">menu:</span></span><br><span class="line">  <span class="string">推送:</span> <span class="string">/</span></span><br><span class="line">  <span class="string">归档:</span> <span class="string">/archives/</span></span><br><span class="line">  <span class="string">标签:</span> <span class="string">/tags/</span></span><br><span class="line">  <span class="string">相册:</span> <span class="string">/album/</span></span><br><span class="line">  <span class="string">伙伴:</span> <span class="string">/friends/</span></span><br><span class="line">  <span class="string">关于:</span> <span class="string">/about/</span></span><br><span class="line"></span><br><span class="line"><span class="attr">background:</span> <span class="string">/img/bg.png</span></span><br><span class="line"></span><br><span class="line"><span class="attr">curtain:</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">background:</span></span><br><span class="line">    <span class="attr">type:</span> <span class="string">image</span>   <span class="comment"># image 或 video</span></span><br><span class="line">    <span class="attr">url:</span> <span class="string">/img/curtain-bg.jpg</span></span><br><span class="line">  <span class="attr">typewriter:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">&quot;你好，世界&quot;</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">&quot;欢迎来到我的博客&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">search:</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<p>菜单项是可以自定义名字的，我直接用了「推送」对应首页，贴近绳网论坛那个味道。</p>
+<hr>
+<h3 id="首页幕布"><a href="#首页幕布" class="headerlink" title="首页幕布"></a>首页幕布</h3><p>这是我比较喜欢的一个功能。开启 <code>curtain.enable: true</code> 之后，进入首页会先看到一个全屏的 Hero 区域，背景可以是图片也可以是视频，上面有打字机效果滚动显示你配置的文字，点击或者向下滚动才会进入文章列表。</p>
+<p>背景图需要你自己放到 <code>source/img/</code> 里，主题不含示例图，别忘了这一步，不然幕布背景是黑色的。</p>
+<p>视频背景的话，<code>type: video</code> 配上视频 URL 就行，适合想搞得炫一点的。</p>
+<hr>
+<h3 id="首页文章列表"><a href="#首页文章列表" class="headerlink" title="首页文章列表"></a>首页文章列表</h3><p>进了幕布之后是瀑布流卡片布局。文章支持封面图，在 frontmatter 里加 <code>headimg</code> 字段：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">title:</span> <span class="string">&quot;文章标题&quot;</span></span><br><span class="line"><span class="attr">headimg:</span> <span class="string">https://example.com/cover.jpg</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></table></figure>
+
+<p>想置顶某篇文章，加 <code>pin: true</code>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">title:</span> <span class="string">&quot;置顶文章&quot;</span></span><br><span class="line"><span class="attr">pin:</span> <span class="literal">true</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="文章详情页"><a href="#文章详情页" class="headerlink" title="文章详情页"></a>文章详情页</h3><p>文章页也会把 <code>headimg</code> 作为页面顶部的大图展示，加了渐变遮罩，文章内容卡片浮在封面图上方。视觉上比较好看，代价是如果你的封面图颜色很浅，遮罩效果可能会弱一点。</p>
+<p>代码块用的 one-dark 主题，右上角有复制按钮。</p>
+<hr>
+<h3 id="相册页"><a href="#相册页" class="headerlink" title="相册页"></a>相册页</h3><p>相册是我花时间比较多的一个功能。数据文件放在 <code>source/_data/album.yml</code>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">albums:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">id:</span> <span class="string">my-album</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">&quot;相册名&quot;</span></span><br><span class="line">    <span class="attr">cover:</span> <span class="string">/img/gallery/cover.jpg</span></span><br><span class="line">    <span class="attr">description:</span> <span class="string">&quot;描述&quot;</span></span><br><span class="line">    <span class="attr">photos:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">url:</span> <span class="string">/img/gallery/1.jpg</span></span><br><span class="line">        <span class="attr">thumb:</span> <span class="string">/img/gallery/1.thumb.webp</span></span><br><span class="line">        <span class="attr">title:</span> <span class="string">&quot;标题&quot;</span></span><br><span class="line">        <span class="attr">desc:</span> <span class="string">&quot;描述&quot;</span></span><br><span class="line">        <span class="attr">link:</span> <span class="string">&quot;https://...&quot;</span>  <span class="comment"># 可选，点击跳转</span></span><br></pre></td></tr></table></figure>
+
+<p>几个值得注意的地方：</p>
+<p><strong><code>id</code> 字段</strong>。每个相册有自己的 id，支持 hash 直达，比如 <code>/album/#my-album</code> 会直接定位到那个相册，分享某个具体相册链接的时候比较方便。</p>
+<p><strong><code>thumb</code> 缩略图</strong>。这个字段是可选的，但我强烈建议提供。列表页加载的是缩略图，如果没有 <code>thumb</code> 就会直接加载原图，图片一多页面会卡。主题仓库里有一个 <code>.github/scripts/compress-images.js</code>，可以配合 GitHub Actions 批量生成 webp 缩略图，懒得手动压图的话可以参考一下。</p>
+<p>相册页本身是多分组 tab，CSS masonry 瀑布流布局，点击图片会有 lightbox 弹出，3D 玻璃卡片效果，在纯黑背景下看起来还不错。</p>
+<hr>
+<h3 id="友链页"><a href="#友链页" class="headerlink" title="友链页"></a>友链页</h3><p>友链数据放在 <code>source/_data/friends.yml</code>。支持新旧两种格式：</p>
+<p>旧版（单组，向下兼容）：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">friends:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">&quot;博主名&quot;</span></span><br><span class="line">    <span class="attr">url:</span> <span class="string">&quot;https://...&quot;</span></span><br><span class="line">    <span class="attr">avatar:</span> <span class="string">&quot;https://...&quot;</span></span><br><span class="line">    <span class="attr">desc:</span> <span class="string">&quot;一句话介绍&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>新版（多分组）：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">sections:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">title:</span> <span class="string">&quot;分组一&quot;</span></span><br><span class="line">    <span class="attr">subtitle:</span> <span class="string">PORTFOLIO</span></span><br><span class="line">    <span class="attr">items:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">&quot;博主名&quot;</span></span><br><span class="line">        <span class="attr">url:</span> <span class="string">&quot;https://...&quot;</span></span><br><span class="line">        <span class="attr">icon:</span> <span class="string">&quot;https://...&quot;</span></span><br><span class="line">        <span class="attr">desc:</span> <span class="string">&quot;一句话介绍&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>内部链接（<code>/</code> 开头的同站路径）不会打开新标签，外链才会。</p>
+<hr>
+<h3 id="3D-标签球"><a href="#3D-标签球" class="headerlink" title="3D 标签球"></a>3D 标签球</h3><p>标签页（<code>/tags/</code>）会显示一个 3D 标签球，用 Fibonacci 球体算法分布标签位置，支持鼠标拖动交互。标签越多越好看，博客刚建的时候只有几个标签，球就有点空旷……</p>
+<hr>
+<h3 id="本地搜索"><a href="#本地搜索" class="headerlink" title="本地搜索"></a>本地搜索</h3><p>需要装了 <code>hexo-generator-searchdb</code> 插件，并在配置里开启：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">search:</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<p>快捷键是 <code>Ctrl+K</code>（Mac 上是 <code>Cmd+K</code>），触发搜索弹窗。搜索的是本地生成的索引文件，不依赖第三方服务。</p>
+<hr>
+<h3 id="几个坑"><a href="#几个坑" class="headerlink" title="几个坑"></a>几个坑</h3><p>用下来有几点需要注意：</p>
+<ol>
+<li><p><strong>幕布背景图要自己放</strong>。主题 <code>source/img/</code> 下没有示例图片，<code>curtain.background.url</code> 填的路径对应 <code>source/</code> 下的文件，空了就是黑背景。</p>
+</li>
+<li><p><strong>搜索插件要单独装</strong>。<code>hexo-generator-searchdb</code> 不是 Hexo 内置的，忘了装搜索就不工作。</p>
+</li>
+<li><p><strong>相册没有 thumb 会很慢</strong>。原图直接拿来当缩略图，100 张图的相册列表页加载时间感人。</p>
+</li>
+<li><p><strong>submodule 更新</strong>。主题用 submodule 管理，更新主题需要：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git submodule update --remote themes/HollowLight</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>字体加载</strong>。猫啃什锦黑是从字体 CDN 加载的，国内访问速度视情况而定。</p>
+</li>
+</ol>
+<hr>
+<p>总体来说 HollowLight 是一个比较小众的主题，受众基本就是喜欢 ZZZ 或者喜欢这种暗黑赛博风格的人。如果你想要一个轻量、干净、有点游戏感的 Hexo 主题，可以试试看。有问题的话去仓库开 issue，我看到了会回。</p>
+
+    </div>
+  </div>
+
+</article>
+
+<!-- ═══════════ Window Mode ═══════════ -->
+<article class="post-window">
+
+  <!-- Header: avatar + name (left) | close button (right) -->
+  <div class="post-window-header">
+    <div class="post-window-author">
+      <img class="post-window-avatar" src="/img/avatar.svg" alt=""
+           onerror="this.onerror=null;this.style.display='none'">
+      <div class="post-window-author-info">
+        <span class="post-window-author-name">Elysio</span>
+      </div>
+    </div>
+    <button class="pw-close" onclick="try{window.parent.closeWindow()}catch(e){}" title="关闭">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 130">
+        <path fill-rule="evenodd" fill="rgb(196,34,9)"
+          d="M0.373,65.000 C0.087,51.609 3.792,38.466 11.131,27.293
+             C19.671,14.293 32.558,4.832 47.439,0.360
+             C90.023,0.360 132.606,0.360 175.190,0.360
+             C183.245,1.482 190.671,5.694 195.361,12.480
+             C201.498,21.357 202.014,33.317 196.706,43.453
+             C185.052,65.000 173.397,86.547 161.743,108.094
+             C156.410,114.144 150.041,119.160 142.916,122.907
+             C136.598,126.230 129.798,128.498 122.745,129.640
+             C99.884,129.640 77.024,129.640 54.163,129.640
+             C38.778,126.247 24.988,117.749 15.165,105.400
+             C6.284,94.236 0.695,80.120 0.373,65.000
+             ZM51.473,11.133 L171.156,11.133
+             C175.707,11.408 180.022,13.285 183.259,16.520
+             C187.160,20.420 189.059,25.857 188.637,31.333
+             C177.880,52.431 167.122,73.529 156.364,94.627
+             C152.903,101.201 147.810,106.769 141.571,110.787
+             C135.517,114.686 128.583,116.999 121.400,117.520
+             C98.988,117.520 76.575,117.520 54.163,117.520
+             C28.223,111.309 10.366,87.869 11.131,62.307
+             C11.831,38.916 28.017,17.942 51.473,11.133
+             ZM54.538,17.998
+             C91.618,17.954 128.697,17.910 165.777,17.866
+             C171.772,16.637 177.788,19.453 180.569,24.600
+             C183.069,29.227 182.591,35.067 179.224,39.413
+             C168.466,58.716 157.708,78.018 146.950,97.320
+             C144.417,101.017 141.229,104.211 137.537,106.747
+             C133.865,109.270 129.766,111.094 125.434,112.134
+             C102.574,112.134 79.713,112.134 56.852,112.134
+             C33.925,106.570 18.183,85.813 18.891,63.215
+             C19.538,42.562 33.826,24.045 54.538,17.998
+             ZM79.713,63.653
+             C74.334,58.267 68.955,52.880 63.576,47.493
+             C60.994,44.908 60.994,40.652 63.576,38.066
+             C66.158,35.481 70.407,35.481 72.989,38.066
+             C78.368,43.453 83.747,48.840 89.126,54.227
+             C94.505,48.840 99.884,43.453 105.263,38.066
+             C107.957,36.746 111.211,37.289 113.332,39.413
+             C115.452,41.537 115.995,44.796 114.676,47.493
+             C109.297,52.880 103.918,58.267 98.539,63.653
+             C103.918,69.040 109.297,74.427 114.676,79.813
+             C117.258,82.399 117.258,86.654 114.676,89.240
+             C112.094,91.826 107.845,91.826 105.263,89.240
+             C99.884,83.853 94.505,78.467 89.126,73.080
+             C83.299,78.916 77.472,84.751 71.645,90.587
+             C68.951,91.907 65.697,91.364 63.576,89.240
+             C61.455,87.116 60.913,83.858 62.231,81.160
+             C68.059,75.325 73.886,69.489 79.713,63.653 Z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Body: cover card (left) + scrollable content (right) -->
+  <div class="post-window-body">
+    
+    <aside class="post-window-cover-panel">
+      <div class="post-window-cover-card">
+        <img src="https://images.unsplash.com/photo-1545670723-196ed0954986?w=1200&q=80" alt="HollowLight：一个致敬《绝区零》绳网论坛的 Hexo 主题"
+             onerror="this.onerror=null;this.style.display='none'">
+      </div>
+    </aside>
+    
+
+    <section class="post-window-main">
+      <h1 class="post-window-title">HollowLight：一个致敬《绝区零》绳网论坛的 Hexo 主题</h1>
+      <div class="post-window-content">
+        <div class="markdown-content">
+          <p>玩《绝区零》的时候，我一直很喜欢游戏内那个「绳网」论坛的 UI 设计。纯黑背景，荧光黄高亮，字体干净利落，整体氛围很赛博，但又不会眼花缭乱。某天刷着帖子突然想，能不能把这个风格做成 Hexo 主题？</p>
+<p>于是就有了 HollowLight。</p>
+<p>仓库地址：<a target="_blank" rel="noopener" href="https://github.com/Everlasting-Elysium/HollowLight">https://github.com/Everlasting-Elysium/HollowLight</a></p>
+<hr>
+<h3 id="先说几句"><a href="#先说几句" class="headerlink" title="先说几句"></a>先说几句</h3><p>这个主题是我边玩游戏边写出来的，算是个人向的产物。设计上深度参考了绳网论坛的视觉语言，核心 accent 色用的是 <code>#fbfe00</code> 那个荧光黄，字体用的是猫啃什锦黑，整体就是追求那种暗黑+霓虹的感觉。</p>
+<p>功能上我尽量做了该有的都有，首页幕布、瀑布流卡片、相册、友链、标签球、本地搜索……不算多花哨，但够用。</p>
+<hr>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>主题通过 git submodule 安装，这样方便后续拉取更新：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git submodule add git@github.com:Everlasting-Elysium/HollowLight.git themes/HollowLight</span><br></pre></td></tr></table></figure>
+
+<p>然后在 Hexo 根目录的 <code>_config.yml</code> 里改一下主题：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">theme:</span> <span class="string">HollowLight</span></span><br></pre></td></tr></table></figure>
+
+<p>把主题目录里的 <code>_config.HollowLight.yml</code> 复制一份到 Hexo 根目录，后续所有配置都在这里改。</p>
+<p>如果你需要搜索功能，还要额外装一个插件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-generator-searchdb</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="配置概览"><a href="#配置概览" class="headerlink" title="配置概览"></a>配置概览</h3><p><code>_config.HollowLight.yml</code> 里主要的字段长这样：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">author:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">&quot;你的名字&quot;</span></span><br><span class="line">  <span class="attr">avatar:</span> <span class="string">/img/avatar.svg</span></span><br><span class="line">  <span class="attr">bio:</span> <span class="string">&quot;个人简介&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">menu:</span></span><br><span class="line">  <span class="string">推送:</span> <span class="string">/</span></span><br><span class="line">  <span class="string">归档:</span> <span class="string">/archives/</span></span><br><span class="line">  <span class="string">标签:</span> <span class="string">/tags/</span></span><br><span class="line">  <span class="string">相册:</span> <span class="string">/album/</span></span><br><span class="line">  <span class="string">伙伴:</span> <span class="string">/friends/</span></span><br><span class="line">  <span class="string">关于:</span> <span class="string">/about/</span></span><br><span class="line"></span><br><span class="line"><span class="attr">background:</span> <span class="string">/img/bg.png</span></span><br><span class="line"></span><br><span class="line"><span class="attr">curtain:</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">background:</span></span><br><span class="line">    <span class="attr">type:</span> <span class="string">image</span>   <span class="comment"># image 或 video</span></span><br><span class="line">    <span class="attr">url:</span> <span class="string">/img/curtain-bg.jpg</span></span><br><span class="line">  <span class="attr">typewriter:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">&quot;你好，世界&quot;</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">&quot;欢迎来到我的博客&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">search:</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<p>菜单项是可以自定义名字的，我直接用了「推送」对应首页，贴近绳网论坛那个味道。</p>
+<hr>
+<h3 id="首页幕布"><a href="#首页幕布" class="headerlink" title="首页幕布"></a>首页幕布</h3><p>这是我比较喜欢的一个功能。开启 <code>curtain.enable: true</code> 之后，进入首页会先看到一个全屏的 Hero 区域，背景可以是图片也可以是视频，上面有打字机效果滚动显示你配置的文字，点击或者向下滚动才会进入文章列表。</p>
+<p>背景图需要你自己放到 <code>source/img/</code> 里，主题不含示例图，别忘了这一步，不然幕布背景是黑色的。</p>
+<p>视频背景的话，<code>type: video</code> 配上视频 URL 就行，适合想搞得炫一点的。</p>
+<hr>
+<h3 id="首页文章列表"><a href="#首页文章列表" class="headerlink" title="首页文章列表"></a>首页文章列表</h3><p>进了幕布之后是瀑布流卡片布局。文章支持封面图，在 frontmatter 里加 <code>headimg</code> 字段：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">title:</span> <span class="string">&quot;文章标题&quot;</span></span><br><span class="line"><span class="attr">headimg:</span> <span class="string">https://example.com/cover.jpg</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></table></figure>
+
+<p>想置顶某篇文章，加 <code>pin: true</code>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">title:</span> <span class="string">&quot;置顶文章&quot;</span></span><br><span class="line"><span class="attr">pin:</span> <span class="literal">true</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="文章详情页"><a href="#文章详情页" class="headerlink" title="文章详情页"></a>文章详情页</h3><p>文章页也会把 <code>headimg</code> 作为页面顶部的大图展示，加了渐变遮罩，文章内容卡片浮在封面图上方。视觉上比较好看，代价是如果你的封面图颜色很浅，遮罩效果可能会弱一点。</p>
+<p>代码块用的 one-dark 主题，右上角有复制按钮。</p>
+<hr>
+<h3 id="相册页"><a href="#相册页" class="headerlink" title="相册页"></a>相册页</h3><p>相册是我花时间比较多的一个功能。数据文件放在 <code>source/_data/album.yml</code>：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">albums:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">id:</span> <span class="string">my-album</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">&quot;相册名&quot;</span></span><br><span class="line">    <span class="attr">cover:</span> <span class="string">/img/gallery/cover.jpg</span></span><br><span class="line">    <span class="attr">description:</span> <span class="string">&quot;描述&quot;</span></span><br><span class="line">    <span class="attr">photos:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">url:</span> <span class="string">/img/gallery/1.jpg</span></span><br><span class="line">        <span class="attr">thumb:</span> <span class="string">/img/gallery/1.thumb.webp</span></span><br><span class="line">        <span class="attr">title:</span> <span class="string">&quot;标题&quot;</span></span><br><span class="line">        <span class="attr">desc:</span> <span class="string">&quot;描述&quot;</span></span><br><span class="line">        <span class="attr">link:</span> <span class="string">&quot;https://...&quot;</span>  <span class="comment"># 可选，点击跳转</span></span><br></pre></td></tr></table></figure>
+
+<p>几个值得注意的地方：</p>
+<p><strong><code>id</code> 字段</strong>。每个相册有自己的 id，支持 hash 直达，比如 <code>/album/#my-album</code> 会直接定位到那个相册，分享某个具体相册链接的时候比较方便。</p>
+<p><strong><code>thumb</code> 缩略图</strong>。这个字段是可选的，但我强烈建议提供。列表页加载的是缩略图，如果没有 <code>thumb</code> 就会直接加载原图，图片一多页面会卡。主题仓库里有一个 <code>.github/scripts/compress-images.js</code>，可以配合 GitHub Actions 批量生成 webp 缩略图，懒得手动压图的话可以参考一下。</p>
+<p>相册页本身是多分组 tab，CSS masonry 瀑布流布局，点击图片会有 lightbox 弹出，3D 玻璃卡片效果，在纯黑背景下看起来还不错。</p>
+<hr>
+<h3 id="友链页"><a href="#友链页" class="headerlink" title="友链页"></a>友链页</h3><p>友链数据放在 <code>source/_data/friends.yml</code>。支持新旧两种格式：</p>
+<p>旧版（单组，向下兼容）：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">friends:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">&quot;博主名&quot;</span></span><br><span class="line">    <span class="attr">url:</span> <span class="string">&quot;https://...&quot;</span></span><br><span class="line">    <span class="attr">avatar:</span> <span class="string">&quot;https://...&quot;</span></span><br><span class="line">    <span class="attr">desc:</span> <span class="string">&quot;一句话介绍&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>新版（多分组）：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">sections:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">title:</span> <span class="string">&quot;分组一&quot;</span></span><br><span class="line">    <span class="attr">subtitle:</span> <span class="string">PORTFOLIO</span></span><br><span class="line">    <span class="attr">items:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">&quot;博主名&quot;</span></span><br><span class="line">        <span class="attr">url:</span> <span class="string">&quot;https://...&quot;</span></span><br><span class="line">        <span class="attr">icon:</span> <span class="string">&quot;https://...&quot;</span></span><br><span class="line">        <span class="attr">desc:</span> <span class="string">&quot;一句话介绍&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>内部链接（<code>/</code> 开头的同站路径）不会打开新标签，外链才会。</p>
+<hr>
+<h3 id="3D-标签球"><a href="#3D-标签球" class="headerlink" title="3D 标签球"></a>3D 标签球</h3><p>标签页（<code>/tags/</code>）会显示一个 3D 标签球，用 Fibonacci 球体算法分布标签位置，支持鼠标拖动交互。标签越多越好看，博客刚建的时候只有几个标签，球就有点空旷……</p>
+<hr>
+<h3 id="本地搜索"><a href="#本地搜索" class="headerlink" title="本地搜索"></a>本地搜索</h3><p>需要装了 <code>hexo-generator-searchdb</code> 插件，并在配置里开启：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">search:</span></span><br><span class="line">  <span class="attr">enable:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<p>快捷键是 <code>Ctrl+K</code>（Mac 上是 <code>Cmd+K</code>），触发搜索弹窗。搜索的是本地生成的索引文件，不依赖第三方服务。</p>
+<hr>
+<h3 id="几个坑"><a href="#几个坑" class="headerlink" title="几个坑"></a>几个坑</h3><p>用下来有几点需要注意：</p>
+<ol>
+<li><p><strong>幕布背景图要自己放</strong>。主题 <code>source/img/</code> 下没有示例图片，<code>curtain.background.url</code> 填的路径对应 <code>source/</code> 下的文件，空了就是黑背景。</p>
+</li>
+<li><p><strong>搜索插件要单独装</strong>。<code>hexo-generator-searchdb</code> 不是 Hexo 内置的，忘了装搜索就不工作。</p>
+</li>
+<li><p><strong>相册没有 thumb 会很慢</strong>。原图直接拿来当缩略图，100 张图的相册列表页加载时间感人。</p>
+</li>
+<li><p><strong>submodule 更新</strong>。主题用 submodule 管理，更新主题需要：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git submodule update --remote themes/HollowLight</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>字体加载</strong>。猫啃什锦黑是从字体 CDN 加载的，国内访问速度视情况而定。</p>
+</li>
+</ol>
+<hr>
+<p>总体来说 HollowLight 是一个比较小众的主题，受众基本就是喜欢 ZZZ 或者喜欢这种暗黑赛博风格的人。如果你想要一个轻量、干净、有点游戏感的 Hexo 主题，可以试试看。有问题的话去仓库开 issue，我看到了会回。</p>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+</article>
+
+  </main>
+
+  <!-- Window Popup (article iframe viewer) -->
+  <div class="window" id="hl-window">
+    <div class="window-content">
+      <iframe class="window-frame" id="hl-window-frame"></iframe>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ---- Loading overlay: fade out on page load ---- */
+    window.addEventListener('load', function() {
+      var loading = document.getElementById('hl-loading');
+      if (!loading) return;
+      loading.classList.add('fade-out');
+      setTimeout(function() {
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+      }, 400);
+    });
+
+    /* ---- _0kd page transition (globally callable) ---- */
+    window._0kd = function(callback) {
+      var el = document.getElementById('hl-0kd');
+      if (!el) return;
+      el.style.display = 'block';
+      el.style.animationPlayState = 'running';
+      setTimeout(function() {
+        if (typeof callback === 'function') callback();
+        setTimeout(function() {
+          el.style.animationPlayState = 'paused';
+          el.style.display = 'none';
+        }, 500);
+      }, 1000);
+    };
+
+    /* ---- Window popup controls (globally callable) ---- */
+    var _windowPrevUrl = null;
+
+    window.openWindow = function(url) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win || !frame) return;
+      _windowPrevUrl = window.location.href;   // remember where we came from
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      frame.src = url + sep + 'window=true';
+      history.pushState({ hollowWindow: true }, '', url);
+      win.style.display = 'flex';
+    };
+
+    window.closeWindow = function(fromPopstate) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win) return;
+      win.style.display = 'none';
+      if (frame) frame.src = '';
+      if (!fromPopstate) {
+        // Replace article URL with original page URL — no popstate, no navigation side-effects
+        history.replaceState(null, '', _windowPrevUrl || window.location.pathname);
+      }
+      _windowPrevUrl = null;
+    };
+
+    /* Close window on Escape key */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.closeWindow();
+    });
+
+    /* Close window when clicking backdrop (outside content) */
+    var winEl = document.getElementById('hl-window');
+    if (winEl) {
+      winEl.addEventListener('click', function(e) {
+        if (e.target === winEl) window.closeWindow();
+      });
+    }
+
+    /* Close window on browser back */
+    window.addEventListener('popstate', function() {
+      var win = document.getElementById('hl-window');
+      if (win && win.style.display !== 'none') closeWindow(true);
+    });
+  })();
+  </script>
+
+  
+<!-- HL Search Modal -->
+<div class="hl-search-overlay" id="hl-search-overlay" hidden>
+  <div class="hl-search-backdrop" id="hl-search-backdrop"></div>
+  <div class="hl-search-modal" role="dialog" aria-label="搜索">
+    <div class="hl-search-header">
+      <svg class="hl-search-icon-prefix" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="hl-search-input" id="hl-search-input"
+             type="search" placeholder="搜索文章…"
+             autocomplete="off" spellcheck="false" aria-label="搜索关键字">
+      <button class="hl-search-close" id="hl-search-close" title="关闭 (Esc)" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hl-search-divider"></div>
+
+    <div class="hl-search-body" id="hl-search-body">
+      <div class="hl-search-hint" id="hl-search-hint">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>输入关键字开始搜索</span>
+      </div>
+      <div class="hl-search-results" id="hl-search-results" role="listbox" aria-label="搜索结果"></div>
+    </div>
+
+    <div class="hl-search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/search.css">
+<script>window.__HL_SEARCH_PATH__ = '/search.json';</script>
+<script src="/js/search.js"></script>
+
+
+  <script src="/js/code-copy.js"></script>
+
+</body>
+</html>
