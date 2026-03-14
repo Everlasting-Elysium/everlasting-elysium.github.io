@@ -6,6 +6,10 @@ sections:
         url: https://github.com/Everlasting-Elysium/HollowLight
         icon: https://hexo.io/icon/favicon-196x196.png
         desc: 一个深度致敬《绝区零》「绳网」论坛 UI 的 Hexo 主题。
+      - name: 拾人记
+        url: /album/#photography_works
+        icon: 📷
+        desc: 镜头下的光与影
   - title: 伙伴
     subtitle: INTER-KNOT LINKS
     items:
