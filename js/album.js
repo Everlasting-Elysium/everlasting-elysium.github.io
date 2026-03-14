@@ -33,11 +33,11 @@
     tab.addEventListener('click', function () {
       const idx = parseInt(this.dataset.albumIndex, 10)
       if (idx === currentAlbum && panels[idx].classList.contains('album-panel--active')) return
-      switchAlbum(idx)
+      switchAlbum(idx, true)
     })
   })
 
-  function switchAlbum(idx) {
+  function switchAlbum(idx, pushState) {
     // Deactivate current
     tabs.forEach(function (t) {
       t.classList.remove('album-tab--active')
@@ -61,7 +61,31 @@
     })
 
     currentAlbum = idx
+
+    // Sync URL hash
+    var albumId = (albums[idx] && albums[idx].id) || ''
+    if (pushState && albumId) {
+      history.replaceState(null, '', '#' + albumId)
+    }
   }
+
+  // --- Hash routing: jump to album by id on load / popstate ---
+  function findIdxById(id) {
+    for (var i = 0; i < albums.length; i++) {
+      if (albums[i].id === id) return i
+    }
+    return -1
+  }
+
+  function applyHash() {
+    var hash = (location.hash || '').replace(/^#/, '')
+    if (!hash) return
+    var idx = findIdxById(hash)
+    if (idx !== -1 && idx !== currentAlbum) switchAlbum(idx, false)
+  }
+
+  window.addEventListener('popstate', applyHash)
+  applyHash() // run on initial load
 
   // --- Lightbox ---
   // Open on card click
