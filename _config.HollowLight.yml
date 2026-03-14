@@ -27,7 +27,7 @@ social:
   email: ""
 
 # 背景图
-background: /img/bg.png
+background: ""   # 替换为你的背景图路径，如 /img/bg.png，留空则无背景
 
 # 相册配置
 album:
@@ -56,7 +56,7 @@ curtain:
   enable: true
   background:
     type: image
-    url: /img/curtain-bg.jpg
+    url: ""        # 替换为幕布背景图路径，如 /img/curtain-bg.jpg
   typewriter:
     - "这里是我的博客"
     - "记录代码与生活"
