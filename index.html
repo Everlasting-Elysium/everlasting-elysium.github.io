@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Elysian Realm</title>
+  <meta name="description" content="">
+  
+  <!-- Font: MaoKen Assorted Sans (unpkg CDN, same as interknot reference) -->
+  <style>@import url('https://unpkg.com/@chinese-fonts/mksjh@1.4.0/dist/MaokenAssortedSans1.30/result.css');</style>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="Elysian Realm">
+<meta property="og:url" content="https://everlasting-elysium.github.io/index.html">
+<meta property="og:site_name" content="Elysian Realm">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:author" content="Everlasting Elysium">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading" id="hl-loading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading</span>
+  </div>
+
+  <!-- _0kd Page Transition Layer -->
+  <div class="_0kd" id="hl-0kd"></div>
+
+  <!-- Background Layer -->
+  
+  <div class="bg" style="background-image: url('/img/bg.png');"></div>
+
+  <!-- Header -->
+  
+  <header>
+  <!-- Personal Info Card -->
+  <a href="/" class="personal">
+    <span class="avatar-link">
+      <img
+        src="/img/avatar.svg"
+        alt="Everlasting Elysium"
+        class="avatar"
+        onerror="this.onerror=null;this.style.background='#333';"
+      >
+    </span>
+    <span class="info-bar">
+      <span class="info-bio">这里是我的博客</span>
+      <span class="info-url">
+        <span class="info-url-lock">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/>
+            <path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        https://everlasting-elysium.github.io/
+      </span>
+    </span>
+  </a>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    
+      
+      <span class="tab choiced">
+        <a href="/">推送</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/archives/">归档</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/tags/">标签</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/album/">相册</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/friends/">伙伴</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/about/">关于</a>
+      </span>
+    
+  </div>
+
+  <!-- Search Button -->
+  
+  <button class="hl-search-btn" id="hl-search-btn"
+          title="搜索 (Ctrl+K)" aria-label="搜索">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+  
+</header>
+
+
+  <!-- Main Content -->
+  <main>
+    
+
+<div class="hl-curtain" id="hl-curtain">
+  <div class="curtain-bg-wrap">
+    
+    <div class="curtain-bg curtain-bg--img" style="background-image: url('/');"></div>
+    
+    <div class="curtain-overlay"></div>
+  </div>
+  <div class="curtain-body">
+    <h1 class="curtain-title">Elysian Realm</h1>
+    <div class="curtain-tw">
+      <span class="curtain-tw-text" id="curtain-tw-text"></span><span class="curtain-tw-cursor" aria-hidden="true"></span>
+    </div>
+    <button class="curtain-scroll-btn" id="curtain-scroll-btn" aria-label="向下探索">
+      <span class="curtain-scroll-label">向下探索</span>
+      <svg class="curtain-scroll-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  window.__HL_CURTAIN_TEXTS__ = ["这里是我的博客","记录代码与生活","探索未知的边界"];
+</script>
+<link rel="stylesheet" href="/css/curtain.css">
+<script src="/js/curtain.js"></script>
+
+
+
+
+
+<link rel="stylesheet" href="/css/home.css">
+
+<main class="home">
+  <div class="list">
+    
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+
+    
+    
+      
+        <a href="/2022/09/11/2022-09-12-once-optimizing/" class="card">
+          <div class="card-cover">
+            <img
+              class="headimg"
+              src="/img/default-cover.svg"
+              alt="关于一次优化"
+              onerror="this.onerror=null;this.src='/img/default-cover.svg'"
+            >
+            
+            <div class="card-author"><img class="card-author-avatar" src="/img/avatar.svg" alt="" onerror="this.onerror=null;this.style.display='none'"><span class="card-author-name">Everlasting Elysium</span></div>
+          </div>
+          <div class="post">
+            <h2 class="title">关于一次优化</h2>
+            <p class="excerpt">
+              还是炸了，果然一个功能，如果要改到基本看不出原来的样子，最好的方案还是重做，轻装前行。
+
+💩山是怎么练成的
+另外的发现
+🔚
+
+如果要过要改一个功能，新...
+            </p>
+          </div>
+        </a>
+      
+    
+      
+        <a href="/2023/05/04/2023-05-05-optimizing-server/" class="card">
+          <div class="card-cover">
+            <img
+              class="headimg"
+              src="/img/default-cover.svg"
+              alt="服务性能优化：从 Redis 到 Memcache 的降本增效之路"
+              onerror="this.onerror=null;this.src='/img/default-cover.svg'"
+            >
+            
+            <div class="card-author"><img class="card-author-avatar" src="/img/avatar.svg" alt="" onerror="this.onerror=null;this.style.display='none'"><span class="card-author-name">Everlasting Elysium</span></div>
+          </div>
+          <div class="post">
+            <h2 class="title">服务性能优化：从 Redis 到 Memcache 的降本增效之路</h2>
+            <p class="excerpt">
+              近期，所负责的服务在性能方面遭遇严峻挑战，难以支撑当前业务的 QPS。
+为解决这一问题，我们对业务进行了深入分析，情况如下：
+
+核心任务数据的查询占据整体...
+            </p>
+          </div>
+        </a>
+      
+    
+      
+        <a href="/2023/06/10/2023-06-11-manage-go-versions-with-asdf-md/" class="card">
+          <div class="card-cover">
+            <img
+              class="headimg"
+              src="/img/default-cover.svg"
+              alt="使用 asdf 管理 Go 多版本：一站式解决开发环境难题"
+              onerror="this.onerror=null;this.src='/img/default-cover.svg'"
+            >
+            
+            <div class="card-author"><img class="card-author-avatar" src="/img/avatar.svg" alt="" onerror="this.onerror=null;this.style.display='none'"><span class="card-author-name">Everlasting Elysium</span></div>
+          </div>
+          <div class="post">
+            <h2 class="title">使用 asdf 管理 Go 多版本：一站式解决开发环境难题</h2>
+            <p class="excerpt">
+              最近接手的公司的另外一个项目，发现其使用的Go在多项目开发中，不同 Go 项目可能依赖不同的 Go 版本，手动实在繁琐，就找到了 asdf。
+为什么选择 ...
+            </p>
+          </div>
+        </a>
+      
+    
+      
+        <a href="/2024/09/20/2024-09-21-test-first/" class="card">
+          <div class="card-cover">
+            <img
+              class="headimg"
+              src="/img/default-cover.svg"
+              alt="测试先行"
+              onerror="this.onerror=null;this.src='/img/default-cover.svg'"
+            >
+            
+            <div class="card-author"><img class="card-author-avatar" src="/img/avatar.svg" alt="" onerror="this.onerror=null;this.style.display='none'"><span class="card-author-name">Everlasting Elysium</span></div>
+          </div>
+          <div class="post">
+            <h2 class="title">测试先行</h2>
+            <p class="excerpt">
+              最近在看了《测试驱动开发》一书，对其中的观点深以为然。  
+会想起之前在好说工作的日子，由于人员紧缺，但又急需新功能上线，从而刺激用户的增长和提高用户的粘...
+            </p>
+          </div>
+        </a>
+      
+    
+      
+        <a href="/2024/12/31/2025-01-01-100-Portrait-Photography-Project/" class="card">
+          <div class="card-cover">
+            <img
+              class="headimg"
+              src="/img/default-cover.svg"
+              alt="百相熔炉·界域巡礼"
+              onerror="this.onerror=null;this.src='/img/default-cover.svg'"
+            >
+            
+            <div class="card-author"><img class="card-author-avatar" src="/img/avatar.svg" alt="" onerror="this.onerror=null;this.style.display='none'"><span class="card-author-name">Everlasting Elysium</span></div>
+          </div>
+          <div class="post">
+            <h2 class="title">百相熔炉·界域巡礼</h2>
+            <p class="excerpt">
+              
+Capturing 100 souls in their most authentic, vulnerable, and radiant moments...
+            </p>
+          </div>
+        </a>
+      
+    
+      
+        <a href="/2024/12/31/2025-01-01-The-100-Shot-Cosplay-Photography-Project/" class="card">
+          <div class="card-cover">
+            <img
+              class="headimg"
+              src="/img/default-cover.svg"
+              alt="百回定格·次元之约"
+              onerror="this.onerror=null;this.src='/img/default-cover.svg'"
+            >
+            
+            <div class="card-author"><img class="card-author-avatar" src="/img/avatar.svg" alt="" onerror="this.onerror=null;this.style.display='none'"><span class="card-author-name">Everlasting Elysium</span></div>
+          </div>
+          <div class="post">
+            <h2 class="title">百回定格·次元之约</h2>
+            <p class="excerpt">
+              
+A visual chronicle of artistry, passion, and fleeting moments in anime conve...
+            </p>
+          </div>
+        </a>
+      
+    
+      
+        <a href="/2025/06/07/2025-06-08-The-100-Shot-Flame-Chasing-Odyssey-md/" class="card">
+          <div class="card-cover">
+            <img
+              class="headimg"
+              src="/img/default-cover.svg"
+              alt="百次逐火·始耀巡疆"
+              onerror="this.onerror=null;this.src='/img/default-cover.svg'"
+            >
+            
+            <div class="card-author"><img class="card-author-avatar" src="/img/avatar.svg" alt="" onerror="this.onerror=null;this.style.display='none'"><span class="card-author-name">Everlasting Elysium</span></div>
+          </div>
+          <div class="post">
+            <h2 class="title">百次逐火·始耀巡疆</h2>
+            <p class="excerpt">
+              
+Embarking on a flame-chasing odyssey across 100 realms, capturing souls who ...
+            </p>
+          </div>
+        </a>
+      
+    
+      
+        <a href="/2025/07/15/2025-07-16-kubernetes-scheduling-hidden-label-requirement-md/" class="card">
+          <div class="card-cover">
+            <img
+              class="headimg"
+              src="/img/default-cover.svg"
+              alt="Kubernetes调度排查：隐藏的标签需求导致Pod调度失败"
+              onerror="this.onerror=null;this.src='/img/default-cover.svg'"
+            >
+            
+            <div class="card-author"><img class="card-author-avatar" src="/img/avatar.svg" alt="" onerror="this.onerror=null;this.style.display='none'"><span class="card-author-name">Everlasting Elysium</span></div>
+          </div>
+          <div class="post">
+            <h2 class="title">Kubernetes调度排查：隐藏的标签需求导致Pod调度失败</h2>
+            <p class="excerpt">
+              
+记录一次线上Kubernetes集群GPU节点调度失败的排查过程，揭示自定义调度器的”隐藏需求”如何成为故障的罪魁祸首。
+
+问题背景在部署AI推理服务时...
+            </p>
+          </div>
+        </a>
+      
+    
+      
+        <a href="/2025/06/30/2025-07-01-github-can-not-client/" class="card">
+          <div class="card-cover">
+            <img
+              class="headimg"
+              src="/img/default-cover.svg"
+              alt="github 无法链接问题排查"
+              onerror="this.onerror=null;this.src='/img/default-cover.svg'"
+            >
+            
+            <div class="card-author"><img class="card-author-avatar" src="/img/avatar.svg" alt="" onerror="this.onerror=null;this.style.display='none'"><span class="card-author-name">Everlasting Elysium</span></div>
+          </div>
+          <div class="post">
+            <h2 class="title">github 无法链接问题排查</h2>
+            <p class="excerpt">
+              最近发现在家只要是和github相关的操作都无法正常进行，但网页端访问却没问题。  
+于是开始着手解决。
+解决方案：
+先获取github动态地址，从htt...
+            </p>
+          </div>
+        </a>
+      
+    
+      
+        <a href="/2025/09/11/2025-09-12-rancher-desktop-docker/" class="card">
+          <div class="card-cover">
+            <img
+              class="headimg"
+              src="/img/default-cover.svg"
+              alt="Rancher Desktop配置Docker源"
+              onerror="this.onerror=null;this.src='/img/default-cover.svg'"
+            >
+            
+            <div class="card-author"><img class="card-author-avatar" src="/img/avatar.svg" alt="" onerror="this.onerror=null;this.style.display='none'"><span class="card-author-name">Everlasting Elysium</span></div>
+          </div>
+          <div class="post">
+            <h2 class="title">Rancher Desktop配置Docker源</h2>
+            <p class="excerpt">
+              最近公司禁用了Docker Desktop,找了半天最后选中Rancher Desktop，一方面是同时支持docker和k8s，另一方面是开源，再者全平...
+            </p>
+          </div>
+        </a>
+      
+    
+  </div>
+</main>
+
+<script src="/js/waterfall.js"></script>
+
+  </main>
+
+  <!-- Window Popup (article iframe viewer) -->
+  <div class="window" id="hl-window">
+    <div class="window-content">
+      <iframe class="window-frame" id="hl-window-frame"></iframe>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ---- Loading overlay: fade out on page load ---- */
+    window.addEventListener('load', function() {
+      var loading = document.getElementById('hl-loading');
+      if (!loading) return;
+      loading.classList.add('fade-out');
+      setTimeout(function() {
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+      }, 400);
+    });
+
+    /* ---- _0kd page transition (globally callable) ---- */
+    window._0kd = function(callback) {
+      var el = document.getElementById('hl-0kd');
+      if (!el) return;
+      el.style.display = 'block';
+      el.style.animationPlayState = 'running';
+      setTimeout(function() {
+        if (typeof callback === 'function') callback();
+        setTimeout(function() {
+          el.style.animationPlayState = 'paused';
+          el.style.display = 'none';
+        }, 500);
+      }, 1000);
+    };
+
+    /* ---- Window popup controls (globally callable) ---- */
+    var _windowPrevUrl = null;
+
+    window.openWindow = function(url) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win || !frame) return;
+      _windowPrevUrl = window.location.href;   // remember where we came from
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      frame.src = url + sep + 'window=true';
+      history.pushState({ hollowWindow: true }, '', url);
+      win.style.display = 'flex';
+    };
+
+    window.closeWindow = function(fromPopstate) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win) return;
+      win.style.display = 'none';
+      if (frame) frame.src = '';
+      if (!fromPopstate) {
+        // Replace article URL with original page URL — no popstate, no navigation side-effects
+        history.replaceState(null, '', _windowPrevUrl || window.location.pathname);
+      }
+      _windowPrevUrl = null;
+    };
+
+    /* Close window on Escape key */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.closeWindow();
+    });
+
+    /* Close window when clicking backdrop (outside content) */
+    var winEl = document.getElementById('hl-window');
+    if (winEl) {
+      winEl.addEventListener('click', function(e) {
+        if (e.target === winEl) window.closeWindow();
+      });
+    }
+
+    /* Close window on browser back */
+    window.addEventListener('popstate', function() {
+      var win = document.getElementById('hl-window');
+      if (win && win.style.display !== 'none') closeWindow(true);
+    });
+  })();
+  </script>
+
+  
+<!-- HL Search Modal -->
+<div class="hl-search-overlay" id="hl-search-overlay" hidden>
+  <div class="hl-search-backdrop" id="hl-search-backdrop"></div>
+  <div class="hl-search-modal" role="dialog" aria-label="搜索">
+    <div class="hl-search-header">
+      <svg class="hl-search-icon-prefix" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="hl-search-input" id="hl-search-input"
+             type="search" placeholder="搜索文章…"
+             autocomplete="off" spellcheck="false" aria-label="搜索关键字">
+      <button class="hl-search-close" id="hl-search-close" title="关闭 (Esc)" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hl-search-divider"></div>
+
+    <div class="hl-search-body" id="hl-search-body">
+      <div class="hl-search-hint" id="hl-search-hint">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>输入关键字开始搜索</span>
+      </div>
+      <div class="hl-search-results" id="hl-search-results" role="listbox" aria-label="搜索结果"></div>
+    </div>
+
+    <div class="hl-search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/search.css">
+<script>window.__HL_SEARCH_PATH__ = '/search.json';</script>
+<script src="/js/search.js"></script>
+
+
+  <script src="/js/code-copy.js"></script>
+
+</body>
+</html>

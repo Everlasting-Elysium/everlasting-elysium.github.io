@@ -1,0 +1,443 @@
+/* ============================================
+   HollowLight — Friends Page
+   Aesthetic: ZZZ 绳网论坛 / Inter-Knot
+   Black bg, neon yellow (#fbfe00), cut corners
+   ============================================ */
+
+/* --- Page Container --- */
+.friends-page {
+  min-height: 100vh;
+  padding-bottom: 60px;
+  font-family: 'Noto Sans SC', 'Segoe UI', sans-serif;
+}
+
+/* --- Header (ZZZ neon style) --- */
+.friends-header {
+  text-align: center;
+  padding: 56px 24px 40px;
+}
+
+.friends-header__title {
+  font-size: clamp(2.4rem, 6vw, 3.6rem);
+  font-weight: 900;
+  color: #fbfe00;
+  margin: 0;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 30px rgba(251, 254, 0, 0.3);
+  line-height: 1.2;
+}
+
+.friends-header__line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 16px auto;
+  width: 200px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #fbfe00, transparent);
+  position: relative;
+}
+
+.friends-header__dot {
+  width: 8px;
+  height: 8px;
+  background: #fbfe00;
+  border-radius: 0;
+  transform: rotate(45deg);
+  flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(251, 254, 0, 0.6);
+  position: absolute;
+}
+
+.friends-header__sub {
+  font-size: 0.75rem;
+  color: #666;
+  letter-spacing: 0.35em;
+  margin: 12px 0 0;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+/* --- Sections wrapper --- */
+.friends-sections {
+  padding-bottom: 8px;
+}
+
+/* --- Individual Section --- */
+.friends-section {
+  max-width: 1200px;
+  margin: 0 auto 56px;
+  padding: 0 24px;
+}
+
+/* Section label bar */
+.friends-section__header {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding: 0 0 12px 14px;
+  border-bottom: 1px solid rgba(251, 254, 0, 0.08);
+  position: relative;
+}
+
+.friends-section__header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 14px;
+  width: 3px;
+  background: #fbfe00;
+  border-radius: 2px;
+}
+
+.friends-section__title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 0.06em;
+}
+
+.friends-section__subtitle {
+  font-size: 0.68rem;
+  color: #555;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+
+/* --- Friends Grid --- */
+.friends-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 240px);
+  gap: 20px;
+  justify-content: center;
+}
+
+/* --- Friend Card --- */
+.friend-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px 20px;
+  background: #1c1c1c;
+  border: 1px solid #2a2a2a;
+  /* ZZZ cut-corner: 20px top-left, top-right, bottom-left; 0 bottom-right */
+  border-radius: 20px 20px 20px 0;
+  text-decoration: none;
+  color: inherit;
+  transition: all 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+
+  /* Entry animation */
+  opacity: 0;
+  animation: friendCardIn 400ms ease both;
+}
+
+@keyframes friendCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Diagonal stripe decoration (ZZZ vibe) */
+.friend-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, transparent 50%, #2a2a2a 50%);
+  transition: background 280ms ease;
+  z-index: 1;
+}
+
+.friend-card:hover {
+  border-color: #fbfe00;
+  transform: translateY(-4px);
+  box-shadow:
+    0 4px 24px rgba(251, 254, 0, 0.08),
+    0 0 0 1px rgba(251, 254, 0, 0.1);
+}
+
+.friend-card:hover::before {
+  background: linear-gradient(135deg, transparent 50%, rgba(251, 254, 0, 0.3) 50%);
+}
+
+/* Scan line effect on hover */
+.friend-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(251, 254, 0, 0.03),
+    transparent
+  );
+  transition: none;
+  pointer-events: none;
+}
+
+.friend-card:hover::after {
+  animation: friendScanline 600ms ease forwards;
+}
+
+@keyframes friendScanline {
+  from { left: -100%; }
+  to { left: 100%; }
+}
+
+/* --- Avatar --- */
+.friend-card__avatar-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #333;
+  background: #111;
+  flex-shrink: 0;
+  margin-bottom: 14px;
+  transition: border-color 280ms ease, box-shadow 280ms ease;
+}
+
+.friend-card:hover .friend-card__avatar-wrap {
+  border-color: #fbfe00;
+  box-shadow: 0 0 16px rgba(251, 254, 0, 0.2);
+}
+
+.friend-card__avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  transition: transform 300ms ease;
+}
+
+.friend-card__avatar--error {
+  object-fit: contain;
+  padding: 8px;
+  opacity: 0.4;
+}
+
+.friend-card:hover .friend-card__avatar {
+  transform: scale(1.08);
+}
+
+/* Emoji / text icon fallback (no avatar) */
+.friend-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 1.6rem;
+  line-height: 1;
+  user-select: none;
+}
+
+/* --- Name --- */
+.friend-card__name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 6px;
+  text-align: center;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+}
+
+/* --- Description --- */
+.friend-card__desc {
+  font-size: 0.78rem;
+  color: #888;
+  margin: 0 0 12px;
+  text-align: center;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.34em; /* reserve space for 2 lines */
+}
+
+/* --- URL tag --- */
+.friend-card__url {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 4px 4px 4px 0;
+  background: rgba(251, 254, 0, 0.08);
+  color: #fbfe00;
+  font-size: 0.68rem;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  letter-spacing: 0.02em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background 280ms ease;
+  margin-top: auto;
+}
+
+.friend-card:hover .friend-card__url {
+  background: rgba(251, 254, 0, 0.14);
+}
+
+.friend-card__link-icon {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+/* --- Empty State --- */
+.friends-empty {
+  text-align: center;
+  padding: 80px 24px;
+}
+
+.friends-empty__icon {
+  font-size: 3rem;
+  color: #fbfe00;
+  opacity: 0.2;
+  margin-bottom: 16px;
+}
+
+.friends-empty__text {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 0 0 8px;
+}
+
+.friends-empty__hint {
+  font-size: 0.82rem;
+  color: #444;
+  margin: 0;
+  font-family: 'Courier New', monospace;
+}
+
+/* --- Footer / Apply section --- */
+.friends-footer {
+  margin-top: 60px;
+  padding: 0 24px;
+}
+
+.friends-footer__inner {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 28px 32px;
+  background: #1c1c1c;
+  border: 1px solid #2a2a2a;
+  border-radius: 20px 20px 20px 0;
+  text-align: center;
+  position: relative;
+}
+
+.friends-footer__inner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #fbfe00, transparent);
+  border-radius: 2px 2px 0 0;
+}
+
+.friends-footer__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fbfe00;
+  margin: 0 0 8px;
+}
+
+.friends-footer__desc {
+  font-size: 0.82rem;
+  color: #888;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .friends-section {
+    padding: 0 16px;
+    margin-bottom: 40px;
+  }
+
+  .friends-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+  }
+
+  .friends-header {
+    padding: 40px 16px 28px;
+  }
+
+  .friend-card {
+    padding: 22px 16px 16px;
+  }
+
+  .friend-card__avatar-wrap {
+    width: 52px;
+    height: 52px;
+  }
+
+  .friend-card__name {
+    font-size: 0.88rem;
+  }
+
+  .friend-card__desc {
+    font-size: 0.74rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .friends-section {
+    padding: 0 12px;
+  }
+
+  .friends-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .friend-card {
+    padding: 18px 12px 14px;
+    border-radius: 14px 14px 14px 0;
+  }
+
+  .friend-card__avatar-wrap {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 10px;
+  }
+
+  .friend-card__desc {
+    display: none;
+  }
+
+  .friend-card__url {
+    font-size: 0.6rem;
+    padding: 3px 8px;
+  }
+
+  .friends-footer__inner {
+    padding: 22px 20px;
+    border-radius: 14px 14px 14px 0;
+  }
+}

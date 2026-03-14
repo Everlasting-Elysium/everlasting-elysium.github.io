@@ -1,0 +1,173 @@
+/* ==========================================================
+   HollowLight — Hero Curtain
+   Full-viewport curtain with typewriter + Ken Burns bg
+   ========================================================== */
+
+/* ---- Curtain Container ---- */
+.hl-curtain {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hl-black);  /* 图片加载前 / 失败时的降级背景 */
+}
+
+.hl-curtain.curtain--hidden {
+  display: none;
+}
+
+/* ---- Background Layer ---- */
+.curtain-bg-wrap {
+  position: absolute;
+  inset: 0;
+}
+
+.curtain-bg--img {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  animation: curtain-zoom 20s ease-in-out infinite alternate;
+}
+
+.curtain-bg--video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- Overlay: gradient fades to #000 at bottom ---- */
+.curtain-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.15) 40%,
+    rgba(0, 0, 0, 0.6) 80%,
+    #000 100%
+  );
+}
+
+/* ---- Content Body ---- */
+.curtain-body {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 0 24px;
+}
+
+/* ---- Title ---- */
+.curtain-title {
+  font-size: clamp(2.4rem, 6vw, 4.8rem);
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.1em;
+  margin: 0 0 20px;
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.5);
+  animation: curtain-fade-up 0.9s ease 0.2s both;
+}
+
+/* ---- Typewriter ---- */
+.curtain-tw {
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--hl-accent);
+  height: 2.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  animation: curtain-fade-up 0.9s ease 0.5s both;
+}
+
+.curtain-tw-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background: var(--hl-accent);
+  vertical-align: middle;
+  border-radius: 1px;
+  animation: curtain-cursor-blink 0.8s steps(1) infinite;
+}
+
+/* ---- Scroll Button ---- */
+.curtain-scroll-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 52px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  font-family: var(--hl-font);
+  transition: color 0.2s;
+  animation: curtain-fade-up 0.9s ease 0.8s both;
+}
+
+.curtain-scroll-btn:hover {
+  color: #fff;
+}
+
+.curtain-scroll-arrow {
+  animation: curtain-arrow-bounce 1.8s ease-in-out infinite;
+}
+
+
+/* ---- Keyframes ---- */
+@keyframes curtain-zoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes curtain-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes curtain-cursor-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes curtain-arrow-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+/* --- Hide header while curtain fills viewport --- */
+header.header--curtain-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+}
+
+/* --- Account for fixed header when articles follow curtain --- */
+.hl-curtain ~ main {
+  padding-top: var(--hl-header-height);
+}

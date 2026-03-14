@@ -1,0 +1,130 @@
+/* ============================================
+ * HollowLight — Archive Styles
+ * ZZZ InterKnot Forum Timeline
+ * ============================================ */
+
+.archive-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 60px 40px 80px;
+}
+
+/* Page header */
+.archive-page-title {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--hl-text-muted, #7e7e7e);
+  margin-bottom: 48px;
+  font-weight: 500;
+}
+
+.archive-page-title span {
+  color: var(--hl-accent, #fbfe00);
+  font-weight: 700;
+}
+
+/* ─── Year Group ─── */
+.archive-year-group {
+  margin-bottom: 56px;
+}
+
+.archive-year {
+  font-size: 80px;
+  font-weight: 900;
+  font-style: italic;
+  color: var(--hl-accent, #fbfe00);
+  line-height: 1;
+  letter-spacing: -3px;
+  margin-bottom: 20px;
+  opacity: 0.85;
+  user-select: none;
+}
+
+/* ─── Entry List ─── */
+.archive-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Single entry row */
+.archive-item {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 12px 16px;
+  margin: 0 -16px;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+  text-decoration: none;
+  color: inherit;
+  border-left: 3px solid transparent;
+}
+
+.archive-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-left-color: var(--hl-accent, #fbfe00);
+}
+
+/* Date column */
+.archive-item-date {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--hl-text-muted, #7e7e7e);
+  font-variant-numeric: tabular-nums;
+  width: 52px;
+  letter-spacing: 0.02em;
+}
+
+/* Dashed connector */
+.archive-item-line {
+  flex: 1;
+  height: 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+  min-width: 40px;
+}
+
+.archive-item:hover .archive-item-line {
+  border-bottom-color: rgba(251, 254, 0, 0.2);
+}
+
+/* Title */
+.archive-item-title {
+  flex-shrink: 1;
+  max-width: 65%;
+  font-size: 15px;
+  color: var(--hl-text, #fff);
+  transition: color 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.archive-item:hover .archive-item-title {
+  color: var(--hl-accent, #fbfe00);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .archive-wrap {
+    padding: 32px 20px 60px;
+  }
+
+  .archive-year {
+    font-size: 56px;
+    letter-spacing: -2px;
+  }
+
+  .archive-item {
+    padding: 10px 12px;
+    margin: 0 -12px;
+  }
+
+  .archive-item-title {
+    max-width: 55%;
+    font-size: 14px;
+  }
+}

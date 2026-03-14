@@ -1,0 +1,132 @@
+/* ============================================
+ * HollowLight — Page Styles
+ * Generic page (about, custom, etc.)
+ * Markdown styles imported via post.css <link>
+ * ============================================ */
+
+/* ─── Hero (with cover image) ─── */
+.page-hero {
+  width: 100%;
+  height: 45vh;
+  min-height: 320px;
+  max-height: 480px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.4)  50%,
+    rgba(0, 0, 0, 0.1)  100%
+  );
+  display: flex;
+  align-items: flex-end;
+}
+
+.page-hero-inner {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 40px 48px;
+}
+
+.page-hero .page-title {
+  font-size: 36px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+/* ─── No-cover header ─── */
+.page-header-plain {
+  padding: 80px 40px 48px;
+  text-align: center;
+}
+
+.page-header-inner {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.page-header-plain .page-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+/* ─── Page Body (content card) — ZZZ corner cut ─── */
+.page-body {
+  max-width: 800px;
+  margin: -32px auto 80px;
+  padding: 48px;
+  background: var(--hl-card, #1c1c1c);
+  border-radius: var(--hl-radius, 20px);
+  border-bottom-right-radius: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.page-body::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 20px 20px;
+  border-color: transparent transparent var(--hl-black, #000) transparent;
+  pointer-events: none;
+}
+
+.page-header-plain + .page-body {
+  margin-top: 0;
+}
+
+/* Window layout (hidden by default) */
+.page-window {
+  display: none;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .page-hero {
+    height: 35vh;
+    min-height: 240px;
+  }
+
+  .page-hero-inner {
+    padding: 0 20px 32px;
+  }
+
+  .page-hero .page-title,
+  .page-header-plain .page-title {
+    font-size: 26px;
+  }
+
+  .page-header-plain {
+    padding: 40px 20px 32px;
+  }
+
+  .page-body {
+    margin: -20px 16px 40px;
+    padding: 28px 20px;
+    border-radius: 16px;
+    border-bottom-right-radius: 0;
+  }
+
+  .page-body::after {
+    border-width: 0 0 16px 16px;
+  }
+}

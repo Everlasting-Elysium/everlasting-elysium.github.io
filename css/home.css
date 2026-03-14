@@ -1,0 +1,158 @@
+/* ==========================================================
+   HollowLight — Home / Waterfall Grid
+   InterKnot-inspired card layout for article listing
+   ========================================================== */
+
+/* ---- Main Container ---- */
+
+.home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: auto;
+  margin-inline: 5%;
+  overflow: hidden;
+  position: relative;
+  min-height: 60vh;
+}
+
+.home .list {
+  position: relative;
+  width: max-content;
+  height: max-content;
+}
+
+/* ---- Card ---- */
+
+.home .card {
+  width: 256px;
+  border-radius: 20px;
+  border-bottom-right-radius: 0;
+  border: 5px solid #000;
+  background: var(--hl-card);
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: top 0.5s ease, left 0.5s ease;
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+  color: inherit;
+}
+
+.home .card:hover {
+  animation: card-border-glow 1s linear 0.3s infinite alternate;
+  border-color: var(--hl-accent);
+}
+
+/* ---- Pinned Card ---- */
+
+.home .card.pin {
+  border-color: var(--hl-blue);
+}
+
+.home .card.pin:hover {
+  animation: card-border-glow-pin 1s linear 0.3s infinite alternate;
+  border-color: var(--hl-accent);
+}
+
+/* ---- Cover Image ---- */
+
+.home .card .headimg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ---- Cover Wrapper (for views badge) ---- */
+
+.home .card .card-cover {
+  position: relative;
+  display: block;
+  line-height: 0;
+}
+
+.home .card .card-views {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px 6px 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ---- Content Area ---- */
+
+.home .card .post {
+  padding: 15px;
+}
+
+.home .card .title {
+  color: var(--hl-text);
+  font-size: 15px;
+  font-weight: bold;
+  margin: 3px 0;
+  line-height: 1.4;
+}
+
+.home .card .excerpt {
+  color: var(--hl-text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 6px 0 0;
+  word-wrap: break-word;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* ---- Keyframes ---- */
+
+@keyframes card-border-glow {
+  from { border-color: #000; }
+  to   { border-color: var(--hl-accent); }
+}
+
+@keyframes card-border-glow-pin {
+  from { border-color: var(--hl-blue); }
+  to   { border-color: var(--hl-accent); }
+}
+
+/* ---- Card Author (bottom-left of cover) ---- */
+
+.home .card .card-author {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.home .card .card-author-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+}
+
+.home .card .card-author-name {
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  white-space: nowrap;
+}

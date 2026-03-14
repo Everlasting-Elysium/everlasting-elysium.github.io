@@ -1,0 +1,233 @@
+/* ============================================
+ * HollowLight — Post / Page Window Mode
+ * Activated when loaded inside iframe popup
+ * (html.window-mode class set by inline JS)
+ * ============================================ */
+
+/* ─── Hide site chrome ─── */
+html.window-mode header,
+html.window-mode footer,
+html.window-mode .bg,
+html.window-mode .loading,
+html.window-mode ._0kd,
+html.window-mode .window {
+  display: none !important;
+}
+
+html.window-mode main {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  min-height: auto;
+}
+
+html.window-mode body {
+  overflow: hidden;
+  background: var(--hl-black, #000);
+}
+
+/* ─── Toggle layouts ─── */
+html.window-mode .post-article,
+html.window-mode .page-article {
+  display: none;
+}
+
+html.window-mode .post-window,
+html.window-mode .page-window {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ─── Header bar (full width) ─── */
+.post-window-header,
+.page-window-header {
+  flex-shrink: 0;
+  min-height: 72px;
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #111;
+}
+
+/* Author section */
+.post-window-author,
+.page-window-author {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.post-window-avatar,
+.page-window-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(251, 254, 0, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.post-window-author-info,
+.page-window-author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.post-window-author-name,
+.page-window-author-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--hl-text, #fff);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Close button ─── */
+.pw-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  margin-left: 12px;
+  transition: transform 0.2s ease;
+  line-height: 0;
+}
+
+.pw-close:hover {
+  transform: scale(1.1);
+}
+
+.pw-close svg {
+  width: 80px;
+  height: 52px;
+  display: block;
+}
+
+.pw-close:hover svg path {
+  fill: var(--hl-accent, #fbfe00);
+}
+
+/* ─── Body (below header) ─── */
+.post-window-body,
+.page-window-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ─── Cover panel (left) ─── */
+.post-window-cover-panel,
+.page-window-cover-panel {
+  width: 280px;
+  flex-shrink: 0;
+  padding: 20px 12px 20px 20px;
+  display: flex;
+  align-items: stretch;
+  }
+
+.post-window-cover-card,
+.page-window-cover-card {
+  width: 100%;
+  border-radius: 16px;
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  background: #111;
+  display: flex;
+}
+
+.post-window-cover-card img,
+.page-window-cover-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* ─── Main content area (right) ─── */
+.post-window-main,
+.page-window-main {
+  flex: 1;
+  min-width: 0;
+  padding: 24px 36px 48px 16px;
+  overflow-y: auto;
+}
+
+/* Title */
+.post-window-title,
+.page-window-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--hl-text, #fff);
+  margin: 0 0 20px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  html.window-mode .post-window,
+  html.window-mode .page-window {
+    overflow-y: auto;
+  }
+
+  .post-window-body,
+  .page-window-body {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .post-window-cover-panel,
+  .page-window-cover-panel {
+    width: 100%;
+    padding: 12px 16px 0;
+  }
+
+  .post-window-cover-card img,
+  .page-window-cover-card img {
+    max-height: 200px;
+  }
+
+  .post-window-main,
+  .page-window-main {
+    padding: 16px 16px 40px;
+    overflow: visible;
+  }
+
+  .post-window-title,
+  .page-window-title {
+    font-size: 20px;
+  }
+
+  .post-window-header,
+  .page-window-header {
+    min-height: 60px;
+    padding: 8px 16px;
+  }
+
+  .post-window-avatar,
+  .page-window-avatar {
+    width: 42px;
+    height: 42px;
+  }
+
+  .post-window-author-name,
+  .page-window-author-name {
+    font-size: 15px;
+  }
+
+  .pw-close svg {
+    width: 60px;
+    height: 40px;
+  }
+}
