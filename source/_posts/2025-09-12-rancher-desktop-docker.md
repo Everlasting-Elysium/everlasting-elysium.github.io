@@ -5,9 +5,9 @@ headimg: https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&q=80
 categories:
   - Development tools
 tags:
-  - Development tools
+  - 开发工具
   - Docker
-  - Environment configuration
+  - 环境配置
   - Rancher Desktop
 ---
 

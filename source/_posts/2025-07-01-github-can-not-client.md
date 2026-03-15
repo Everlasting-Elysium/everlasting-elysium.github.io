@@ -5,8 +5,8 @@ headimg: /img/post/github.png
 categories:
   - Troubleshooting & Solutions
 tags:
-  - Github
-  - Net
+  - GitHub
+  - 网络
 ---
 
 最近发现在家只要是和github相关的操作都无法正常进行，但网页端访问却没问题。  

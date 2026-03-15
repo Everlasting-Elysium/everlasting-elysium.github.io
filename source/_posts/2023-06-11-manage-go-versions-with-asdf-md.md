@@ -5,10 +5,10 @@ headimg: https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=400&q=75
 categories:
   - Development tools
 tags:
-  - Development tools
-  - Environment configuration
+  - 开发工具
+  - 环境配置
   - Golang
-  - Version management
+  - 版本管理
   - asdf
 ---
 

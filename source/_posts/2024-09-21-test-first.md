@@ -5,8 +5,8 @@ headimg: https://images.unsplash.com/photo-1476231682828-37e571bc172f?w=400&q=75
 categories:
   - Learning Retrospectives
 tags:
-  - Coding habits
-  - Test
+  - 编码习惯
+  - 测试
 ---
 
 最近在看了《测试驱动开发》一书，对其中的观点深以为然。  
