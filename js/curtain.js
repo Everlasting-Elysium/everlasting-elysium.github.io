@@ -15,7 +15,11 @@
     }
   }
   window.addEventListener('scroll', syncHeader, { passive: true });
-  syncHeader();
+  // 初始同步延迟到 load 后：script 执行时 DOM 尚未完整，
+  // scrollHeight ≈ 100vh 会误判 nearBottom=true 而移除隐藏 class。
+  window.addEventListener('load', syncHeader);
+  // 兜底：若 load 已触发（如缓存页），立即同步一次
+  if (document.readyState === 'complete') syncHeader();
 
   // --- Typewriter ---
   var texts = (window.__HL_CURTAIN_TEXTS__ || []).filter(Boolean);
