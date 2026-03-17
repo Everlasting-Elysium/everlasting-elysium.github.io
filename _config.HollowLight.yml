@@ -55,8 +55,8 @@ footer:
 curtain:
   enable: true
   background:
-    type: image
-    url: "/img/background.png" # 替换为幕布背景图路径，如 /img/curtain-bg.jpg
+    type: video
+    url: "/img/13.mp4" # 替换为幕布背景图路径，如 /img/curtain-bg.jpg
   typewriter:
     - "记录代码与生活"
     - "探索未知的边界"
