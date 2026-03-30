@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>让 AI 真正帮上忙：我的 AI 编程实践 | Elysian Realm</title>
+  <meta name="description" content="">
+  
+  <!-- Font: MaoKen Assorted Sans (unpkg CDN, same as interknot reference) -->
+  <style>@import url('https://unpkg.com/@chinese-fonts/mksjh@1.4.0/dist/MaokenAssortedSans1.30/result.css');</style>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="description" content="AI 编程工具越来越多，Cursor、Copilot、各类 AI 助手铺天盖地。用了一段时间下来，我发现一个规律：工具好不好用，很大程度上取决于你怎么用它，而不是工具本身有多强。 这篇文章是我在日常工作中实践下来觉得真正有效的五条经验，算是个人总结，不一定适合所有人，但可以参考。  一、把代码写”小”——别让 AI 看蒙了这是我觉得最重要的一点，也是最容易被忽视的。 AI 模型的理解能力和你提供的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="让 AI 真正帮上忙：我的 AI 编程实践">
+<meta property="og:url" content="https://everlasting-elysium.github.io/2026/03/29/2026-03-30-ai-programming-practices/index.html">
+<meta property="og:site_name" content="Elysian Realm">
+<meta property="og:description" content="AI 编程工具越来越多，Cursor、Copilot、各类 AI 助手铺天盖地。用了一段时间下来，我发现一个规律：工具好不好用，很大程度上取决于你怎么用它，而不是工具本身有多强。 这篇文章是我在日常工作中实践下来觉得真正有效的五条经验，算是个人总结，不一定适合所有人，但可以参考。  一、把代码写”小”——别让 AI 看蒙了这是我觉得最重要的一点，也是最容易被忽视的。 AI 模型的理解能力和你提供的">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-29T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-03-30T10:17:51.793Z">
+<meta property="article:author" content="Everlasting Elysium">
+<meta property="article:tag" content="编码习惯">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="OhMyOpenCode">
+<meta property="article:tag" content="工作流">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading" id="hl-loading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading</span>
+  </div>
+
+  <!-- _0kd Page Transition Layer -->
+  <div class="_0kd" id="hl-0kd"></div>
+
+  <!-- Background Layer -->
+  
+  <div class="bg" style="background-image: url('/img/bg.png');"></div>
+
+  <!-- Header -->
+  
+  <header>
+  <!-- Personal Info Card -->
+  <a href="/" class="personal">
+    <span class="avatar-link">
+      <img
+        src="/img/avatar.svg"
+        alt="Elysio"
+        class="avatar"
+        onerror="this.onerror=null;this.style.background='#333';"
+      >
+    </span>
+    <span class="info-bar">
+      <span class="info-bio">知行合一,学以致用；但行好事，莫问前程。</span>
+      <span class="info-url">
+        <span class="info-url-lock">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/>
+            <path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        https://everlasting-elysium.github.io/
+      </span>
+    </span>
+  </a>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    
+      
+      <span class="tab">
+        <a href="/">推送</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/archives/">归档</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/tags/">标签</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/album/">相册</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/friends/">伙伴</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/about/">关于</a>
+      </span>
+    
+  </div>
+
+  <!-- Search Button -->
+  
+  <button class="hl-search-btn" id="hl-search-btn"
+          title="搜索 (Ctrl+K)" aria-label="搜索">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+  
+</header>
+
+
+  <!-- Main Content -->
+  <main class="has-hero">
+    <link rel="stylesheet" href="/css/post.css">
+<link rel="stylesheet" href="/css/post-window.css">
+
+<script>
+(function () {
+  var isWindow = false;
+  try { isWindow = new URLSearchParams(window.location.search).get('window') === 'true'; } catch(e) {}
+  if (!isWindow) { try { isWindow = window.self !== window.top; } catch(e) { isWindow = true; } }
+  if (isWindow) document.documentElement.classList.add('window-mode');
+})();
+</script>
+
+
+
+<!-- ═══════════ Normal Mode ═══════════ -->
+<article class="post-article">
+
+  
+  <div class="post-hero" style="background-image:url('https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=1200&q=80')">
+    <div class="post-hero-overlay">
+      <div class="post-hero-inner">
+        <h1 class="post-title">让 AI 真正帮上忙：我的 AI 编程实践</h1>
+        <div class="post-meta">
+          <time datetime="2026-03-30">
+            2026 / 03 / 30
+          </time>
+          
+          <div class="post-tags">
+            
+            <a class="tag-pill" href="/tags/%E7%BC%96%E7%A0%81%E4%B9%A0%E6%83%AF/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E7%BC%96%E7%A0%81%E4%B9%A0%E6%83%AF/')}else{window.location.href=this.href}">
+              编码习惯
+            </a>
+            
+            <a class="tag-pill" href="/tags/AI/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/AI/')}else{window.location.href=this.href}">
+              AI
+            </a>
+            
+            <a class="tag-pill" href="/tags/OhMyOpenCode/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/OhMyOpenCode/')}else{window.location.href=this.href}">
+              OhMyOpenCode
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/')}else{window.location.href=this.href}">
+              工作流
+            </a>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="post-body">
+    <div class="markdown-content">
+      <p>AI 编程工具越来越多，Cursor、Copilot、各类 AI 助手铺天盖地。用了一段时间下来，我发现一个规律：工具好不好用，很大程度上取决于你怎么用它，而不是工具本身有多强。</p>
+<p>这篇文章是我在日常工作中实践下来觉得真正有效的五条经验，算是个人总结，不一定适合所有人，但可以参考。</p>
+<hr>
+<h3 id="一、把代码写”小”——别让-AI-看蒙了"><a href="#一、把代码写”小”——别让-AI-看蒙了" class="headerlink" title="一、把代码写”小”——别让 AI 看蒙了"></a>一、把代码写”小”——别让 AI 看蒙了</h3><p>这是我觉得最重要的一点，也是最容易被忽视的。</p>
+<p>AI 模型的理解能力和你提供的上下文质量直接挂钩。如果一个函数写了 200 行，同时做了数据处理、业务逻辑判断、数据库操作和返回格式化，丢给 AI 看的时候，它很难准确定位到你的问题在哪里。</p>
+<p>我的习惯是：尽量让每个函数只做一件事，保持在 30-50 行以内。这不只是为了代码可维护性，更直接的好处是 AI 能更清晰地理解这段代码在做什么，给出的建议也更准确。</p>
+<p>举个实际例子。之前我有一个处理订单的函数，校验、计算、落库、推送消息都混在一起写。每次让 AI 帮我改一块，它总是顺带「优化」了其他部分，引入新的问题。后来把它拆成四个独立函数，再让 AI 逐个处理，整个过程顺滑了很多。</p>
+<p>代码的「可读性」，本质上也是对 AI 的友好程度。粒度越小、职责越单一，AI 发挥的空间就越大。</p>
+<hr>
+<h3 id="二、测试是护栏，不是可选项"><a href="#二、测试是护栏，不是可选项" class="headerlink" title="二、测试是护栏，不是可选项"></a>二、测试是护栏，不是可选项</h3><p>这点和我之前写的<a href="/2024/09/21/test-first/">测试先行</a>有关联，但从 AI 协作的角度再说一遍。</p>
+<p>AI 改代码很快，但它不知道你的业务边界在哪里。让 AI 重构一段代码，它可能顺手把某个你依赖的边界条件改掉了——代码能跑，但结果不对，而且你很难察觉。</p>
+<p>有测试的情况下，这种问题会立刻暴露出来。我现在的工作流是：让 AI 改完代码，第一件事就是跑测试。测试绿了，才算这一步完成。</p>
+<p>另一个好处是：测试本身就是对代码意图的说明。让 AI 看测试文件，它能更准确地理解代码应该做什么，而不是靠猜。这比单纯给一段函数实现，AI 能理解得更深。</p>
+<p>如果时间紧，至少对核心链路写覆盖。其他地方可以欠着，核心测试不能省——这不只是对自己负责，也是给 AI 一个能工作的安全网。</p>
+<hr>
+<h3 id="三、和-AI-说话要”具体到位”"><a href="#三、和-AI-说话要”具体到位”" class="headerlink" title="三、和 AI 说话要”具体到位”"></a>三、和 AI 说话要”具体到位”</h3><p>这条道理大家都知道，但做到的不多。</p>
+<p>模糊的提问会得到模糊的回答。「帮我优化这段代码」和「这个函数目前每次调用都会查两次数据库，帮我改成只查一次，同时不要改函数签名」，AI 给出的结果天壤之别。</p>
+<p>我总结了几个让提示词更有效的习惯：</p>
+<ul>
+<li><strong>说清楚上下文</strong>：当前在哪个文件、这段代码是做什么用的、周边有什么依赖</li>
+<li><strong>说清楚约束</strong>：不能改接口、要保持向下兼容、只用已有的工具函数</li>
+<li><strong>说清楚期望</strong>：你想要的结果是什么，同样重要的是——你不想要什么</li>
+<li><strong>给出必要背景</strong>：如果是 bug，说一下复现步骤和完整的报错信息</li>
+</ul>
+<p>和 AI 交流越具体，它帮你省的时间就越多。反过来，模糊交流，改来改去，最后自己还得收尾，还不如一开始自己写。</p>
+<p>信息差是 AI 犯错的主要来源，你提供的上下文越完整，它犯错的空间就越小。</p>
+<hr>
+<h3 id="四、用-OhMyOpenCode-让不同窗口各司其职"><a href="#四、用-OhMyOpenCode-让不同窗口各司其职" class="headerlink" title="四、用 OhMyOpenCode 让不同窗口各司其职"></a>四、用 OhMyOpenCode 让不同窗口各司其职</h3><p>这是我最近用得比较多的一个工作方式。</p>
+<p>OhMyOpenCode 支持在一个 AI 会话里协调多个专项 Agent——有负责前端的、负责后端的、负责搜索代码库的、负责写文档的……每个 Agent 在自己的职责范围内工作，不会互相干扰。</p>
+<p>实际感受上，它更像是在指挥一个小团队，而不是在和一个 AI 聊天。一个任务进来，主 Agent 分析需求、拆解工作，然后把具体任务分发给各个专项 Agent 并行处理，最后汇总结果。</p>
+<p>对比以前单个 AI 窗口一把梭，分工协作的方式效率高得多，质量也更稳定。特别是在处理跨模块的改动时，以前一个窗口上下文很快就撑不住，用了 OhMyOpenCode 之后，每个 Agent 的上下文都是干净聚焦的，互不污染。</p>
+<p>这种方式对「复杂任务」的收益最明显。如果只是改一行代码，直接用 AI 就行。如果是一个涉及多个模块、前后端都要动的功能，分工协作的价值就体现出来了。</p>
+<hr>
+<h3 id="五、Git-worktree-多窗口，同时推进多个需求"><a href="#五、Git-worktree-多窗口，同时推进多个需求" class="headerlink" title="五、Git worktree + 多窗口，同时推进多个需求"></a>五、Git worktree + 多窗口，同时推进多个需求</h3><p>这条要结合上一条来用。</p>
+<p>一个很常见的场景：手头有三个需求同时在推进，相互之间没有依赖，但都还没做完。如果只有一个 git 工作区，来回切换分支很麻烦，而且容易把不同需求的改动搞混。</p>
+<p>解决方案是用 git worktree。每个需求开一个独立的工作树，物理上是不同的目录，各自有自己的分支：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 为每个需求创建独立的工作目录</span></span><br><span class="line">git worktree add ../project-feature-a feature/feature-a</span><br><span class="line">git worktree add ../project-feature-b feature/feature-b</span><br><span class="line">git worktree add ../project-bugfix-c fix/bug-c</span><br></pre></td></tr></table></figure>
+
+<p>然后给每个目录开一个独立的 AI 窗口，分别推进。窗口之间互不干扰，代码也不会混。</p>
+<p>这种方式对 AI 同样友好——每个 AI 窗口只看到一个干净的分支，上下文清晰，不会因为你在同一个工作区来回切换分支而困惑。AI 对当前任务的理解也更集中，不会被其他分支的改动带偏。</p>
+<p>我现在的习惯是：每开一个新需求，就对应开一个 worktree + 一个 AI 窗口，用完了再合并清理。相比以前在一个工作区里来回切，管理起来轻松很多。</p>
+<hr>
+<p>这几条总结下来，其实有一个共同的底层逻辑：<strong>降低上下文的复杂度</strong>。</p>
+<p>不管是把代码拆小、写测试、给出具体的提示词，还是让不同 Agent 分工、用 worktree 隔离需求，本质上都是在帮 AI（也帮自己）减少需要同时处理的信息量。上下文越干净，AI 能发挥的空间就越大。</p>
+<p>工具在进化，用法也需要跟着迭代。这些是我目前觉得有效的，后续有新的感悟再回来补充。</p>
+
+    </div>
+  </div>
+
+</article>
+
+<!-- ═══════════ Window Mode ═══════════ -->
+<article class="post-window">
+
+  <!-- Header: avatar + name (left) | close button (right) -->
+  <div class="post-window-header">
+    <div class="post-window-author">
+      <img class="post-window-avatar" src="/img/avatar.svg" alt=""
+           onerror="this.onerror=null;this.style.display='none'">
+      <div class="post-window-author-info">
+        <span class="post-window-author-name">Elysio</span>
+      </div>
+    </div>
+    <button class="pw-close" onclick="try{window.parent.closeWindow()}catch(e){}" title="关闭">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 130">
+        <path fill-rule="evenodd" fill="rgb(196,34,9)"
+          d="M0.373,65.000 C0.087,51.609 3.792,38.466 11.131,27.293
+             C19.671,14.293 32.558,4.832 47.439,0.360
+             C90.023,0.360 132.606,0.360 175.190,0.360
+             C183.245,1.482 190.671,5.694 195.361,12.480
+             C201.498,21.357 202.014,33.317 196.706,43.453
+             C185.052,65.000 173.397,86.547 161.743,108.094
+             C156.410,114.144 150.041,119.160 142.916,122.907
+             C136.598,126.230 129.798,128.498 122.745,129.640
+             C99.884,129.640 77.024,129.640 54.163,129.640
+             C38.778,126.247 24.988,117.749 15.165,105.400
+             C6.284,94.236 0.695,80.120 0.373,65.000
+             ZM51.473,11.133 L171.156,11.133
+             C175.707,11.408 180.022,13.285 183.259,16.520
+             C187.160,20.420 189.059,25.857 188.637,31.333
+             C177.880,52.431 167.122,73.529 156.364,94.627
+             C152.903,101.201 147.810,106.769 141.571,110.787
+             C135.517,114.686 128.583,116.999 121.400,117.520
+             C98.988,117.520 76.575,117.520 54.163,117.520
+             C28.223,111.309 10.366,87.869 11.131,62.307
+             C11.831,38.916 28.017,17.942 51.473,11.133
+             ZM54.538,17.998
+             C91.618,17.954 128.697,17.910 165.777,17.866
+             C171.772,16.637 177.788,19.453 180.569,24.600
+             C183.069,29.227 182.591,35.067 179.224,39.413
+             C168.466,58.716 157.708,78.018 146.950,97.320
+             C144.417,101.017 141.229,104.211 137.537,106.747
+             C133.865,109.270 129.766,111.094 125.434,112.134
+             C102.574,112.134 79.713,112.134 56.852,112.134
+             C33.925,106.570 18.183,85.813 18.891,63.215
+             C19.538,42.562 33.826,24.045 54.538,17.998
+             ZM79.713,63.653
+             C74.334,58.267 68.955,52.880 63.576,47.493
+             C60.994,44.908 60.994,40.652 63.576,38.066
+             C66.158,35.481 70.407,35.481 72.989,38.066
+             C78.368,43.453 83.747,48.840 89.126,54.227
+             C94.505,48.840 99.884,43.453 105.263,38.066
+             C107.957,36.746 111.211,37.289 113.332,39.413
+             C115.452,41.537 115.995,44.796 114.676,47.493
+             C109.297,52.880 103.918,58.267 98.539,63.653
+             C103.918,69.040 109.297,74.427 114.676,79.813
+             C117.258,82.399 117.258,86.654 114.676,89.240
+             C112.094,91.826 107.845,91.826 105.263,89.240
+             C99.884,83.853 94.505,78.467 89.126,73.080
+             C83.299,78.916 77.472,84.751 71.645,90.587
+             C68.951,91.907 65.697,91.364 63.576,89.240
+             C61.455,87.116 60.913,83.858 62.231,81.160
+             C68.059,75.325 73.886,69.489 79.713,63.653 Z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Body: cover card (left) + scrollable content (right) -->
+  <div class="post-window-body">
+    
+    <aside class="post-window-cover-panel">
+      <div class="post-window-cover-card">
+        <img src="https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=1200&q=80" alt="让 AI 真正帮上忙：我的 AI 编程实践"
+             onerror="this.onerror=null;this.style.display='none'">
+      </div>
+    </aside>
+    
+
+    <section class="post-window-main">
+      <h1 class="post-window-title">让 AI 真正帮上忙：我的 AI 编程实践</h1>
+      <div class="post-window-content">
+        <div class="markdown-content">
+          <p>AI 编程工具越来越多，Cursor、Copilot、各类 AI 助手铺天盖地。用了一段时间下来，我发现一个规律：工具好不好用，很大程度上取决于你怎么用它，而不是工具本身有多强。</p>
+<p>这篇文章是我在日常工作中实践下来觉得真正有效的五条经验，算是个人总结，不一定适合所有人，但可以参考。</p>
+<hr>
+<h3 id="一、把代码写”小”——别让-AI-看蒙了"><a href="#一、把代码写”小”——别让-AI-看蒙了" class="headerlink" title="一、把代码写”小”——别让 AI 看蒙了"></a>一、把代码写”小”——别让 AI 看蒙了</h3><p>这是我觉得最重要的一点，也是最容易被忽视的。</p>
+<p>AI 模型的理解能力和你提供的上下文质量直接挂钩。如果一个函数写了 200 行，同时做了数据处理、业务逻辑判断、数据库操作和返回格式化，丢给 AI 看的时候，它很难准确定位到你的问题在哪里。</p>
+<p>我的习惯是：尽量让每个函数只做一件事，保持在 30-50 行以内。这不只是为了代码可维护性，更直接的好处是 AI 能更清晰地理解这段代码在做什么，给出的建议也更准确。</p>
+<p>举个实际例子。之前我有一个处理订单的函数，校验、计算、落库、推送消息都混在一起写。每次让 AI 帮我改一块，它总是顺带「优化」了其他部分，引入新的问题。后来把它拆成四个独立函数，再让 AI 逐个处理，整个过程顺滑了很多。</p>
+<p>代码的「可读性」，本质上也是对 AI 的友好程度。粒度越小、职责越单一，AI 发挥的空间就越大。</p>
+<hr>
+<h3 id="二、测试是护栏，不是可选项"><a href="#二、测试是护栏，不是可选项" class="headerlink" title="二、测试是护栏，不是可选项"></a>二、测试是护栏，不是可选项</h3><p>这点和我之前写的<a href="/2024/09/21/test-first/">测试先行</a>有关联，但从 AI 协作的角度再说一遍。</p>
+<p>AI 改代码很快，但它不知道你的业务边界在哪里。让 AI 重构一段代码，它可能顺手把某个你依赖的边界条件改掉了——代码能跑，但结果不对，而且你很难察觉。</p>
+<p>有测试的情况下，这种问题会立刻暴露出来。我现在的工作流是：让 AI 改完代码，第一件事就是跑测试。测试绿了，才算这一步完成。</p>
+<p>另一个好处是：测试本身就是对代码意图的说明。让 AI 看测试文件，它能更准确地理解代码应该做什么，而不是靠猜。这比单纯给一段函数实现，AI 能理解得更深。</p>
+<p>如果时间紧，至少对核心链路写覆盖。其他地方可以欠着，核心测试不能省——这不只是对自己负责，也是给 AI 一个能工作的安全网。</p>
+<hr>
+<h3 id="三、和-AI-说话要”具体到位”"><a href="#三、和-AI-说话要”具体到位”" class="headerlink" title="三、和 AI 说话要”具体到位”"></a>三、和 AI 说话要”具体到位”</h3><p>这条道理大家都知道，但做到的不多。</p>
+<p>模糊的提问会得到模糊的回答。「帮我优化这段代码」和「这个函数目前每次调用都会查两次数据库，帮我改成只查一次，同时不要改函数签名」，AI 给出的结果天壤之别。</p>
+<p>我总结了几个让提示词更有效的习惯：</p>
+<ul>
+<li><strong>说清楚上下文</strong>：当前在哪个文件、这段代码是做什么用的、周边有什么依赖</li>
+<li><strong>说清楚约束</strong>：不能改接口、要保持向下兼容、只用已有的工具函数</li>
+<li><strong>说清楚期望</strong>：你想要的结果是什么，同样重要的是——你不想要什么</li>
+<li><strong>给出必要背景</strong>：如果是 bug，说一下复现步骤和完整的报错信息</li>
+</ul>
+<p>和 AI 交流越具体，它帮你省的时间就越多。反过来，模糊交流，改来改去，最后自己还得收尾，还不如一开始自己写。</p>
+<p>信息差是 AI 犯错的主要来源，你提供的上下文越完整，它犯错的空间就越小。</p>
+<hr>
+<h3 id="四、用-OhMyOpenCode-让不同窗口各司其职"><a href="#四、用-OhMyOpenCode-让不同窗口各司其职" class="headerlink" title="四、用 OhMyOpenCode 让不同窗口各司其职"></a>四、用 OhMyOpenCode 让不同窗口各司其职</h3><p>这是我最近用得比较多的一个工作方式。</p>
+<p>OhMyOpenCode 支持在一个 AI 会话里协调多个专项 Agent——有负责前端的、负责后端的、负责搜索代码库的、负责写文档的……每个 Agent 在自己的职责范围内工作，不会互相干扰。</p>
+<p>实际感受上，它更像是在指挥一个小团队，而不是在和一个 AI 聊天。一个任务进来，主 Agent 分析需求、拆解工作，然后把具体任务分发给各个专项 Agent 并行处理，最后汇总结果。</p>
+<p>对比以前单个 AI 窗口一把梭，分工协作的方式效率高得多，质量也更稳定。特别是在处理跨模块的改动时，以前一个窗口上下文很快就撑不住，用了 OhMyOpenCode 之后，每个 Agent 的上下文都是干净聚焦的，互不污染。</p>
+<p>这种方式对「复杂任务」的收益最明显。如果只是改一行代码，直接用 AI 就行。如果是一个涉及多个模块、前后端都要动的功能，分工协作的价值就体现出来了。</p>
+<hr>
+<h3 id="五、Git-worktree-多窗口，同时推进多个需求"><a href="#五、Git-worktree-多窗口，同时推进多个需求" class="headerlink" title="五、Git worktree + 多窗口，同时推进多个需求"></a>五、Git worktree + 多窗口，同时推进多个需求</h3><p>这条要结合上一条来用。</p>
+<p>一个很常见的场景：手头有三个需求同时在推进，相互之间没有依赖，但都还没做完。如果只有一个 git 工作区，来回切换分支很麻烦，而且容易把不同需求的改动搞混。</p>
+<p>解决方案是用 git worktree。每个需求开一个独立的工作树，物理上是不同的目录，各自有自己的分支：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 为每个需求创建独立的工作目录</span></span><br><span class="line">git worktree add ../project-feature-a feature/feature-a</span><br><span class="line">git worktree add ../project-feature-b feature/feature-b</span><br><span class="line">git worktree add ../project-bugfix-c fix/bug-c</span><br></pre></td></tr></table></figure>
+
+<p>然后给每个目录开一个独立的 AI 窗口，分别推进。窗口之间互不干扰，代码也不会混。</p>
+<p>这种方式对 AI 同样友好——每个 AI 窗口只看到一个干净的分支，上下文清晰，不会因为你在同一个工作区来回切换分支而困惑。AI 对当前任务的理解也更集中，不会被其他分支的改动带偏。</p>
+<p>我现在的习惯是：每开一个新需求，就对应开一个 worktree + 一个 AI 窗口，用完了再合并清理。相比以前在一个工作区里来回切，管理起来轻松很多。</p>
+<hr>
+<p>这几条总结下来，其实有一个共同的底层逻辑：<strong>降低上下文的复杂度</strong>。</p>
+<p>不管是把代码拆小、写测试、给出具体的提示词，还是让不同 Agent 分工、用 worktree 隔离需求，本质上都是在帮 AI（也帮自己）减少需要同时处理的信息量。上下文越干净，AI 能发挥的空间就越大。</p>
+<p>工具在进化，用法也需要跟着迭代。这些是我目前觉得有效的，后续有新的感悟再回来补充。</p>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+</article>
+
+  </main>
+
+  <!-- Window Popup (article iframe viewer) -->
+  <div class="window" id="hl-window">
+    <div class="window-content">
+      <iframe class="window-frame" id="hl-window-frame"></iframe>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ---- Loading overlay: fade out on page load ---- */
+    window.addEventListener('load', function() {
+      var loading = document.getElementById('hl-loading');
+      if (!loading) return;
+      loading.classList.add('fade-out');
+      setTimeout(function() {
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+      }, 400);
+    });
+
+    /* ---- _0kd page transition (globally callable) ---- */
+    window._0kd = function(callback) {
+      var el = document.getElementById('hl-0kd');
+      if (!el) return;
+      el.style.display = 'block';
+      el.style.animationPlayState = 'running';
+      setTimeout(function() {
+        if (typeof callback === 'function') callback();
+        setTimeout(function() {
+          el.style.animationPlayState = 'paused';
+          el.style.display = 'none';
+        }, 500);
+      }, 1000);
+    };
+
+    /* ---- Window popup controls (globally callable) ---- */
+    var _windowPrevUrl = null;
+
+    window.openWindow = function(url) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win || !frame) return;
+      _windowPrevUrl = window.location.href;   // remember where we came from
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      frame.src = url + sep + 'window=true';
+      history.pushState({ hollowWindow: true }, '', url);
+      win.style.display = 'flex';
+    };
+
+    window.closeWindow = function(fromPopstate) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win) return;
+      win.style.display = 'none';
+      if (frame) frame.src = '';
+      if (!fromPopstate) {
+        // Replace article URL with original page URL — no popstate, no navigation side-effects
+        history.replaceState(null, '', _windowPrevUrl || window.location.pathname);
+      }
+      _windowPrevUrl = null;
+    };
+
+    /* Close window on Escape key */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.closeWindow();
+    });
+
+    /* Close window when clicking backdrop (outside content) */
+    var winEl = document.getElementById('hl-window');
+    if (winEl) {
+      winEl.addEventListener('click', function(e) {
+        if (e.target === winEl) window.closeWindow();
+      });
+    }
+
+    /* Close window on browser back */
+    window.addEventListener('popstate', function() {
+      var win = document.getElementById('hl-window');
+      if (win && win.style.display !== 'none') closeWindow(true);
+    });
+  })();
+  </script>
+
+  
+<!-- HL Search Modal -->
+<div class="hl-search-overlay" id="hl-search-overlay" hidden>
+  <div class="hl-search-backdrop" id="hl-search-backdrop"></div>
+  <div class="hl-search-modal" role="dialog" aria-label="搜索">
+    <div class="hl-search-header">
+      <svg class="hl-search-icon-prefix" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="hl-search-input" id="hl-search-input"
+             type="search" placeholder="搜索文章…"
+             autocomplete="off" spellcheck="false" aria-label="搜索关键字">
+      <button class="hl-search-close" id="hl-search-close" title="关闭 (Esc)" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hl-search-divider"></div>
+
+    <div class="hl-search-body" id="hl-search-body">
+      <div class="hl-search-hint" id="hl-search-hint">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>输入关键字开始搜索</span>
+      </div>
+      <div class="hl-search-results" id="hl-search-results" role="listbox" aria-label="搜索结果"></div>
+    </div>
+
+    <div class="hl-search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/search.css">
+<script>window.__HL_SEARCH_PATH__ = '/search.json';</script>
+<script src="/js/search.js"></script>
+
+
+  <script src="/js/code-copy.js"></script>
+
+</body>
+</html>
