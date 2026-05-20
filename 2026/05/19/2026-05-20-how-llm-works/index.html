@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>大模型是怎么工作的：从字母接龙到理解世界 | Elysian Realm</title>
+  <meta name="description" content="">
+  
+  <!-- Font: MaoKen Assorted Sans (unpkg CDN, same as interknot reference) -->
+  <style>@import url('https://unpkg.com/@chinese-fonts/mksjh@1.4.0/dist/MaokenAssortedSans1.30/result.css');</style>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="description" content="你有没有想过，ChatGPT 到底是怎么”懂”你说的话的？ 它不是一个搜索引擎，也不是一个提前写好答案的数据库。它是一个在海量文字里泡大的模型，学会了一件事：根据前面的内容，猜下一个词是什么。 听起来简单得有点可疑。但这件看似简单的事，做到极致之后，就是 GPT-4。  一、一切从”猜下一个词”开始大模型的训练目标非常朴素：给你看一段话，让你猜接下来会出现什么词。  “今天天气很好，我决定出去__">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大模型是怎么工作的：从字母接龙到理解世界">
+<meta property="og:url" content="https://everlasting-elysium.github.io/2026/05/19/2026-05-20-how-llm-works/index.html">
+<meta property="og:site_name" content="Elysian Realm">
+<meta property="og:description" content="你有没有想过，ChatGPT 到底是怎么”懂”你说的话的？ 它不是一个搜索引擎，也不是一个提前写好答案的数据库。它是一个在海量文字里泡大的模型，学会了一件事：根据前面的内容，猜下一个词是什么。 听起来简单得有点可疑。但这件看似简单的事，做到极致之后，就是 GPT-4。  一、一切从”猜下一个词”开始大模型的训练目标非常朴素：给你看一段话，让你猜接下来会出现什么词。  “今天天气很好，我决定出去__">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-05-19T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-05-20T05:09:41.255Z">
+<meta property="article:author" content="Everlasting Elysium">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="原理">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading" id="hl-loading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading</span>
+  </div>
+
+  <!-- _0kd Page Transition Layer -->
+  <div class="_0kd" id="hl-0kd"></div>
+
+  <!-- Background Layer -->
+  
+  <div class="bg" style="background-image: url('/img/bg.png');"></div>
+
+  <!-- Header -->
+  
+  <header>
+  <!-- Personal Info Card -->
+  <a href="/" class="personal">
+    <span class="avatar-link">
+      <img
+        src="/img/avatar.svg"
+        alt="Elysio"
+        class="avatar"
+        onerror="this.onerror=null;this.style.background='#333';"
+      >
+    </span>
+    <span class="info-bar">
+      <span class="info-bio">知行合一,学以致用；但行好事，莫问前程。</span>
+      <span class="info-url">
+        <span class="info-url-lock">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/>
+            <path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        https://everlasting-elysium.github.io/
+      </span>
+    </span>
+  </a>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    
+      
+      <span class="tab">
+        <a href="/">推送</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/archives/">归档</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/tags/">标签</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/album/">相册</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/friends/">伙伴</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/about/">关于</a>
+      </span>
+    
+  </div>
+
+  <!-- Search Button -->
+  
+  <button class="hl-search-btn" id="hl-search-btn"
+          title="搜索 (Ctrl+K)" aria-label="搜索">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+  
+</header>
+
+
+  <!-- Main Content -->
+  <main class="has-hero">
+    <link rel="stylesheet" href="/css/post.css">
+<link rel="stylesheet" href="/css/post-window.css">
+
+<script>
+(function () {
+  var isWindow = false;
+  try { isWindow = new URLSearchParams(window.location.search).get('window') === 'true'; } catch(e) {}
+  if (!isWindow) { try { isWindow = window.self !== window.top; } catch(e) { isWindow = true; } }
+  if (isWindow) document.documentElement.classList.add('window-mode');
+})();
+</script>
+
+
+
+<!-- ═══════════ Normal Mode ═══════════ -->
+<article class="post-article">
+
+  
+  <div class="post-hero" style="background-image:url('https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1200&q=80')">
+    <div class="post-hero-overlay">
+      <div class="post-hero-inner">
+        <h1 class="post-title">大模型是怎么工作的：从字母接龙到理解世界</h1>
+        <div class="post-meta">
+          <time datetime="2026-05-20">
+            2026 / 05 / 20
+          </time>
+          
+          <div class="post-tags">
+            
+            <a class="tag-pill" href="/tags/AI/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/AI/')}else{window.location.href=this.href}">
+              AI
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/')}else{window.location.href=this.href}">
+              大模型
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E5%8E%9F%E7%90%86/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E5%8E%9F%E7%90%86/')}else{window.location.href=this.href}">
+              原理
+            </a>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="post-body">
+    <div class="markdown-content">
+      <p>你有没有想过，ChatGPT 到底是怎么”懂”你说的话的？</p>
+<p>它不是一个搜索引擎，也不是一个提前写好答案的数据库。它是一个在海量文字里泡大的模型，学会了一件事：<strong>根据前面的内容，猜下一个词是什么</strong>。</p>
+<p>听起来简单得有点可疑。但这件看似简单的事，做到极致之后，就是 GPT-4。</p>
+<hr>
+<h3 id="一、一切从”猜下一个词”开始"><a href="#一、一切从”猜下一个词”开始" class="headerlink" title="一、一切从”猜下一个词”开始"></a>一、一切从”猜下一个词”开始</h3><p>大模型的训练目标非常朴素：给你看一段话，让你猜接下来会出现什么词。</p>
+<blockquote>
+<p>“今天天气很好，我决定出去___“</p>
+</blockquote>
+<p>人类会填”散步”、”跑步”、”买菜”，不会填”火箭”或”哭泣”——因为我们对世界有理解，知道什么词在什么语境下合理。</p>
+<p>大模型也在做同一件事，只不过它的”理解”来自于读过的几千亿个词。训练时，模型每猜一次，就对比真实答案，然后调整自己的参数，让下次猜得更准。这个过程重复几万亿次之后，模型就慢慢”懂”了语言的规律。</p>
+<p>这个任务叫做<strong>自回归语言建模</strong>，是整个大模型的地基。</p>
+<hr>
+<h3 id="二、Token：模型眼里的世界"><a href="#二、Token：模型眼里的世界" class="headerlink" title="二、Token：模型眼里的世界"></a>二、Token：模型眼里的世界</h3><p>模型处理的不是字母，也不是词，而是 <strong>Token</strong>——一种介于字符和词之间的单位。</p>
+<p>“I love you” 会被切成 <code>I</code> &#x2F; <code>love</code> &#x2F; <code>you</code> 三个 token。但 “unbelievable” 可能会被切成 <code>un</code> &#x2F; <code>believ</code> &#x2F; <code>able</code>，因为这样能更高效地覆盖各种词汇。</p>
+<p>中文通常一个字或两个字是一个 token。所以你会发现，同样的意思，英文用的 token 比中文少，模型处理起来也快一些。</p>
+<p>理解 token 的意义在于：<strong>模型每次生成，都是从所有可能的 token 里挑一个概率最高的</strong>。它看到的是 token 的序列，预测的也是下一个 token，而不是”下一句话”或者”下一个想法”。</p>
+<hr>
+<h3 id="三、Transformer：注意力才是关键"><a href="#三、Transformer：注意力才是关键" class="headerlink" title="三、Transformer：注意力才是关键"></a>三、Transformer：注意力才是关键</h3><p>2017 年之前，处理序列数据的主流方法是 RNN（循环神经网络）。它像人读书一样，一个字一个字往后读，但前面读过的内容会随着距离增加而慢慢”遗忘”。</p>
+<p>2017 年，谷歌发了一篇论文，叫做《Attention is All You Need》，提出了 <strong>Transformer</strong> 架构。核心思想是：不按顺序读，而是让每个词同时看所有其他词，自己决定哪些地方值得关注。</p>
+<p>这个机制叫 <strong>Self-Attention（自注意力）</strong>。</p>
+<p>举个例子：</p>
+<blockquote>
+<p>“The animal didn’t cross the street because <strong>it</strong> was too tired.”</p>
+</blockquote>
+<p>这里的 “it” 指的是 “animal” 还是 “street”？</p>
+<p>人类一眼就能判断，因为我们知道”疲倦”是动物的属性。Transformer 通过自注意力机制，让 “it” 这个词在计算时自动和 “animal” 建立更强的关联，而不是 “street”。</p>
+<p>这种”谁跟谁有关系”的能力，让 Transformer 在理解长文本、处理复杂语义时远超之前的模型。现在所有主流大模型——GPT、Claude、Gemini——底层都是 Transformer。</p>
+<hr>
+<h3 id="四、规模才是魔法"><a href="#四、规模才是魔法" class="headerlink" title="四、规模才是魔法"></a>四、规模才是魔法</h3><p>有一个现象困扰了研究者很久：当模型参数量超过某个阈值，它突然就会做一些”没教过它”的事——做数学题、写代码、类比推理。</p>
+<p>这叫<strong>涌现能力（Emergent Abilities）</strong>。</p>
+<p>没人明确教过 GPT-3 做加减法，但它能做。这背后的原因现在还没有完全搞清楚，但经验规律是：<strong>模型越大、数据越多、算力越足，能力就越强，而且是非线性地增强</strong>。</p>
+<p>这个规律被称为 <strong>Scaling Law</strong>，是驱动这几年大模型军备竞赛的核心逻辑。OpenAI、Anthropic、Google 烧那么多钱，本质上是在赌：继续堆规模，会有更多涌现能力出现。</p>
+<hr>
+<h3 id="五、预训练之后：让模型学会”说人话”"><a href="#五、预训练之后：让模型学会”说人话”" class="headerlink" title="五、预训练之后：让模型学会”说人话”"></a>五、预训练之后：让模型学会”说人话”</h3><p>预训练结束后，模型已经很”博学”了——它见过太多文字，什么都知道一点。但它还不擅长”对话”，更不懂什么是有帮助的回答。</p>
+<p>这时候需要第二阶段：<strong>微调（Fine-tuning）+ RLHF</strong>。</p>
+<p>RLHF 的全称是 Reinforcement Learning from Human Feedback，人类反馈强化学习。简单说就是：</p>
+<ol>
+<li>让模型生成几个不同的回答</li>
+<li>人类标注员给这些回答排名，哪个更好</li>
+<li>用这些排名训练一个”打分模型”</li>
+<li>再用这个打分模型反过来训练语言模型，让它生成更高分的回答</li>
+</ol>
+<p>这一步让模型从”知道很多但说话奇怪”变成”有帮助、无害、诚实”。你现在用的 ChatGPT 和 Claude，都经过了这一步。</p>
+<hr>
+<h3 id="六、它真的”懂”吗？"><a href="#六、它真的”懂”吗？" class="headerlink" title="六、它真的”懂”吗？"></a>六、它真的”懂”吗？</h3><p>一个无法回避的问题：大模型真的理解语言，还是只是在做精巧的统计匹配？</p>
+<p>坦白说，这个问题现在没有定论。</p>
+<p>有一派认为，大模型本质上是”随机鹦鹉”，只是在拼接训练数据里的模式，没有真正的理解。另一派认为，理解本身就是一种模式识别，人类大脑也不过如此。</p>
+<p>我倾向于一个更务实的观点：<strong>它到底”懂不懂”这个哲学问题可以先放一边，重要的是它在很多任务上表现出了类似理解的能力</strong>。会不会有幻觉、会不会犯错——当然会，但这不妨碍它在正确使用的场景下，真的很有用。</p>
+<hr>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>把整个过程串起来：</p>
+<ol>
+<li>用几千亿词训练模型<strong>猜下一个 token</strong>，这是预训练</li>
+<li>底层架构是 <strong>Transformer</strong>，自注意力机制让它理解词与词之间的关系</li>
+<li>规模到一定程度，涌现出意料之外的能力——<strong>Scaling Law</strong></li>
+<li>用 <strong>RLHF</strong> 让模型学会对话，变得有帮助</li>
+</ol>
+<p>一个字母接龙的游戏，玩到极致，就成了现在这个样子。</p>
+
+    </div>
+  </div>
+
+</article>
+
+<!-- ═══════════ Window Mode ═══════════ -->
+<article class="post-window">
+
+  <!-- Header: avatar + name (left) | close button (right) -->
+  <div class="post-window-header">
+    <div class="post-window-author">
+      <img class="post-window-avatar" src="/img/avatar.svg" alt=""
+           onerror="this.onerror=null;this.style.display='none'">
+      <div class="post-window-author-info">
+        <span class="post-window-author-name">Elysio</span>
+      </div>
+    </div>
+    <button class="pw-close" onclick="try{window.parent.closeWindow()}catch(e){}" title="关闭">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 130">
+        <path fill-rule="evenodd" fill="rgb(196,34,9)"
+          d="M0.373,65.000 C0.087,51.609 3.792,38.466 11.131,27.293
+             C19.671,14.293 32.558,4.832 47.439,0.360
+             C90.023,0.360 132.606,0.360 175.190,0.360
+             C183.245,1.482 190.671,5.694 195.361,12.480
+             C201.498,21.357 202.014,33.317 196.706,43.453
+             C185.052,65.000 173.397,86.547 161.743,108.094
+             C156.410,114.144 150.041,119.160 142.916,122.907
+             C136.598,126.230 129.798,128.498 122.745,129.640
+             C99.884,129.640 77.024,129.640 54.163,129.640
+             C38.778,126.247 24.988,117.749 15.165,105.400
+             C6.284,94.236 0.695,80.120 0.373,65.000
+             ZM51.473,11.133 L171.156,11.133
+             C175.707,11.408 180.022,13.285 183.259,16.520
+             C187.160,20.420 189.059,25.857 188.637,31.333
+             C177.880,52.431 167.122,73.529 156.364,94.627
+             C152.903,101.201 147.810,106.769 141.571,110.787
+             C135.517,114.686 128.583,116.999 121.400,117.520
+             C98.988,117.520 76.575,117.520 54.163,117.520
+             C28.223,111.309 10.366,87.869 11.131,62.307
+             C11.831,38.916 28.017,17.942 51.473,11.133
+             ZM54.538,17.998
+             C91.618,17.954 128.697,17.910 165.777,17.866
+             C171.772,16.637 177.788,19.453 180.569,24.600
+             C183.069,29.227 182.591,35.067 179.224,39.413
+             C168.466,58.716 157.708,78.018 146.950,97.320
+             C144.417,101.017 141.229,104.211 137.537,106.747
+             C133.865,109.270 129.766,111.094 125.434,112.134
+             C102.574,112.134 79.713,112.134 56.852,112.134
+             C33.925,106.570 18.183,85.813 18.891,63.215
+             C19.538,42.562 33.826,24.045 54.538,17.998
+             ZM79.713,63.653
+             C74.334,58.267 68.955,52.880 63.576,47.493
+             C60.994,44.908 60.994,40.652 63.576,38.066
+             C66.158,35.481 70.407,35.481 72.989,38.066
+             C78.368,43.453 83.747,48.840 89.126,54.227
+             C94.505,48.840 99.884,43.453 105.263,38.066
+             C107.957,36.746 111.211,37.289 113.332,39.413
+             C115.452,41.537 115.995,44.796 114.676,47.493
+             C109.297,52.880 103.918,58.267 98.539,63.653
+             C103.918,69.040 109.297,74.427 114.676,79.813
+             C117.258,82.399 117.258,86.654 114.676,89.240
+             C112.094,91.826 107.845,91.826 105.263,89.240
+             C99.884,83.853 94.505,78.467 89.126,73.080
+             C83.299,78.916 77.472,84.751 71.645,90.587
+             C68.951,91.907 65.697,91.364 63.576,89.240
+             C61.455,87.116 60.913,83.858 62.231,81.160
+             C68.059,75.325 73.886,69.489 79.713,63.653 Z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Body: cover card (left) + scrollable content (right) -->
+  <div class="post-window-body">
+    
+    <aside class="post-window-cover-panel">
+      <div class="post-window-cover-card">
+        <img src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1200&q=80" alt="大模型是怎么工作的：从字母接龙到理解世界"
+             onerror="this.onerror=null;this.style.display='none'">
+      </div>
+    </aside>
+    
+
+    <section class="post-window-main">
+      <h1 class="post-window-title">大模型是怎么工作的：从字母接龙到理解世界</h1>
+      <div class="post-window-content">
+        <div class="markdown-content">
+          <p>你有没有想过，ChatGPT 到底是怎么”懂”你说的话的？</p>
+<p>它不是一个搜索引擎，也不是一个提前写好答案的数据库。它是一个在海量文字里泡大的模型，学会了一件事：<strong>根据前面的内容，猜下一个词是什么</strong>。</p>
+<p>听起来简单得有点可疑。但这件看似简单的事，做到极致之后，就是 GPT-4。</p>
+<hr>
+<h3 id="一、一切从”猜下一个词”开始"><a href="#一、一切从”猜下一个词”开始" class="headerlink" title="一、一切从”猜下一个词”开始"></a>一、一切从”猜下一个词”开始</h3><p>大模型的训练目标非常朴素：给你看一段话，让你猜接下来会出现什么词。</p>
+<blockquote>
+<p>“今天天气很好，我决定出去___“</p>
+</blockquote>
+<p>人类会填”散步”、”跑步”、”买菜”，不会填”火箭”或”哭泣”——因为我们对世界有理解，知道什么词在什么语境下合理。</p>
+<p>大模型也在做同一件事，只不过它的”理解”来自于读过的几千亿个词。训练时，模型每猜一次，就对比真实答案，然后调整自己的参数，让下次猜得更准。这个过程重复几万亿次之后，模型就慢慢”懂”了语言的规律。</p>
+<p>这个任务叫做<strong>自回归语言建模</strong>，是整个大模型的地基。</p>
+<hr>
+<h3 id="二、Token：模型眼里的世界"><a href="#二、Token：模型眼里的世界" class="headerlink" title="二、Token：模型眼里的世界"></a>二、Token：模型眼里的世界</h3><p>模型处理的不是字母，也不是词，而是 <strong>Token</strong>——一种介于字符和词之间的单位。</p>
+<p>“I love you” 会被切成 <code>I</code> &#x2F; <code>love</code> &#x2F; <code>you</code> 三个 token。但 “unbelievable” 可能会被切成 <code>un</code> &#x2F; <code>believ</code> &#x2F; <code>able</code>，因为这样能更高效地覆盖各种词汇。</p>
+<p>中文通常一个字或两个字是一个 token。所以你会发现，同样的意思，英文用的 token 比中文少，模型处理起来也快一些。</p>
+<p>理解 token 的意义在于：<strong>模型每次生成，都是从所有可能的 token 里挑一个概率最高的</strong>。它看到的是 token 的序列，预测的也是下一个 token，而不是”下一句话”或者”下一个想法”。</p>
+<hr>
+<h3 id="三、Transformer：注意力才是关键"><a href="#三、Transformer：注意力才是关键" class="headerlink" title="三、Transformer：注意力才是关键"></a>三、Transformer：注意力才是关键</h3><p>2017 年之前，处理序列数据的主流方法是 RNN（循环神经网络）。它像人读书一样，一个字一个字往后读，但前面读过的内容会随着距离增加而慢慢”遗忘”。</p>
+<p>2017 年，谷歌发了一篇论文，叫做《Attention is All You Need》，提出了 <strong>Transformer</strong> 架构。核心思想是：不按顺序读，而是让每个词同时看所有其他词，自己决定哪些地方值得关注。</p>
+<p>这个机制叫 <strong>Self-Attention（自注意力）</strong>。</p>
+<p>举个例子：</p>
+<blockquote>
+<p>“The animal didn’t cross the street because <strong>it</strong> was too tired.”</p>
+</blockquote>
+<p>这里的 “it” 指的是 “animal” 还是 “street”？</p>
+<p>人类一眼就能判断，因为我们知道”疲倦”是动物的属性。Transformer 通过自注意力机制，让 “it” 这个词在计算时自动和 “animal” 建立更强的关联，而不是 “street”。</p>
+<p>这种”谁跟谁有关系”的能力，让 Transformer 在理解长文本、处理复杂语义时远超之前的模型。现在所有主流大模型——GPT、Claude、Gemini——底层都是 Transformer。</p>
+<hr>
+<h3 id="四、规模才是魔法"><a href="#四、规模才是魔法" class="headerlink" title="四、规模才是魔法"></a>四、规模才是魔法</h3><p>有一个现象困扰了研究者很久：当模型参数量超过某个阈值，它突然就会做一些”没教过它”的事——做数学题、写代码、类比推理。</p>
+<p>这叫<strong>涌现能力（Emergent Abilities）</strong>。</p>
+<p>没人明确教过 GPT-3 做加减法，但它能做。这背后的原因现在还没有完全搞清楚，但经验规律是：<strong>模型越大、数据越多、算力越足，能力就越强，而且是非线性地增强</strong>。</p>
+<p>这个规律被称为 <strong>Scaling Law</strong>，是驱动这几年大模型军备竞赛的核心逻辑。OpenAI、Anthropic、Google 烧那么多钱，本质上是在赌：继续堆规模，会有更多涌现能力出现。</p>
+<hr>
+<h3 id="五、预训练之后：让模型学会”说人话”"><a href="#五、预训练之后：让模型学会”说人话”" class="headerlink" title="五、预训练之后：让模型学会”说人话”"></a>五、预训练之后：让模型学会”说人话”</h3><p>预训练结束后，模型已经很”博学”了——它见过太多文字，什么都知道一点。但它还不擅长”对话”，更不懂什么是有帮助的回答。</p>
+<p>这时候需要第二阶段：<strong>微调（Fine-tuning）+ RLHF</strong>。</p>
+<p>RLHF 的全称是 Reinforcement Learning from Human Feedback，人类反馈强化学习。简单说就是：</p>
+<ol>
+<li>让模型生成几个不同的回答</li>
+<li>人类标注员给这些回答排名，哪个更好</li>
+<li>用这些排名训练一个”打分模型”</li>
+<li>再用这个打分模型反过来训练语言模型，让它生成更高分的回答</li>
+</ol>
+<p>这一步让模型从”知道很多但说话奇怪”变成”有帮助、无害、诚实”。你现在用的 ChatGPT 和 Claude，都经过了这一步。</p>
+<hr>
+<h3 id="六、它真的”懂”吗？"><a href="#六、它真的”懂”吗？" class="headerlink" title="六、它真的”懂”吗？"></a>六、它真的”懂”吗？</h3><p>一个无法回避的问题：大模型真的理解语言，还是只是在做精巧的统计匹配？</p>
+<p>坦白说，这个问题现在没有定论。</p>
+<p>有一派认为，大模型本质上是”随机鹦鹉”，只是在拼接训练数据里的模式，没有真正的理解。另一派认为，理解本身就是一种模式识别，人类大脑也不过如此。</p>
+<p>我倾向于一个更务实的观点：<strong>它到底”懂不懂”这个哲学问题可以先放一边，重要的是它在很多任务上表现出了类似理解的能力</strong>。会不会有幻觉、会不会犯错——当然会，但这不妨碍它在正确使用的场景下，真的很有用。</p>
+<hr>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>把整个过程串起来：</p>
+<ol>
+<li>用几千亿词训练模型<strong>猜下一个 token</strong>，这是预训练</li>
+<li>底层架构是 <strong>Transformer</strong>，自注意力机制让它理解词与词之间的关系</li>
+<li>规模到一定程度，涌现出意料之外的能力——<strong>Scaling Law</strong></li>
+<li>用 <strong>RLHF</strong> 让模型学会对话，变得有帮助</li>
+</ol>
+<p>一个字母接龙的游戏，玩到极致，就成了现在这个样子。</p>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+</article>
+
+  </main>
+
+  <!-- Window Popup (article iframe viewer) -->
+  <div class="window" id="hl-window">
+    <div class="window-content">
+      <iframe class="window-frame" id="hl-window-frame"></iframe>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ---- Loading overlay: fade out on page load ---- */
+    window.addEventListener('load', function() {
+      var loading = document.getElementById('hl-loading');
+      if (!loading) return;
+      loading.classList.add('fade-out');
+      setTimeout(function() {
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+      }, 400);
+    });
+
+    /* ---- _0kd page transition (globally callable) ---- */
+    window._0kd = function(callback) {
+      var el = document.getElementById('hl-0kd');
+      if (!el) return;
+      el.style.display = 'block';
+      el.style.animationPlayState = 'running';
+      setTimeout(function() {
+        if (typeof callback === 'function') callback();
+        setTimeout(function() {
+          el.style.animationPlayState = 'paused';
+          el.style.display = 'none';
+        }, 500);
+      }, 1000);
+    };
+
+    /* ---- Window popup controls (globally callable) ---- */
+    var _windowPrevUrl = null;
+
+    window.openWindow = function(url) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win || !frame) return;
+      _windowPrevUrl = window.location.href;   // remember where we came from
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      frame.src = url + sep + 'window=true';
+      history.pushState({ hollowWindow: true }, '', url);
+      win.style.display = 'flex';
+    };
+
+    window.closeWindow = function(fromPopstate) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win) return;
+      win.style.display = 'none';
+      if (frame) frame.src = '';
+      if (!fromPopstate) {
+        // Replace article URL with original page URL — no popstate, no navigation side-effects
+        history.replaceState(null, '', _windowPrevUrl || window.location.pathname);
+      }
+      _windowPrevUrl = null;
+    };
+
+    /* Close window on Escape key */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.closeWindow();
+    });
+
+    /* Close window when clicking backdrop (outside content) */
+    var winEl = document.getElementById('hl-window');
+    if (winEl) {
+      winEl.addEventListener('click', function(e) {
+        if (e.target === winEl) window.closeWindow();
+      });
+    }
+
+    /* Close window on browser back */
+    window.addEventListener('popstate', function() {
+      var win = document.getElementById('hl-window');
+      if (win && win.style.display !== 'none') closeWindow(true);
+    });
+  })();
+  </script>
+
+  
+<!-- HL Search Modal -->
+<div class="hl-search-overlay" id="hl-search-overlay" hidden>
+  <div class="hl-search-backdrop" id="hl-search-backdrop"></div>
+  <div class="hl-search-modal" role="dialog" aria-label="搜索">
+    <div class="hl-search-header">
+      <svg class="hl-search-icon-prefix" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="hl-search-input" id="hl-search-input"
+             type="search" placeholder="搜索文章…"
+             autocomplete="off" spellcheck="false" aria-label="搜索关键字">
+      <button class="hl-search-close" id="hl-search-close" title="关闭 (Esc)" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hl-search-divider"></div>
+
+    <div class="hl-search-body" id="hl-search-body">
+      <div class="hl-search-hint" id="hl-search-hint">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>输入关键字开始搜索</span>
+      </div>
+      <div class="hl-search-results" id="hl-search-results" role="listbox" aria-label="搜索结果"></div>
+    </div>
+
+    <div class="hl-search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/search.css">
+<script>window.__HL_SEARCH_PATH__ = '/search.json';</script>
+<script src="/js/search.js"></script>
+
+
+  <script src="/js/code-copy.js"></script>
+
+</body>
+</html>
