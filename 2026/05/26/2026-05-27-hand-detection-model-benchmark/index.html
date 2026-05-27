@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>第一人称手部检测选型：WiLoR 碾压，YOLO26 翻车记 | Elysian Realm</title>
+  <meta name="description" content="">
+  
+  <!-- Font: MaoKen Assorted Sans (unpkg CDN, same as interknot reference) -->
+  <style>@import url('https://unpkg.com/@chinese-fonts/mksjh@1.4.0/dist/MaokenAssortedSans1.30/result.css');</style>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="description" content="最近在做一个视频质量审核的项目，其中有一条规则：第一人称拍摄的视频，手可见帧占比必须 &gt;&#x3D; 90%。听起来简单——检测每一帧有没有手就行了。但实际跑下来，模型选型这一步就踩了不少坑。 今天做了一组正式的 benchmark，结果挺出乎意料。记录一下。  实验怎么做的拿了一段 10 分钟的第一人称居家视频（1920x1440，30fps），按 1fps 抽关键帧，总共 602 帧。每">
+<meta property="og:type" content="article">
+<meta property="og:title" content="第一人称手部检测选型：WiLoR 碾压，YOLO26 翻车记">
+<meta property="og:url" content="https://everlasting-elysium.github.io/2026/05/26/2026-05-27-hand-detection-model-benchmark/index.html">
+<meta property="og:site_name" content="Elysian Realm">
+<meta property="og:description" content="最近在做一个视频质量审核的项目，其中有一条规则：第一人称拍摄的视频，手可见帧占比必须 &gt;&#x3D; 90%。听起来简单——检测每一帧有没有手就行了。但实际跑下来，模型选型这一步就踩了不少坑。 今天做了一组正式的 benchmark，结果挺出乎意料。记录一下。  实验怎么做的拿了一段 10 分钟的第一人称居家视频（1920x1440，30fps），按 1fps 抽关键帧，总共 602 帧。每">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-05-26T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-05-27T06:08:47.206Z">
+<meta property="article:author" content="Everlasting Elysium">
+<meta property="article:tag" content="计算机视觉">
+<meta property="article:tag" content="手部检测">
+<meta property="article:tag" content="模型选型">
+<meta property="article:tag" content="WiLoR">
+<meta property="article:tag" content="YOLO">
+<meta property="article:tag" content="MediaPipe">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading" id="hl-loading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading</span>
+  </div>
+
+  <!-- _0kd Page Transition Layer -->
+  <div class="_0kd" id="hl-0kd"></div>
+
+  <!-- Background Layer -->
+  
+  <div class="bg" style="background-image: url('/img/bg.png');"></div>
+
+  <!-- Header -->
+  
+  <header>
+  <!-- Personal Info Card -->
+  <a href="/" class="personal">
+    <span class="avatar-link">
+      <img
+        src="/img/avatar.svg"
+        alt="Elysio"
+        class="avatar"
+        onerror="this.onerror=null;this.style.background='#333';"
+      >
+    </span>
+    <span class="info-bar">
+      <span class="info-bio">知行合一,学以致用；但行好事，莫问前程。</span>
+      <span class="info-url">
+        <span class="info-url-lock">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/>
+            <path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        https://everlasting-elysium.github.io/
+      </span>
+    </span>
+  </a>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    
+      
+      <span class="tab">
+        <a href="/">推送</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/archives/">归档</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/tags/">标签</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/album/">相册</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/friends/">伙伴</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/about/">关于</a>
+      </span>
+    
+  </div>
+
+  <!-- Search Button -->
+  
+  <button class="hl-search-btn" id="hl-search-btn"
+          title="搜索 (Ctrl+K)" aria-label="搜索">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+  
+</header>
+
+
+  <!-- Main Content -->
+  <main class="has-hero">
+    <link rel="stylesheet" href="/css/post.css">
+<link rel="stylesheet" href="/css/post-window.css">
+
+<script>
+(function () {
+  var isWindow = false;
+  try { isWindow = new URLSearchParams(window.location.search).get('window') === 'true'; } catch(e) {}
+  if (!isWindow) { try { isWindow = window.self !== window.top; } catch(e) { isWindow = true; } }
+  if (isWindow) document.documentElement.classList.add('window-mode');
+})();
+</script>
+
+
+
+<!-- ═══════════ Normal Mode ═══════════ -->
+<article class="post-article">
+
+  
+  <div class="post-hero" style="background-image:url('https://images.unsplash.com/photo-1527430253228-e93688616381?w=1200&q=80')">
+    <div class="post-hero-overlay">
+      <div class="post-hero-inner">
+        <h1 class="post-title">第一人称手部检测选型：WiLoR 碾压，YOLO26 翻车记</h1>
+        <div class="post-meta">
+          <time datetime="2026-05-27">
+            2026 / 05 / 27
+          </time>
+          
+          <div class="post-tags">
+            
+            <a class="tag-pill" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/')}else{window.location.href=this.href}">
+              计算机视觉
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E6%89%8B%E9%83%A8%E6%A3%80%E6%B5%8B/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E6%89%8B%E9%83%A8%E6%A3%80%E6%B5%8B/')}else{window.location.href=this.href}">
+              手部检测
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E6%A8%A1%E5%9E%8B%E9%80%89%E5%9E%8B/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E6%A8%A1%E5%9E%8B%E9%80%89%E5%9E%8B/')}else{window.location.href=this.href}">
+              模型选型
+            </a>
+            
+            <a class="tag-pill" href="/tags/WiLoR/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/WiLoR/')}else{window.location.href=this.href}">
+              WiLoR
+            </a>
+            
+            <a class="tag-pill" href="/tags/YOLO/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/YOLO/')}else{window.location.href=this.href}">
+              YOLO
+            </a>
+            
+            <a class="tag-pill" href="/tags/MediaPipe/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/MediaPipe/')}else{window.location.href=this.href}">
+              MediaPipe
+            </a>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="post-body">
+    <div class="markdown-content">
+      <p>最近在做一个视频质量审核的项目，其中有一条规则：第一人称拍摄的视频，手可见帧占比必须 &gt;&#x3D; 90%。听起来简单——检测每一帧有没有手就行了。但实际跑下来，模型选型这一步就踩了不少坑。</p>
+<p>今天做了一组正式的 benchmark，结果挺出乎意料。记录一下。</p>
+<hr>
+<h3 id="实验怎么做的"><a href="#实验怎么做的" class="headerlink" title="实验怎么做的"></a>实验怎么做的</h3><p>拿了一段 10 分钟的第一人称居家视频（1920x1440，30fps），按 1fps 抽关键帧，总共 602 帧。每一帧分别过四个模型，记录是否检出、置信度、耗时。</p>
+<p>四个候选：</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>来源</th>
+<th>权重大小</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MediaPipe HandLandmarker (conf&#x3D;0.5)</td>
+<td>Google</td>
+<td>2MB</td>
+</tr>
+<tr>
+<td>MediaPipe HandLandmarker (conf&#x3D;0.3)</td>
+<td>Google（降阈值对照）</td>
+<td>2MB</td>
+</tr>
+<tr>
+<td>WiLoR detector.pt</td>
+<td>CVPR 2025，200 万+野外手部图像训练</td>
+<td>51MB</td>
+</tr>
+<tr>
+<td>YOLO26s-pose hand</td>
+<td>HuggingFace poptoz，26K 张训练</td>
+<td>19MB</td>
+</tr>
+</tbody></table>
+<p>环境是 Apple M1，CPU 推理，conda Python 3.11。</p>
+<hr>
+<h3 id="结果一览"><a href="#结果一览" class="headerlink" title="结果一览"></a>结果一览</h3><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>检出帧</th>
+<th>检出率</th>
+<th>漏检帧</th>
+<th>最长无手间隔</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>WiLoR</strong></td>
+<td><strong>601&#x2F;602</strong></td>
+<td><strong>99.83%</strong></td>
+<td><strong>1</strong></td>
+<td><strong>1.0s</strong></td>
+</tr>
+<tr>
+<td>MediaPipe (conf&#x3D;0.3)</td>
+<td>591&#x2F;602</td>
+<td>98.17%</td>
+<td>11</td>
+<td>2.0s</td>
+</tr>
+<tr>
+<td>MediaPipe (conf&#x3D;0.5)</td>
+<td>589&#x2F;602</td>
+<td>97.84%</td>
+<td>13</td>
+<td>2.0s</td>
+</tr>
+<tr>
+<td>YOLO26s-pose</td>
+<td>579&#x2F;602</td>
+<td>96.18%</td>
+<td>23</td>
+<td>2.0s</td>
+</tr>
+</tbody></table>
+<p>WiLoR 只漏了 1 帧，而且那一帧所有模型都漏了（帧 9，t&#x3D;9s，估计是手完全不在画面里）。换句话说，<strong>WiLoR 的独有漏检是 0 帧</strong>——凡是能看到手的帧，它全检出来了。</p>
+<p>YOLO26 反而垫底，漏了 23 帧，比 MediaPipe 默认配置还差。</p>
+<hr>
+<h3 id="YOLO26-为什么翻车"><a href="#YOLO26-为什么翻车" class="headerlink" title="YOLO26 为什么翻车"></a>YOLO26 为什么翻车</h3><p>这是最让我意外的。YOLO26s-pose hand 在通用数据集上 mAP50 高达 0.993，看纸面数据非常强。但实测最差。</p>
+<p>翻了一下它的漏检帧，做了交叉分析：YOLO26 独有漏检的 22 帧里，MediaPipe 在其中 16 帧都能高置信度（0.68-0.99）检出。说明这些帧里手是清清楚楚的，不是什么模糊、遮挡的边缘 case。</p>
+<p>问题出在训练数据。YOLO26 的训练集是 Ultralytics Hand Keypoints 26K 张，来自通用场景——也就是正面拍摄、第三人称视角居多。而第一人称视角下，手的姿态是从上往下看手掌或手背，和通用数据集的分布差异很大。</p>
+<p><strong>mAP 再高，域不对，就是不行。</strong> 这算是一个教训。</p>
+<hr>
+<h3 id="MediaPipe：降阈值不是解法"><a href="#MediaPipe：降阈值不是解法" class="headerlink" title="MediaPipe：降阈值不是解法"></a>MediaPipe：降阈值不是解法</h3><p>看到 MediaPipe 默认 conf&#x3D;0.5 漏了 13 帧，很自然的想法是降低阈值试试。所以加了一组 conf&#x3D;0.3 的对照。</p>
+<p>结果只多捡回来 2 帧，从 13 帧漏检降到 11 帧。改善微乎其微。</p>
+<p>看了一下检测流程就明白了：MediaPipe 的 HandLandmarker 是先检测候选区域，再做 landmark 回归。如果第一步就没产生候选，后面阈值再低也没用。问题不在阈值，而是检测器本身在这些帧上压根没找到手。</p>
+<hr>
+<h3 id="WiLoR-赢在哪"><a href="#WiLoR-赢在哪" class="headerlink" title="WiLoR 赢在哪"></a>WiLoR 赢在哪</h3><p>WiLoR 是 CVPR 2025 的工作，核心优势在训练数据——200 万+的野外手部图像，涵盖各种视角和场景。它的检测器本质上也是个 YOLO，但训练数据的量级和多样性完全不在一个层面。</p>
+<p>不过 WiLoR 也不是完美的：</p>
+<ul>
+<li><strong>置信度偏低</strong>：p50 只有 0.802，而 MediaPipe 的 p50 是 0.965。但对于”手有没有”这个二分类判定来说，置信度绝对值不重要，检出与否才是关键。</li>
+<li><strong>速度最慢</strong>：CPU 上 p50 延迟 150ms，是 MediaPipe 的 4 倍。但我们是 1fps 采样，150ms 完全可接受。</li>
+<li><strong>模型较大</strong>：51MB vs MediaPipe 的 2MB。对于服务端场景不是问题。</li>
+<li><strong>许可证</strong>：AGPL-3.0，商用需要注意。</li>
+</ul>
+<p>综合来看，对于”第一人称视频手部存在检测”这个具体任务，WiLoR 是当前最优解。</p>
+<hr>
+<h3 id="置信度和速度的完整数据"><a href="#置信度和速度的完整数据" class="headerlink" title="置信度和速度的完整数据"></a>置信度和速度的完整数据</h3><p>补充两张表，备查。</p>
+<p><strong>置信度分布：</strong></p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>min</th>
+<th>p10</th>
+<th>p50</th>
+<th>p90</th>
+<th>max</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MediaPipe (conf&#x3D;0.5)</td>
+<td>0.510</td>
+<td>0.869</td>
+<td>0.965</td>
+<td>0.992</td>
+<td>1.000</td>
+</tr>
+<tr>
+<td>MediaPipe (conf&#x3D;0.3)</td>
+<td>0.513</td>
+<td>0.873</td>
+<td>0.967</td>
+<td>0.992</td>
+<td>1.000</td>
+</tr>
+<tr>
+<td>WiLoR</td>
+<td>0.337</td>
+<td>0.729</td>
+<td>0.802</td>
+<td>0.846</td>
+<td>0.889</td>
+</tr>
+<tr>
+<td>YOLO26s-pose</td>
+<td>0.306</td>
+<td>0.635</td>
+<td>0.815</td>
+<td>0.877</td>
+<td>0.925</td>
+</tr>
+</tbody></table>
+<p><strong>CPU 推理延迟 (Apple M1)：</strong></p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>p50</th>
+<th>p90</th>
+<th>p99</th>
+<th>max</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MediaPipe</td>
+<td>39.6ms</td>
+<td>40.7ms</td>
+<td>43.1ms</td>
+<td>130.1ms</td>
+</tr>
+<tr>
+<td>MediaPipe (conf&#x3D;0.3)</td>
+<td>39.5ms</td>
+<td>40.6ms</td>
+<td>44.6ms</td>
+<td>141.3ms</td>
+</tr>
+<tr>
+<td>YOLO26s-pose</td>
+<td>104.0ms</td>
+<td>112.1ms</td>
+<td>136.6ms</td>
+<td>223.0ms</td>
+</tr>
+<tr>
+<td>WiLoR</td>
+<td>149.7ms</td>
+<td>169.4ms</td>
+<td>263.8ms</td>
+<td>321.0ms</td>
+</tr>
+</tbody></table>
+<hr>
+<h3 id="几点收获"><a href="#几点收获" class="headerlink" title="几点收获"></a>几点收获</h3><p><strong>1. 不要迷信 benchmark 指标。</strong> YOLO26 的 mAP50&#x3D;0.993 看着好看，但换个域就不行。模型选型必须在目标场景上实测。</p>
+<p><strong>2. 训练数据的多样性比模型架构更重要。</strong> WiLoR 和 YOLO26 底层都是 YOLO 架构，差距完全来自训练数据——200 万 vs 2.6 万，野外多视角 vs 通用场景。</p>
+<p><strong>3. 对于 presence detection 这种二分类任务，召回率是第一指标。</strong> 置信度高低、速度快慢都是次要的，漏检才是致命的。WiLoR 置信度虽然偏低，但检出率 99.83%，这才是该看的数字。</p>
+<p><strong>4. 降阈值是个诱人但通常无效的操作。</strong> 如果模型在某些样本上根本没产生候选，阈值调到 0 也没用。要看瓶颈在哪一步。</p>
+<hr>
+<h3 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h3><p>目前只在一段视频上测了，后面还要补充低光、户外、手-物交互等场景的测试。另外 WiLoR 的 AGPL-3.0 许可证对商业部署有限制，这块也需要评估。</p>
+<p>实验脚本支持多视频批量跑和 2x2 网格对比视频生成，有需要的可以直接复用。</p>
+
+    </div>
+  </div>
+
+</article>
+
+<!-- ═══════════ Window Mode ═══════════ -->
+<article class="post-window">
+
+  <!-- Header: avatar + name (left) | close button (right) -->
+  <div class="post-window-header">
+    <div class="post-window-author">
+      <img class="post-window-avatar" src="/img/avatar.svg" alt=""
+           onerror="this.onerror=null;this.style.display='none'">
+      <div class="post-window-author-info">
+        <span class="post-window-author-name">Elysio</span>
+      </div>
+    </div>
+    <button class="pw-close" onclick="try{window.parent.closeWindow()}catch(e){}" title="关闭">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 130">
+        <path fill-rule="evenodd" fill="rgb(196,34,9)"
+          d="M0.373,65.000 C0.087,51.609 3.792,38.466 11.131,27.293
+             C19.671,14.293 32.558,4.832 47.439,0.360
+             C90.023,0.360 132.606,0.360 175.190,0.360
+             C183.245,1.482 190.671,5.694 195.361,12.480
+             C201.498,21.357 202.014,33.317 196.706,43.453
+             C185.052,65.000 173.397,86.547 161.743,108.094
+             C156.410,114.144 150.041,119.160 142.916,122.907
+             C136.598,126.230 129.798,128.498 122.745,129.640
+             C99.884,129.640 77.024,129.640 54.163,129.640
+             C38.778,126.247 24.988,117.749 15.165,105.400
+             C6.284,94.236 0.695,80.120 0.373,65.000
+             ZM51.473,11.133 L171.156,11.133
+             C175.707,11.408 180.022,13.285 183.259,16.520
+             C187.160,20.420 189.059,25.857 188.637,31.333
+             C177.880,52.431 167.122,73.529 156.364,94.627
+             C152.903,101.201 147.810,106.769 141.571,110.787
+             C135.517,114.686 128.583,116.999 121.400,117.520
+             C98.988,117.520 76.575,117.520 54.163,117.520
+             C28.223,111.309 10.366,87.869 11.131,62.307
+             C11.831,38.916 28.017,17.942 51.473,11.133
+             ZM54.538,17.998
+             C91.618,17.954 128.697,17.910 165.777,17.866
+             C171.772,16.637 177.788,19.453 180.569,24.600
+             C183.069,29.227 182.591,35.067 179.224,39.413
+             C168.466,58.716 157.708,78.018 146.950,97.320
+             C144.417,101.017 141.229,104.211 137.537,106.747
+             C133.865,109.270 129.766,111.094 125.434,112.134
+             C102.574,112.134 79.713,112.134 56.852,112.134
+             C33.925,106.570 18.183,85.813 18.891,63.215
+             C19.538,42.562 33.826,24.045 54.538,17.998
+             ZM79.713,63.653
+             C74.334,58.267 68.955,52.880 63.576,47.493
+             C60.994,44.908 60.994,40.652 63.576,38.066
+             C66.158,35.481 70.407,35.481 72.989,38.066
+             C78.368,43.453 83.747,48.840 89.126,54.227
+             C94.505,48.840 99.884,43.453 105.263,38.066
+             C107.957,36.746 111.211,37.289 113.332,39.413
+             C115.452,41.537 115.995,44.796 114.676,47.493
+             C109.297,52.880 103.918,58.267 98.539,63.653
+             C103.918,69.040 109.297,74.427 114.676,79.813
+             C117.258,82.399 117.258,86.654 114.676,89.240
+             C112.094,91.826 107.845,91.826 105.263,89.240
+             C99.884,83.853 94.505,78.467 89.126,73.080
+             C83.299,78.916 77.472,84.751 71.645,90.587
+             C68.951,91.907 65.697,91.364 63.576,89.240
+             C61.455,87.116 60.913,83.858 62.231,81.160
+             C68.059,75.325 73.886,69.489 79.713,63.653 Z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Body: cover card (left) + scrollable content (right) -->
+  <div class="post-window-body">
+    
+    <aside class="post-window-cover-panel">
+      <div class="post-window-cover-card">
+        <img src="https://images.unsplash.com/photo-1527430253228-e93688616381?w=1200&q=80" alt="第一人称手部检测选型：WiLoR 碾压，YOLO26 翻车记"
+             onerror="this.onerror=null;this.style.display='none'">
+      </div>
+    </aside>
+    
+
+    <section class="post-window-main">
+      <h1 class="post-window-title">第一人称手部检测选型：WiLoR 碾压，YOLO26 翻车记</h1>
+      <div class="post-window-content">
+        <div class="markdown-content">
+          <p>最近在做一个视频质量审核的项目，其中有一条规则：第一人称拍摄的视频，手可见帧占比必须 &gt;&#x3D; 90%。听起来简单——检测每一帧有没有手就行了。但实际跑下来，模型选型这一步就踩了不少坑。</p>
+<p>今天做了一组正式的 benchmark，结果挺出乎意料。记录一下。</p>
+<hr>
+<h3 id="实验怎么做的"><a href="#实验怎么做的" class="headerlink" title="实验怎么做的"></a>实验怎么做的</h3><p>拿了一段 10 分钟的第一人称居家视频（1920x1440，30fps），按 1fps 抽关键帧，总共 602 帧。每一帧分别过四个模型，记录是否检出、置信度、耗时。</p>
+<p>四个候选：</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>来源</th>
+<th>权重大小</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MediaPipe HandLandmarker (conf&#x3D;0.5)</td>
+<td>Google</td>
+<td>2MB</td>
+</tr>
+<tr>
+<td>MediaPipe HandLandmarker (conf&#x3D;0.3)</td>
+<td>Google（降阈值对照）</td>
+<td>2MB</td>
+</tr>
+<tr>
+<td>WiLoR detector.pt</td>
+<td>CVPR 2025，200 万+野外手部图像训练</td>
+<td>51MB</td>
+</tr>
+<tr>
+<td>YOLO26s-pose hand</td>
+<td>HuggingFace poptoz，26K 张训练</td>
+<td>19MB</td>
+</tr>
+</tbody></table>
+<p>环境是 Apple M1，CPU 推理，conda Python 3.11。</p>
+<hr>
+<h3 id="结果一览"><a href="#结果一览" class="headerlink" title="结果一览"></a>结果一览</h3><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>检出帧</th>
+<th>检出率</th>
+<th>漏检帧</th>
+<th>最长无手间隔</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>WiLoR</strong></td>
+<td><strong>601&#x2F;602</strong></td>
+<td><strong>99.83%</strong></td>
+<td><strong>1</strong></td>
+<td><strong>1.0s</strong></td>
+</tr>
+<tr>
+<td>MediaPipe (conf&#x3D;0.3)</td>
+<td>591&#x2F;602</td>
+<td>98.17%</td>
+<td>11</td>
+<td>2.0s</td>
+</tr>
+<tr>
+<td>MediaPipe (conf&#x3D;0.5)</td>
+<td>589&#x2F;602</td>
+<td>97.84%</td>
+<td>13</td>
+<td>2.0s</td>
+</tr>
+<tr>
+<td>YOLO26s-pose</td>
+<td>579&#x2F;602</td>
+<td>96.18%</td>
+<td>23</td>
+<td>2.0s</td>
+</tr>
+</tbody></table>
+<p>WiLoR 只漏了 1 帧，而且那一帧所有模型都漏了（帧 9，t&#x3D;9s，估计是手完全不在画面里）。换句话说，<strong>WiLoR 的独有漏检是 0 帧</strong>——凡是能看到手的帧，它全检出来了。</p>
+<p>YOLO26 反而垫底，漏了 23 帧，比 MediaPipe 默认配置还差。</p>
+<hr>
+<h3 id="YOLO26-为什么翻车"><a href="#YOLO26-为什么翻车" class="headerlink" title="YOLO26 为什么翻车"></a>YOLO26 为什么翻车</h3><p>这是最让我意外的。YOLO26s-pose hand 在通用数据集上 mAP50 高达 0.993，看纸面数据非常强。但实测最差。</p>
+<p>翻了一下它的漏检帧，做了交叉分析：YOLO26 独有漏检的 22 帧里，MediaPipe 在其中 16 帧都能高置信度（0.68-0.99）检出。说明这些帧里手是清清楚楚的，不是什么模糊、遮挡的边缘 case。</p>
+<p>问题出在训练数据。YOLO26 的训练集是 Ultralytics Hand Keypoints 26K 张，来自通用场景——也就是正面拍摄、第三人称视角居多。而第一人称视角下，手的姿态是从上往下看手掌或手背，和通用数据集的分布差异很大。</p>
+<p><strong>mAP 再高，域不对，就是不行。</strong> 这算是一个教训。</p>
+<hr>
+<h3 id="MediaPipe：降阈值不是解法"><a href="#MediaPipe：降阈值不是解法" class="headerlink" title="MediaPipe：降阈值不是解法"></a>MediaPipe：降阈值不是解法</h3><p>看到 MediaPipe 默认 conf&#x3D;0.5 漏了 13 帧，很自然的想法是降低阈值试试。所以加了一组 conf&#x3D;0.3 的对照。</p>
+<p>结果只多捡回来 2 帧，从 13 帧漏检降到 11 帧。改善微乎其微。</p>
+<p>看了一下检测流程就明白了：MediaPipe 的 HandLandmarker 是先检测候选区域，再做 landmark 回归。如果第一步就没产生候选，后面阈值再低也没用。问题不在阈值，而是检测器本身在这些帧上压根没找到手。</p>
+<hr>
+<h3 id="WiLoR-赢在哪"><a href="#WiLoR-赢在哪" class="headerlink" title="WiLoR 赢在哪"></a>WiLoR 赢在哪</h3><p>WiLoR 是 CVPR 2025 的工作，核心优势在训练数据——200 万+的野外手部图像，涵盖各种视角和场景。它的检测器本质上也是个 YOLO，但训练数据的量级和多样性完全不在一个层面。</p>
+<p>不过 WiLoR 也不是完美的：</p>
+<ul>
+<li><strong>置信度偏低</strong>：p50 只有 0.802，而 MediaPipe 的 p50 是 0.965。但对于”手有没有”这个二分类判定来说，置信度绝对值不重要，检出与否才是关键。</li>
+<li><strong>速度最慢</strong>：CPU 上 p50 延迟 150ms，是 MediaPipe 的 4 倍。但我们是 1fps 采样，150ms 完全可接受。</li>
+<li><strong>模型较大</strong>：51MB vs MediaPipe 的 2MB。对于服务端场景不是问题。</li>
+<li><strong>许可证</strong>：AGPL-3.0，商用需要注意。</li>
+</ul>
+<p>综合来看，对于”第一人称视频手部存在检测”这个具体任务，WiLoR 是当前最优解。</p>
+<hr>
+<h3 id="置信度和速度的完整数据"><a href="#置信度和速度的完整数据" class="headerlink" title="置信度和速度的完整数据"></a>置信度和速度的完整数据</h3><p>补充两张表，备查。</p>
+<p><strong>置信度分布：</strong></p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>min</th>
+<th>p10</th>
+<th>p50</th>
+<th>p90</th>
+<th>max</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MediaPipe (conf&#x3D;0.5)</td>
+<td>0.510</td>
+<td>0.869</td>
+<td>0.965</td>
+<td>0.992</td>
+<td>1.000</td>
+</tr>
+<tr>
+<td>MediaPipe (conf&#x3D;0.3)</td>
+<td>0.513</td>
+<td>0.873</td>
+<td>0.967</td>
+<td>0.992</td>
+<td>1.000</td>
+</tr>
+<tr>
+<td>WiLoR</td>
+<td>0.337</td>
+<td>0.729</td>
+<td>0.802</td>
+<td>0.846</td>
+<td>0.889</td>
+</tr>
+<tr>
+<td>YOLO26s-pose</td>
+<td>0.306</td>
+<td>0.635</td>
+<td>0.815</td>
+<td>0.877</td>
+<td>0.925</td>
+</tr>
+</tbody></table>
+<p><strong>CPU 推理延迟 (Apple M1)：</strong></p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>p50</th>
+<th>p90</th>
+<th>p99</th>
+<th>max</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MediaPipe</td>
+<td>39.6ms</td>
+<td>40.7ms</td>
+<td>43.1ms</td>
+<td>130.1ms</td>
+</tr>
+<tr>
+<td>MediaPipe (conf&#x3D;0.3)</td>
+<td>39.5ms</td>
+<td>40.6ms</td>
+<td>44.6ms</td>
+<td>141.3ms</td>
+</tr>
+<tr>
+<td>YOLO26s-pose</td>
+<td>104.0ms</td>
+<td>112.1ms</td>
+<td>136.6ms</td>
+<td>223.0ms</td>
+</tr>
+<tr>
+<td>WiLoR</td>
+<td>149.7ms</td>
+<td>169.4ms</td>
+<td>263.8ms</td>
+<td>321.0ms</td>
+</tr>
+</tbody></table>
+<hr>
+<h3 id="几点收获"><a href="#几点收获" class="headerlink" title="几点收获"></a>几点收获</h3><p><strong>1. 不要迷信 benchmark 指标。</strong> YOLO26 的 mAP50&#x3D;0.993 看着好看，但换个域就不行。模型选型必须在目标场景上实测。</p>
+<p><strong>2. 训练数据的多样性比模型架构更重要。</strong> WiLoR 和 YOLO26 底层都是 YOLO 架构，差距完全来自训练数据——200 万 vs 2.6 万，野外多视角 vs 通用场景。</p>
+<p><strong>3. 对于 presence detection 这种二分类任务，召回率是第一指标。</strong> 置信度高低、速度快慢都是次要的，漏检才是致命的。WiLoR 置信度虽然偏低，但检出率 99.83%，这才是该看的数字。</p>
+<p><strong>4. 降阈值是个诱人但通常无效的操作。</strong> 如果模型在某些样本上根本没产生候选，阈值调到 0 也没用。要看瓶颈在哪一步。</p>
+<hr>
+<h3 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h3><p>目前只在一段视频上测了，后面还要补充低光、户外、手-物交互等场景的测试。另外 WiLoR 的 AGPL-3.0 许可证对商业部署有限制，这块也需要评估。</p>
+<p>实验脚本支持多视频批量跑和 2x2 网格对比视频生成，有需要的可以直接复用。</p>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+</article>
+
+  </main>
+
+  <!-- Window Popup (article iframe viewer) -->
+  <div class="window" id="hl-window">
+    <div class="window-content">
+      <iframe class="window-frame" id="hl-window-frame"></iframe>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ---- Loading overlay: fade out on page load ---- */
+    window.addEventListener('load', function() {
+      var loading = document.getElementById('hl-loading');
+      if (!loading) return;
+      loading.classList.add('fade-out');
+      setTimeout(function() {
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+      }, 400);
+    });
+
+    /* ---- _0kd page transition (globally callable) ---- */
+    window._0kd = function(callback) {
+      var el = document.getElementById('hl-0kd');
+      if (!el) return;
+      el.style.display = 'block';
+      el.style.animationPlayState = 'running';
+      setTimeout(function() {
+        if (typeof callback === 'function') callback();
+        setTimeout(function() {
+          el.style.animationPlayState = 'paused';
+          el.style.display = 'none';
+        }, 500);
+      }, 1000);
+    };
+
+    /* ---- Window popup controls (globally callable) ---- */
+    var _windowPrevUrl = null;
+
+    window.openWindow = function(url) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win || !frame) return;
+      _windowPrevUrl = window.location.href;   // remember where we came from
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      frame.src = url + sep + 'window=true';
+      history.pushState({ hollowWindow: true }, '', url);
+      win.style.display = 'flex';
+    };
+
+    window.closeWindow = function(fromPopstate) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win) return;
+      win.style.display = 'none';
+      if (frame) frame.src = '';
+      if (!fromPopstate) {
+        // Replace article URL with original page URL — no popstate, no navigation side-effects
+        history.replaceState(null, '', _windowPrevUrl || window.location.pathname);
+      }
+      _windowPrevUrl = null;
+    };
+
+    /* Close window on Escape key */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.closeWindow();
+    });
+
+    /* Close window when clicking backdrop (outside content) */
+    var winEl = document.getElementById('hl-window');
+    if (winEl) {
+      winEl.addEventListener('click', function(e) {
+        if (e.target === winEl) window.closeWindow();
+      });
+    }
+
+    /* Close window on browser back */
+    window.addEventListener('popstate', function() {
+      var win = document.getElementById('hl-window');
+      if (win && win.style.display !== 'none') closeWindow(true);
+    });
+  })();
+  </script>
+
+  
+<!-- HL Search Modal -->
+<div class="hl-search-overlay" id="hl-search-overlay" hidden>
+  <div class="hl-search-backdrop" id="hl-search-backdrop"></div>
+  <div class="hl-search-modal" role="dialog" aria-label="搜索">
+    <div class="hl-search-header">
+      <svg class="hl-search-icon-prefix" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="hl-search-input" id="hl-search-input"
+             type="search" placeholder="搜索文章…"
+             autocomplete="off" spellcheck="false" aria-label="搜索关键字">
+      <button class="hl-search-close" id="hl-search-close" title="关闭 (Esc)" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hl-search-divider"></div>
+
+    <div class="hl-search-body" id="hl-search-body">
+      <div class="hl-search-hint" id="hl-search-hint">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>输入关键字开始搜索</span>
+      </div>
+      <div class="hl-search-results" id="hl-search-results" role="listbox" aria-label="搜索结果"></div>
+    </div>
+
+    <div class="hl-search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/search.css">
+<script>window.__HL_SEARCH_PATH__ = '/search.json';</script>
+<script src="/js/search.js"></script>
+
+
+  <script src="/js/code-copy.js"></script>
+
+</body>
+</html>

@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/css/style.css">
   <meta property="og:type" content="website">
 <meta property="og:title" content="Elysian Realm">
-<meta property="og:url" content="https://everlasting-elysium.github.io/page/2/index.html">
+<meta property="og:url" content="https://everlasting-elysium.github.io/tags/MediaPipe/index.html">
 <meta property="og:site_name" content="Elysian Realm">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:author" content="Everlasting Elysium">
@@ -36,7 +36,7 @@
 
   <!-- Header -->
   
-  <header class="header--curtain-hidden">
+  <header>
   <!-- Personal Info Card -->
   <a href="/" class="personal">
     <span class="avatar-link">
@@ -65,7 +65,7 @@
   <div class="tabs">
     
       
-      <span class="tab choiced">
+      <span class="tab">
         <a href="/">推送</a>
       </span>
     
@@ -75,7 +75,7 @@
       </span>
     
       
-      <span class="tab">
+      <span class="tab choiced">
         <a href="/tags/">标签</a>
       </span>
     
@@ -110,128 +110,40 @@
 
 
   <!-- Main Content -->
-  <main class="has-curtain">
-    
+  <main>
+    <link rel="stylesheet" href="/css/tag.css">
 
-<div class="hl-curtain" id="hl-curtain">
-  <div class="curtain-bg-wrap">
-    
-    <video class="curtain-bg curtain-bg--video" autoplay muted loop playsinline>
-      <source src="/img/13.mp4">
-    </video>
-    
-    <div class="curtain-overlay"></div>
+
+
+<div class="tag-wrap">
+
+  <div class="tag-header">
+    <h1 class="tag-name"># MediaPipe</h1>
+    <div class="tag-article-count"><span>1</span> articles</div>
   </div>
-  <div class="curtain-body">
-    <h1 class="curtain-title">Elysian Realm</h1>
-    <div class="curtain-tw">
-      <span class="curtain-tw-text" id="curtain-tw-text"></span><span class="curtain-tw-cursor" aria-hidden="true"></span>
-    </div>
-    <button class="curtain-scroll-btn" id="curtain-scroll-btn" aria-label="向下探索">
-      <span class="curtain-scroll-label">向下探索</span>
-      <svg class="curtain-scroll-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="6 9 12 15 18 9"/>
-      </svg>
-    </button>
+
+  <div class="tag-articles">
+    
+    <a class="tag-article-card"
+       href="/2026/05/26/2026-05-27-hand-detection-model-benchmark/"
+       onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/2026/05/26/2026-05-27-hand-detection-model-benchmark/')}else{window.location.href=this.href}">
+
+      
+      <img class="tag-article-thumb"
+           src="https://images.unsplash.com/photo-1527430253228-e93688616381?w=1200&q=80"
+           alt="" loading="lazy">
+      
+
+      <div class="tag-article-info">
+        <div class="tag-article-title">第一人称手部检测选型：WiLoR 碾压，YOLO26 翻车记</div>
+        <div class="tag-article-date">2026-05-27</div>
+      </div>
+
+    </a>
+    
   </div>
+
 </div>
-
-<script>
-  window.__HL_CURTAIN_TEXTS__ = ["这里是我的博客","记录代码与生活","探索未知的边界"];
-</script>
-<link rel="stylesheet" href="/css/curtain.css">
-<script src="/js/curtain.js"></script>
-
-
-
-
-
-<link rel="stylesheet" href="/css/home.css">
-
-<main class="home">
-  <div class="list">
-    
-    
-      
-    
-      
-    
-      
-    
-      
-    
-      
-    
-      
-    
-      
-    
-      
-    
-      
-    
-      
-    
-      
-    
-      
-    
-
-    
-    
-      
-        <a href="/2023/05/04/2023-05-05-optimizing-server/" class="card">
-          <div class="card-cover">
-            <img
-              class="headimg"
-              src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1200&q=80"
-              alt="服务性能优化：从 Redis 到 Memcache 的降本增效之路"
-              onerror="this.onerror=null;this.src='/img/default-cover.svg'"
-            >
-            
-          </div>
-          <div class="post">
-            <h2 class="title">服务性能优化：从 Redis 到 Memcache 的降本增效之路</h2>
-            <p class="excerpt">
-              近期，所负责的服务在性能方面遭遇严峻挑战，难以支撑当前业务的 QPS。
-为解决这一问题，我们对业务进行了深入分析，情况如下：
-
-核心任务数据的查询占据整体...
-            </p>
-          </div>
-        </a>
-      
-    
-      
-        <a href="/2022/09/11/2022-09-12-once-optimizing/" class="card">
-          <div class="card-cover">
-            <img
-              class="headimg"
-              src="https://images.unsplash.com/photo-1431440869543-efaf3388c585?w=1200&q=80"
-              alt="关于一次优化"
-              onerror="this.onerror=null;this.src='/img/default-cover.svg'"
-            >
-            
-          </div>
-          <div class="post">
-            <h2 class="title">关于一次优化</h2>
-            <p class="excerpt">
-              还是炸了，果然一个功能，如果要改到基本看不出原来的样子，最好的方案还是重做，轻装前行。
-
-💩山是怎么练成的
-另外的发现
-🔚
-
-如果要过要改一个功能，新...
-            </p>
-          </div>
-        </a>
-      
-    
-  </div>
-</main>
-
-<script src="/js/waterfall.js"></script>
 
   </main>
 
