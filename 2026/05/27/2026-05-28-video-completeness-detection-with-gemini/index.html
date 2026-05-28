@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>用 Gemini 多帧理解做视频完整性检测：两步采样的思路 | Elysian Realm</title>
+  <meta name="description" content="">
+  
+  <!-- Font: MaoKen Assorted Sans (unpkg CDN, same as interknot reference) -->
+  <style>@import url('https://unpkg.com/@chinese-fonts/mksjh@1.4.0/dist/MaokenAssortedSans1.30/result.css');</style>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="description" content="项目里有一条质量规则：第一人称拍摄的视频，录制必须完整——开头不能是动作已经在进行中（开晚了），结尾不能卡在动作半截（关早了）。 听起来不难，但一展开就有意思了。”完整”这个概念带语义——你得知道这个任务是什么、包含几个步骤、从什么状态开始算起、到什么状态算结束。纯靠传统视觉做不了这件事。 今天的实验：拿 Gemini 的多帧理解能力来判断。记录一下思路和踩的坑。  为什么不能直接把视频丢给模型最">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用 Gemini 多帧理解做视频完整性检测：两步采样的思路">
+<meta property="og:url" content="https://everlasting-elysium.github.io/2026/05/27/2026-05-28-video-completeness-detection-with-gemini/index.html">
+<meta property="og:site_name" content="Elysian Realm">
+<meta property="og:description" content="项目里有一条质量规则：第一人称拍摄的视频，录制必须完整——开头不能是动作已经在进行中（开晚了），结尾不能卡在动作半截（关早了）。 听起来不难，但一展开就有意思了。”完整”这个概念带语义——你得知道这个任务是什么、包含几个步骤、从什么状态开始算起、到什么状态算结束。纯靠传统视觉做不了这件事。 今天的实验：拿 Gemini 的多帧理解能力来判断。记录一下思路和踩的坑。  为什么不能直接把视频丢给模型最">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-05-27T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-05-28T07:47:10.159Z">
+<meta property="article:author" content="Everlasting Elysium">
+<meta property="article:tag" content="计算机视觉">
+<meta property="article:tag" content="Gemini">
+<meta property="article:tag" content="视频理解">
+<meta property="article:tag" content="多模态">
+<meta property="article:tag" content="Prompt Engineering">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading" id="hl-loading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading</span>
+  </div>
+
+  <!-- _0kd Page Transition Layer -->
+  <div class="_0kd" id="hl-0kd"></div>
+
+  <!-- Background Layer -->
+  
+  <div class="bg" style="background-image: url('/img/bg.png');"></div>
+
+  <!-- Header -->
+  
+  <header>
+  <!-- Personal Info Card -->
+  <a href="/" class="personal">
+    <span class="avatar-link">
+      <img
+        src="/img/avatar.svg"
+        alt="Elysio"
+        class="avatar"
+        onerror="this.onerror=null;this.style.background='#333';"
+      >
+    </span>
+    <span class="info-bar">
+      <span class="info-bio">知行合一,学以致用；但行好事，莫问前程。</span>
+      <span class="info-url">
+        <span class="info-url-lock">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/>
+            <path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        https://everlasting-elysium.github.io/
+      </span>
+    </span>
+  </a>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    
+      
+      <span class="tab">
+        <a href="/">推送</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/archives/">归档</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/tags/">标签</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/album/">相册</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/friends/">伙伴</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/about/">关于</a>
+      </span>
+    
+  </div>
+
+  <!-- Search Button -->
+  
+  <button class="hl-search-btn" id="hl-search-btn"
+          title="搜索 (Ctrl+K)" aria-label="搜索">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+  
+</header>
+
+
+  <!-- Main Content -->
+  <main class="has-hero">
+    <link rel="stylesheet" href="/css/post.css">
+<link rel="stylesheet" href="/css/post-window.css">
+
+<script>
+(function () {
+  var isWindow = false;
+  try { isWindow = new URLSearchParams(window.location.search).get('window') === 'true'; } catch(e) {}
+  if (!isWindow) { try { isWindow = window.self !== window.top; } catch(e) { isWindow = true; } }
+  if (isWindow) document.documentElement.classList.add('window-mode');
+})();
+</script>
+
+
+
+<!-- ═══════════ Normal Mode ═══════════ -->
+<article class="post-article">
+
+  
+  <div class="post-hero" style="background-image:url('https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1200&q=80')">
+    <div class="post-hero-overlay">
+      <div class="post-hero-inner">
+        <h1 class="post-title">用 Gemini 多帧理解做视频完整性检测：两步采样的思路</h1>
+        <div class="post-meta">
+          <time datetime="2026-05-28">
+            2026 / 05 / 28
+          </time>
+          
+          <div class="post-tags">
+            
+            <a class="tag-pill" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/')}else{window.location.href=this.href}">
+              计算机视觉
+            </a>
+            
+            <a class="tag-pill" href="/tags/Gemini/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/Gemini/')}else{window.location.href=this.href}">
+              Gemini
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E8%A7%86%E9%A2%91%E7%90%86%E8%A7%A3/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E8%A7%86%E9%A2%91%E7%90%86%E8%A7%A3/')}else{window.location.href=this.href}">
+              视频理解
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E5%A4%9A%E6%A8%A1%E6%80%81/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E5%A4%9A%E6%A8%A1%E6%80%81/')}else{window.location.href=this.href}">
+              多模态
+            </a>
+            
+            <a class="tag-pill" href="/tags/Prompt-Engineering/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/Prompt-Engineering/')}else{window.location.href=this.href}">
+              Prompt Engineering
+            </a>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="post-body">
+    <div class="markdown-content">
+      <p>项目里有一条质量规则：第一人称拍摄的视频，录制必须完整——开头不能是动作已经在进行中（开晚了），结尾不能卡在动作半截（关早了）。</p>
+<p>听起来不难，但一展开就有意思了。”完整”这个概念带语义——你得知道这个任务是什么、包含几个步骤、从什么状态开始算起、到什么状态算结束。纯靠传统视觉做不了这件事。</p>
+<p>今天的实验：拿 Gemini 的多帧理解能力来判断。记录一下思路和踩的坑。</p>
+<hr>
+<h3 id="为什么不能直接把视频丢给模型"><a href="#为什么不能直接把视频丢给模型" class="headerlink" title="为什么不能直接把视频丢给模型"></a>为什么不能直接把视频丢给模型</h3><p>最直觉的想法是把整段视频传给 Gemini，问它”这视频完整吗”。</p>
+<p>不行，两个原因：</p>
+<ol>
+<li><strong>Token 成本</strong>。一段 3 分钟的视频按 1fps 抽帧就是 180 张图，每张图按 768px 算，token 开销巨大。实际场景要跑几百上千条视频，成本不可接受。</li>
+<li><strong>注意力稀释</strong>。帧数越多，模型对每一帧的注意力越分散。而完整性判断的关键信息集中在开头和结尾——中间大段都是正常执行过程，对判定没什么帮助。</li>
+</ol>
+<p>所以核心问题变成了：<strong>怎么用尽可能少的帧，覆盖到最关键的信息</strong>。</p>
+<hr>
+<h3 id="两步走：先规划，再判断"><a href="#两步走：先规划，再判断" class="headerlink" title="两步走：先规划，再判断"></a>两步走：先规划，再判断</h3><p>最终方案是两步 LLM 调用。</p>
+<p><strong>Step 1：任务周期估算。</strong> 把任务描述发给 Gemini（纯文本，没有图），让它估算执行一次这个任务需要多长时间、分几步。比如”在厨房洗碗并放到碗柜”，模型会拆成打开水龙头→挤洗洁精→刷碗→冲洗→放碗柜，估算总共 2 分钟。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;estimated_cycle_seconds&quot;</span><span class="punctuation">:</span> <span class="number">120</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;steps&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;step&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span> <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;打开水龙头&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;seconds&quot;</span><span class="punctuation">:</span> <span class="number">5</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;step&quot;</span><span class="punctuation">:</span> <span class="number">2</span><span class="punctuation">,</span> <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;挤洗洁精&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;seconds&quot;</span><span class="punctuation">:</span> <span class="number">5</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;step&quot;</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span> <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;刷碗&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;seconds&quot;</span><span class="punctuation">:</span> <span class="number">60</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;step&quot;</span><span class="punctuation">:</span> <span class="number">4</span><span class="punctuation">,</span> <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;冲洗&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;seconds&quot;</span><span class="punctuation">:</span> <span class="number">30</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;step&quot;</span><span class="punctuation">:</span> <span class="number">5</span><span class="punctuation">,</span> <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;放碗柜&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;seconds&quot;</span><span class="punctuation">:</span> <span class="number">20</span><span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 2：智能采样 + 完整性判断。</strong> 根据估算出的周期时长和步骤边界，生成一个采样计划，然后从视频里抽帧、发给 Gemini 做多帧理解。</p>
+<p>这样一来，10-20 帧就能覆盖一段几分钟甚至十几分钟的视频。</p>
+<hr>
+<h3 id="采样策略：头尾重、中间轻"><a href="#采样策略：头尾重、中间轻" class="headerlink" title="采样策略：头尾重、中间轻"></a>采样策略：头尾重、中间轻</h3><p>完整性检测和普通的视频理解不一样——判定全靠头和尾。所以采样策略是非均匀的：</p>
+<ul>
+<li><strong>头部密采</strong>：视频前 30% 分配 5 个采样点，用来判断录制开头是否截断</li>
+<li><strong>中间按步骤边界采</strong>：每个步骤的中点各一帧，确认任务在正常推进</li>
+<li><strong>尾部密采</strong>：视频后 30% 分配 5 个采样点，用来判断录制结尾是否截断</li>
+<li><strong>强制首尾帧</strong>：第 0 帧和最后一帧必采</li>
+</ul>
+<p>对于可能包含多次重复执行的长视频（比如连续洗了三个碗），会根据 Step 1 估算的周期时长推算循环数，每个循环内都按上述策略铺采样点。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">n_cycles = <span class="built_in">max</span>(<span class="number">1</span>, <span class="built_in">round</span>(video_duration / cycle_duration))</span><br></pre></td></tr></table></figure>
+
+<p>但有个帧预算上限——每个循环至少需要 <code>步骤数 + 2</code> 帧，如果帧预算不够就减少循环数。宁可把少数几个循环看清楚，也不要每个循环都只抽一两帧。</p>
+<hr>
+<h3 id="Prompt-的关键区分：”录制完整”≠”任务完美”"><a href="#Prompt-的关键区分：”录制完整”≠”任务完美”" class="headerlink" title="Prompt 的关键区分：”录制完整”≠”任务完美”"></a>Prompt 的关键区分：”录制完整”≠”任务完美”</h3><p>Prompt 设计上花了不少心思。最大的坑是：<strong>模型很容易把”录制是否被截断”和”任务是否做得好”搞混</strong>。</p>
+<p>比如一段视频里连续洗了三个碗，第三个碗的步骤比较潦草。模型可能会判”不完整”，但实际上录制本身是完整的——开头有准备动作，结尾有收尾动作，只是后面几次执行质量差了点而已。</p>
+<p>所以 prompt 里明确区分了：</p>
+<blockquote>
+<p>“Recording completeness” &#x3D; Did the camera start BEFORE the task began and stop AFTER the task ended?<br>This is NOT about whether every repetition of the task is performed perfectly.</p>
+</blockquote>
+<p>并且给了具体的判定标准：</p>
+<ul>
+<li><strong>COMPLETE</strong>：开头能看到任务开始前或刚开始的状态，结尾能看到任务结束或自然停止的状态</li>
+<li><strong>TRUNCATED</strong>：第一帧就已经在做了（开头截断），或最后一帧动作还没做完就断了（结尾截断）</li>
+</ul>
+<p>还专门列了”不算截断”的情况：</p>
+<ul>
+<li>重复执行时后面几次步骤被压缩了</li>
+<li>步骤执行很快、采样帧没抓到</li>
+<li>两次执行之间有暂停或无关动作</li>
+</ul>
+<p>这些 negative case 的明确列举很重要，不加的话模型误判率会高不少。</p>
+<hr>
+<h3 id="输出结构"><a href="#输出结构" class="headerlink" title="输出结构"></a>输出结构</h3><p>让模型返回结构化 JSON，方便下游处理：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;recording_complete&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;recording_start&quot;</span><span class="punctuation">:</span> <span class="string">&quot;clean&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;recording_end&quot;</span><span class="punctuation">:</span> <span class="string">&quot;clean&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;start_evidence&quot;</span><span class="punctuation">:</span> <span class="string">&quot;第一帧显示操作者站在水槽前，双手自然下垂，尚未开始操作&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;end_evidence&quot;</span><span class="punctuation">:</span> <span class="string">&quot;最后几帧显示碗已放入碗柜，操作者手离开碗柜&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;confidence&quot;</span><span class="punctuation">:</span> <span class="number">0.92</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;total_executions&quot;</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;complete_executions&quot;</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;executions&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;execution&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span> <span class="attr">&quot;status&quot;</span><span class="punctuation">:</span> <span class="string">&quot;complete&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;steps_observed&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span><span class="string">&quot;2&quot;</span><span class="punctuation">,</span><span class="string">&quot;3&quot;</span><span class="punctuation">,</span><span class="string">&quot;4&quot;</span><span class="punctuation">,</span><span class="string">&quot;5&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span> <span class="attr">&quot;note&quot;</span><span class="punctuation">:</span> <span class="string">&quot;完整执行&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;execution&quot;</span><span class="punctuation">:</span> <span class="number">2</span><span class="punctuation">,</span> <span class="attr">&quot;status&quot;</span><span class="punctuation">:</span> <span class="string">&quot;complete&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;steps_observed&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span><span class="string">&quot;2&quot;</span><span class="punctuation">,</span><span class="string">&quot;3&quot;</span><span class="punctuation">,</span><span class="string">&quot;4&quot;</span><span class="punctuation">,</span><span class="string">&quot;5&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span> <span class="attr">&quot;note&quot;</span><span class="punctuation">:</span> <span class="string">&quot;完整执行&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;execution&quot;</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span> <span class="attr">&quot;status&quot;</span><span class="punctuation">:</span> <span class="string">&quot;complete&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;steps_observed&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;2&quot;</span><span class="punctuation">,</span><span class="string">&quot;3&quot;</span><span class="punctuation">,</span><span class="string">&quot;4&quot;</span><span class="punctuation">,</span><span class="string">&quot;5&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span> <span class="attr">&quot;note&quot;</span><span class="punctuation">:</span> <span class="string">&quot;步骤1较快未捕获到&quot;</span><span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;reasoning&quot;</span><span class="punctuation">:</span> <span class="string">&quot;录制从操作者准备阶段开始，到最后一个碗放入碗柜后自然结束。三次执行均被完整录制。&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>start&#x2F;end 各有 evidence 字段，要求模型说出开头和结尾几帧看到了什么。这是个有效的”强制推理”手段——要求模型先描述观察到的内容，再给出判定，能减少胡说的概率。</p>
+<hr>
+<h3 id="几个实现细节"><a href="#几个实现细节" class="headerlink" title="几个实现细节"></a>几个实现细节</h3><p><strong>帧压缩</strong>。采样出来的帧会缩放到最大边 768px，JPEG 质量 85。对于完整性判断来说，分辨率不需要太高，手和物体的粗粒度动作变化就够了。</p>
+<p><strong>COS 集成</strong>。支持直接从腾讯云 COS 下载视频，本地有缓存机制，同一个视频不会重复下载。方便跑批量实验。</p>
+<p><strong>默认回退</strong>。如果 Step 1 的周期估算失败（JSON 解析错误、预估时长为 0 之类的），会回退到一个固定策略：头部 20%、尾部 50%、中间 30%。因为即使没有 LLM 规划，头尾密采这个大方向不变。</p>
+<hr>
+<h3 id="目前的感受"><a href="#目前的感受" class="headerlink" title="目前的感受"></a>目前的感受</h3><p>这个方案的核心优势是<strong>成本可控</strong>。用两次 API 调用（一次纯文本、一次多帧）替代整段视频的理解，帧数压到 10-20 帧级别，单条视频的成本很低。</p>
+<p>但有几个还没解决的问题：</p>
+<ol>
+<li><strong>精度还没系统评估</strong>。目前只在两段视频上定性验证了，还没标注 ground truth 做定量 benchmark。后面需要标一批数据跑准确率&#x2F;召回率。</li>
+<li><strong>Step 1 的估算偏差</strong>。LLM 对任务时长的估算不一定准，如果严重偏离实际，采样点就会错位。目前的应对是默认回退策略，但更好的做法可能是结合视频的运动特征做自适应采样。</li>
+<li><strong>边缘 case</strong>。比如任务描述本身就很模糊（”整理房间”——怎么算整理完了？），或者视频里做了一半换了个完全不同的事。这些情况下模型的判定可信度会打折扣。</li>
+</ol>
+<p>下一步打算标注一批数据做正式评估，也准备试试视频开头结尾各截 5 秒直接传视频片段（而非抽帧）的方案，看看对截断检测是否有提升。</p>
+
+    </div>
+  </div>
+
+</article>
+
+<!-- ═══════════ Window Mode ═══════════ -->
+<article class="post-window">
+
+  <!-- Header: avatar + name (left) | close button (right) -->
+  <div class="post-window-header">
+    <div class="post-window-author">
+      <img class="post-window-avatar" src="/img/avatar.svg" alt=""
+           onerror="this.onerror=null;this.style.display='none'">
+      <div class="post-window-author-info">
+        <span class="post-window-author-name">Elysio</span>
+      </div>
+    </div>
+    <button class="pw-close" onclick="try{window.parent.closeWindow()}catch(e){}" title="关闭">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 130">
+        <path fill-rule="evenodd" fill="rgb(196,34,9)"
+          d="M0.373,65.000 C0.087,51.609 3.792,38.466 11.131,27.293
+             C19.671,14.293 32.558,4.832 47.439,0.360
+             C90.023,0.360 132.606,0.360 175.190,0.360
+             C183.245,1.482 190.671,5.694 195.361,12.480
+             C201.498,21.357 202.014,33.317 196.706,43.453
+             C185.052,65.000 173.397,86.547 161.743,108.094
+             C156.410,114.144 150.041,119.160 142.916,122.907
+             C136.598,126.230 129.798,128.498 122.745,129.640
+             C99.884,129.640 77.024,129.640 54.163,129.640
+             C38.778,126.247 24.988,117.749 15.165,105.400
+             C6.284,94.236 0.695,80.120 0.373,65.000
+             ZM51.473,11.133 L171.156,11.133
+             C175.707,11.408 180.022,13.285 183.259,16.520
+             C187.160,20.420 189.059,25.857 188.637,31.333
+             C177.880,52.431 167.122,73.529 156.364,94.627
+             C152.903,101.201 147.810,106.769 141.571,110.787
+             C135.517,114.686 128.583,116.999 121.400,117.520
+             C98.988,117.520 76.575,117.520 54.163,117.520
+             C28.223,111.309 10.366,87.869 11.131,62.307
+             C11.831,38.916 28.017,17.942 51.473,11.133
+             ZM54.538,17.998
+             C91.618,17.954 128.697,17.910 165.777,17.866
+             C171.772,16.637 177.788,19.453 180.569,24.600
+             C183.069,29.227 182.591,35.067 179.224,39.413
+             C168.466,58.716 157.708,78.018 146.950,97.320
+             C144.417,101.017 141.229,104.211 137.537,106.747
+             C133.865,109.270 129.766,111.094 125.434,112.134
+             C102.574,112.134 79.713,112.134 56.852,112.134
+             C33.925,106.570 18.183,85.813 18.891,63.215
+             C19.538,42.562 33.826,24.045 54.538,17.998
+             ZM79.713,63.653
+             C74.334,58.267 68.955,52.880 63.576,47.493
+             C60.994,44.908 60.994,40.652 63.576,38.066
+             C66.158,35.481 70.407,35.481 72.989,38.066
+             C78.368,43.453 83.747,48.840 89.126,54.227
+             C94.505,48.840 99.884,43.453 105.263,38.066
+             C107.957,36.746 111.211,37.289 113.332,39.413
+             C115.452,41.537 115.995,44.796 114.676,47.493
+             C109.297,52.880 103.918,58.267 98.539,63.653
+             C103.918,69.040 109.297,74.427 114.676,79.813
+             C117.258,82.399 117.258,86.654 114.676,89.240
+             C112.094,91.826 107.845,91.826 105.263,89.240
+             C99.884,83.853 94.505,78.467 89.126,73.080
+             C83.299,78.916 77.472,84.751 71.645,90.587
+             C68.951,91.907 65.697,91.364 63.576,89.240
+             C61.455,87.116 60.913,83.858 62.231,81.160
+             C68.059,75.325 73.886,69.489 79.713,63.653 Z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Body: cover card (left) + scrollable content (right) -->
+  <div class="post-window-body">
+    
+    <aside class="post-window-cover-panel">
+      <div class="post-window-cover-card">
+        <img src="https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1200&q=80" alt="用 Gemini 多帧理解做视频完整性检测：两步采样的思路"
+             onerror="this.onerror=null;this.style.display='none'">
+      </div>
+    </aside>
+    
+
+    <section class="post-window-main">
+      <h1 class="post-window-title">用 Gemini 多帧理解做视频完整性检测：两步采样的思路</h1>
+      <div class="post-window-content">
+        <div class="markdown-content">
+          <p>项目里有一条质量规则：第一人称拍摄的视频，录制必须完整——开头不能是动作已经在进行中（开晚了），结尾不能卡在动作半截（关早了）。</p>
+<p>听起来不难，但一展开就有意思了。”完整”这个概念带语义——你得知道这个任务是什么、包含几个步骤、从什么状态开始算起、到什么状态算结束。纯靠传统视觉做不了这件事。</p>
+<p>今天的实验：拿 Gemini 的多帧理解能力来判断。记录一下思路和踩的坑。</p>
+<hr>
+<h3 id="为什么不能直接把视频丢给模型"><a href="#为什么不能直接把视频丢给模型" class="headerlink" title="为什么不能直接把视频丢给模型"></a>为什么不能直接把视频丢给模型</h3><p>最直觉的想法是把整段视频传给 Gemini，问它”这视频完整吗”。</p>
+<p>不行，两个原因：</p>
+<ol>
+<li><strong>Token 成本</strong>。一段 3 分钟的视频按 1fps 抽帧就是 180 张图，每张图按 768px 算，token 开销巨大。实际场景要跑几百上千条视频，成本不可接受。</li>
+<li><strong>注意力稀释</strong>。帧数越多，模型对每一帧的注意力越分散。而完整性判断的关键信息集中在开头和结尾——中间大段都是正常执行过程，对判定没什么帮助。</li>
+</ol>
+<p>所以核心问题变成了：<strong>怎么用尽可能少的帧，覆盖到最关键的信息</strong>。</p>
+<hr>
+<h3 id="两步走：先规划，再判断"><a href="#两步走：先规划，再判断" class="headerlink" title="两步走：先规划，再判断"></a>两步走：先规划，再判断</h3><p>最终方案是两步 LLM 调用。</p>
+<p><strong>Step 1：任务周期估算。</strong> 把任务描述发给 Gemini（纯文本，没有图），让它估算执行一次这个任务需要多长时间、分几步。比如”在厨房洗碗并放到碗柜”，模型会拆成打开水龙头→挤洗洁精→刷碗→冲洗→放碗柜，估算总共 2 分钟。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;estimated_cycle_seconds&quot;</span><span class="punctuation">:</span> <span class="number">120</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;steps&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;step&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span> <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;打开水龙头&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;seconds&quot;</span><span class="punctuation">:</span> <span class="number">5</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;step&quot;</span><span class="punctuation">:</span> <span class="number">2</span><span class="punctuation">,</span> <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;挤洗洁精&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;seconds&quot;</span><span class="punctuation">:</span> <span class="number">5</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;step&quot;</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span> <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;刷碗&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;seconds&quot;</span><span class="punctuation">:</span> <span class="number">60</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;step&quot;</span><span class="punctuation">:</span> <span class="number">4</span><span class="punctuation">,</span> <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;冲洗&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;seconds&quot;</span><span class="punctuation">:</span> <span class="number">30</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;step&quot;</span><span class="punctuation">:</span> <span class="number">5</span><span class="punctuation">,</span> <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;放碗柜&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;seconds&quot;</span><span class="punctuation">:</span> <span class="number">20</span><span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 2：智能采样 + 完整性判断。</strong> 根据估算出的周期时长和步骤边界，生成一个采样计划，然后从视频里抽帧、发给 Gemini 做多帧理解。</p>
+<p>这样一来，10-20 帧就能覆盖一段几分钟甚至十几分钟的视频。</p>
+<hr>
+<h3 id="采样策略：头尾重、中间轻"><a href="#采样策略：头尾重、中间轻" class="headerlink" title="采样策略：头尾重、中间轻"></a>采样策略：头尾重、中间轻</h3><p>完整性检测和普通的视频理解不一样——判定全靠头和尾。所以采样策略是非均匀的：</p>
+<ul>
+<li><strong>头部密采</strong>：视频前 30% 分配 5 个采样点，用来判断录制开头是否截断</li>
+<li><strong>中间按步骤边界采</strong>：每个步骤的中点各一帧，确认任务在正常推进</li>
+<li><strong>尾部密采</strong>：视频后 30% 分配 5 个采样点，用来判断录制结尾是否截断</li>
+<li><strong>强制首尾帧</strong>：第 0 帧和最后一帧必采</li>
+</ul>
+<p>对于可能包含多次重复执行的长视频（比如连续洗了三个碗），会根据 Step 1 估算的周期时长推算循环数，每个循环内都按上述策略铺采样点。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">n_cycles = <span class="built_in">max</span>(<span class="number">1</span>, <span class="built_in">round</span>(video_duration / cycle_duration))</span><br></pre></td></tr></table></figure>
+
+<p>但有个帧预算上限——每个循环至少需要 <code>步骤数 + 2</code> 帧，如果帧预算不够就减少循环数。宁可把少数几个循环看清楚，也不要每个循环都只抽一两帧。</p>
+<hr>
+<h3 id="Prompt-的关键区分：”录制完整”≠”任务完美”"><a href="#Prompt-的关键区分：”录制完整”≠”任务完美”" class="headerlink" title="Prompt 的关键区分：”录制完整”≠”任务完美”"></a>Prompt 的关键区分：”录制完整”≠”任务完美”</h3><p>Prompt 设计上花了不少心思。最大的坑是：<strong>模型很容易把”录制是否被截断”和”任务是否做得好”搞混</strong>。</p>
+<p>比如一段视频里连续洗了三个碗，第三个碗的步骤比较潦草。模型可能会判”不完整”，但实际上录制本身是完整的——开头有准备动作，结尾有收尾动作，只是后面几次执行质量差了点而已。</p>
+<p>所以 prompt 里明确区分了：</p>
+<blockquote>
+<p>“Recording completeness” &#x3D; Did the camera start BEFORE the task began and stop AFTER the task ended?<br>This is NOT about whether every repetition of the task is performed perfectly.</p>
+</blockquote>
+<p>并且给了具体的判定标准：</p>
+<ul>
+<li><strong>COMPLETE</strong>：开头能看到任务开始前或刚开始的状态，结尾能看到任务结束或自然停止的状态</li>
+<li><strong>TRUNCATED</strong>：第一帧就已经在做了（开头截断），或最后一帧动作还没做完就断了（结尾截断）</li>
+</ul>
+<p>还专门列了”不算截断”的情况：</p>
+<ul>
+<li>重复执行时后面几次步骤被压缩了</li>
+<li>步骤执行很快、采样帧没抓到</li>
+<li>两次执行之间有暂停或无关动作</li>
+</ul>
+<p>这些 negative case 的明确列举很重要，不加的话模型误判率会高不少。</p>
+<hr>
+<h3 id="输出结构"><a href="#输出结构" class="headerlink" title="输出结构"></a>输出结构</h3><p>让模型返回结构化 JSON，方便下游处理：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;recording_complete&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;recording_start&quot;</span><span class="punctuation">:</span> <span class="string">&quot;clean&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;recording_end&quot;</span><span class="punctuation">:</span> <span class="string">&quot;clean&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;start_evidence&quot;</span><span class="punctuation">:</span> <span class="string">&quot;第一帧显示操作者站在水槽前，双手自然下垂，尚未开始操作&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;end_evidence&quot;</span><span class="punctuation">:</span> <span class="string">&quot;最后几帧显示碗已放入碗柜，操作者手离开碗柜&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;confidence&quot;</span><span class="punctuation">:</span> <span class="number">0.92</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;total_executions&quot;</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;complete_executions&quot;</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;executions&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;execution&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span> <span class="attr">&quot;status&quot;</span><span class="punctuation">:</span> <span class="string">&quot;complete&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;steps_observed&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span><span class="string">&quot;2&quot;</span><span class="punctuation">,</span><span class="string">&quot;3&quot;</span><span class="punctuation">,</span><span class="string">&quot;4&quot;</span><span class="punctuation">,</span><span class="string">&quot;5&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span> <span class="attr">&quot;note&quot;</span><span class="punctuation">:</span> <span class="string">&quot;完整执行&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;execution&quot;</span><span class="punctuation">:</span> <span class="number">2</span><span class="punctuation">,</span> <span class="attr">&quot;status&quot;</span><span class="punctuation">:</span> <span class="string">&quot;complete&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;steps_observed&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span><span class="string">&quot;2&quot;</span><span class="punctuation">,</span><span class="string">&quot;3&quot;</span><span class="punctuation">,</span><span class="string">&quot;4&quot;</span><span class="punctuation">,</span><span class="string">&quot;5&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span> <span class="attr">&quot;note&quot;</span><span class="punctuation">:</span> <span class="string">&quot;完整执行&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span><span class="attr">&quot;execution&quot;</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span> <span class="attr">&quot;status&quot;</span><span class="punctuation">:</span> <span class="string">&quot;complete&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;steps_observed&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;2&quot;</span><span class="punctuation">,</span><span class="string">&quot;3&quot;</span><span class="punctuation">,</span><span class="string">&quot;4&quot;</span><span class="punctuation">,</span><span class="string">&quot;5&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span> <span class="attr">&quot;note&quot;</span><span class="punctuation">:</span> <span class="string">&quot;步骤1较快未捕获到&quot;</span><span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;reasoning&quot;</span><span class="punctuation">:</span> <span class="string">&quot;录制从操作者准备阶段开始，到最后一个碗放入碗柜后自然结束。三次执行均被完整录制。&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>start&#x2F;end 各有 evidence 字段，要求模型说出开头和结尾几帧看到了什么。这是个有效的”强制推理”手段——要求模型先描述观察到的内容，再给出判定，能减少胡说的概率。</p>
+<hr>
+<h3 id="几个实现细节"><a href="#几个实现细节" class="headerlink" title="几个实现细节"></a>几个实现细节</h3><p><strong>帧压缩</strong>。采样出来的帧会缩放到最大边 768px，JPEG 质量 85。对于完整性判断来说，分辨率不需要太高，手和物体的粗粒度动作变化就够了。</p>
+<p><strong>COS 集成</strong>。支持直接从腾讯云 COS 下载视频，本地有缓存机制，同一个视频不会重复下载。方便跑批量实验。</p>
+<p><strong>默认回退</strong>。如果 Step 1 的周期估算失败（JSON 解析错误、预估时长为 0 之类的），会回退到一个固定策略：头部 20%、尾部 50%、中间 30%。因为即使没有 LLM 规划，头尾密采这个大方向不变。</p>
+<hr>
+<h3 id="目前的感受"><a href="#目前的感受" class="headerlink" title="目前的感受"></a>目前的感受</h3><p>这个方案的核心优势是<strong>成本可控</strong>。用两次 API 调用（一次纯文本、一次多帧）替代整段视频的理解，帧数压到 10-20 帧级别，单条视频的成本很低。</p>
+<p>但有几个还没解决的问题：</p>
+<ol>
+<li><strong>精度还没系统评估</strong>。目前只在两段视频上定性验证了，还没标注 ground truth 做定量 benchmark。后面需要标一批数据跑准确率&#x2F;召回率。</li>
+<li><strong>Step 1 的估算偏差</strong>。LLM 对任务时长的估算不一定准，如果严重偏离实际，采样点就会错位。目前的应对是默认回退策略，但更好的做法可能是结合视频的运动特征做自适应采样。</li>
+<li><strong>边缘 case</strong>。比如任务描述本身就很模糊（”整理房间”——怎么算整理完了？），或者视频里做了一半换了个完全不同的事。这些情况下模型的判定可信度会打折扣。</li>
+</ol>
+<p>下一步打算标注一批数据做正式评估，也准备试试视频开头结尾各截 5 秒直接传视频片段（而非抽帧）的方案，看看对截断检测是否有提升。</p>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+</article>
+
+  </main>
+
+  <!-- Window Popup (article iframe viewer) -->
+  <div class="window" id="hl-window">
+    <div class="window-content">
+      <iframe class="window-frame" id="hl-window-frame"></iframe>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ---- Loading overlay: fade out on page load ---- */
+    window.addEventListener('load', function() {
+      var loading = document.getElementById('hl-loading');
+      if (!loading) return;
+      loading.classList.add('fade-out');
+      setTimeout(function() {
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+      }, 400);
+    });
+
+    /* ---- _0kd page transition (globally callable) ---- */
+    window._0kd = function(callback) {
+      var el = document.getElementById('hl-0kd');
+      if (!el) return;
+      el.style.display = 'block';
+      el.style.animationPlayState = 'running';
+      setTimeout(function() {
+        if (typeof callback === 'function') callback();
+        setTimeout(function() {
+          el.style.animationPlayState = 'paused';
+          el.style.display = 'none';
+        }, 500);
+      }, 1000);
+    };
+
+    /* ---- Window popup controls (globally callable) ---- */
+    var _windowPrevUrl = null;
+
+    window.openWindow = function(url) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win || !frame) return;
+      _windowPrevUrl = window.location.href;   // remember where we came from
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      frame.src = url + sep + 'window=true';
+      history.pushState({ hollowWindow: true }, '', url);
+      win.style.display = 'flex';
+    };
+
+    window.closeWindow = function(fromPopstate) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win) return;
+      win.style.display = 'none';
+      if (frame) frame.src = '';
+      if (!fromPopstate) {
+        // Replace article URL with original page URL — no popstate, no navigation side-effects
+        history.replaceState(null, '', _windowPrevUrl || window.location.pathname);
+      }
+      _windowPrevUrl = null;
+    };
+
+    /* Close window on Escape key */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.closeWindow();
+    });
+
+    /* Close window when clicking backdrop (outside content) */
+    var winEl = document.getElementById('hl-window');
+    if (winEl) {
+      winEl.addEventListener('click', function(e) {
+        if (e.target === winEl) window.closeWindow();
+      });
+    }
+
+    /* Close window on browser back */
+    window.addEventListener('popstate', function() {
+      var win = document.getElementById('hl-window');
+      if (win && win.style.display !== 'none') closeWindow(true);
+    });
+  })();
+  </script>
+
+  
+<!-- HL Search Modal -->
+<div class="hl-search-overlay" id="hl-search-overlay" hidden>
+  <div class="hl-search-backdrop" id="hl-search-backdrop"></div>
+  <div class="hl-search-modal" role="dialog" aria-label="搜索">
+    <div class="hl-search-header">
+      <svg class="hl-search-icon-prefix" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="hl-search-input" id="hl-search-input"
+             type="search" placeholder="搜索文章…"
+             autocomplete="off" spellcheck="false" aria-label="搜索关键字">
+      <button class="hl-search-close" id="hl-search-close" title="关闭 (Esc)" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hl-search-divider"></div>
+
+    <div class="hl-search-body" id="hl-search-body">
+      <div class="hl-search-hint" id="hl-search-hint">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>输入关键字开始搜索</span>
+      </div>
+      <div class="hl-search-results" id="hl-search-results" role="listbox" aria-label="搜索结果"></div>
+    </div>
+
+    <div class="hl-search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/search.css">
+<script>window.__HL_SEARCH_PATH__ = '/search.json';</script>
+<script src="/js/search.js"></script>
+
+
+  <script src="/js/code-copy.js"></script>
+
+</body>
+</html>
