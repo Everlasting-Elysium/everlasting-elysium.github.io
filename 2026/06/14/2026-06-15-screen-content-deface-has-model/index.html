@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>用 HaS 模型做视频屏幕打码：五轮调参换来一个检到即打 | Elysian Realm</title>
+  <meta name="description" content="">
+  
+  <!-- Font: MaoKen Assorted Sans (unpkg CDN, same as interknot reference) -->
+  <style>@import url('https://unpkg.com/@chinese-fonts/mksjh@1.4.0/dist/MaokenAssortedSans1.30/result.css');</style>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="description" content="第一人称录制的视频里，屏幕几乎无处不在。手里操作的手机、背景开着的 MacBook，上面可能有聊天记录、密码输入、账户信息。这是规则 7 要解决的事：检测视频帧里的屏幕，对屏幕区域打码。 检测器：腾讯玄武的 HaS选型上我直接用了腾讯玄武实验室开源的 HaS（Hide-and-Seek），xuanwulab&#x2F;HaS_Image_0209_FP32，MIT 协议，HuggingFace 上能直接拉。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用 HaS 模型做视频屏幕打码：五轮调参换来一个检到即打">
+<meta property="og:url" content="https://everlasting-elysium.github.io/2026/06/14/2026-06-15-screen-content-deface-has-model/index.html">
+<meta property="og:site_name" content="Elysian Realm">
+<meta property="og:description" content="第一人称录制的视频里，屏幕几乎无处不在。手里操作的手机、背景开着的 MacBook，上面可能有聊天记录、密码输入、账户信息。这是规则 7 要解决的事：检测视频帧里的屏幕，对屏幕区域打码。 检测器：腾讯玄武的 HaS选型上我直接用了腾讯玄武实验室开源的 HaS（Hide-and-Seek），xuanwulab&#x2F;HaS_Image_0209_FP32，MIT 协议，HuggingFace 上能直接拉。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-06-14T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-06-24T02:47:22.530Z">
+<meta property="article:author" content="Everlasting Elysium">
+<meta property="article:tag" content="计算机视觉">
+<meta property="article:tag" content="YOLO">
+<meta property="article:tag" content="视频处理">
+<meta property="article:tag" content="隐私打码">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading" id="hl-loading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading</span>
+  </div>
+
+  <!-- _0kd Page Transition Layer -->
+  <div class="_0kd" id="hl-0kd"></div>
+
+  <!-- Background Layer -->
+  
+  <div class="bg" style="background-image: url('/img/bg.png');"></div>
+
+  <!-- Header -->
+  
+  <header>
+  <!-- Personal Info Card -->
+  <a href="/" class="personal">
+    <span class="avatar-link">
+      <img
+        src="/img/avatar.svg"
+        alt="Elysio"
+        class="avatar"
+        onerror="this.onerror=null;this.style.background='#333';"
+      >
+    </span>
+    <span class="info-bar">
+      <span class="info-bio">知行合一,学以致用；但行好事，莫问前程。</span>
+      <span class="info-url">
+        <span class="info-url-lock">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/>
+            <path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        https://everlasting-elysium.github.io/
+      </span>
+    </span>
+  </a>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    
+      
+      <span class="tab">
+        <a href="/">推送</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/archives/">归档</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/tags/">标签</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/album/">相册</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/friends/">伙伴</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/about/">关于</a>
+      </span>
+    
+  </div>
+
+  <!-- Search Button -->
+  
+  <button class="hl-search-btn" id="hl-search-btn"
+          title="搜索 (Ctrl+K)" aria-label="搜索">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+  
+</header>
+
+
+  <!-- Main Content -->
+  <main class="has-hero">
+    <link rel="stylesheet" href="/css/post.css">
+<link rel="stylesheet" href="/css/post-window.css">
+
+<script>
+(function () {
+  var isWindow = false;
+  try { isWindow = new URLSearchParams(window.location.search).get('window') === 'true'; } catch(e) {}
+  if (!isWindow) { try { isWindow = window.self !== window.top; } catch(e) { isWindow = true; } }
+  if (isWindow) document.documentElement.classList.add('window-mode');
+})();
+</script>
+
+
+
+<!-- ═══════════ Normal Mode ═══════════ -->
+<article class="post-article">
+
+  
+  <div class="post-hero" style="background-image:url('https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=1200&q=80')">
+    <div class="post-hero-overlay">
+      <div class="post-hero-inner">
+        <h1 class="post-title">用 HaS 模型做视频屏幕打码：五轮调参换来一个检到即打</h1>
+        <div class="post-meta">
+          <time datetime="2026-06-15">
+            2026 / 06 / 15
+          </time>
+          
+          <div class="post-tags">
+            
+            <a class="tag-pill" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/')}else{window.location.href=this.href}">
+              计算机视觉
+            </a>
+            
+            <a class="tag-pill" href="/tags/YOLO/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/YOLO/')}else{window.location.href=this.href}">
+              YOLO
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E8%A7%86%E9%A2%91%E5%A4%84%E7%90%86/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E8%A7%86%E9%A2%91%E5%A4%84%E7%90%86/')}else{window.location.href=this.href}">
+              视频处理
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E9%9A%90%E7%A7%81%E6%89%93%E7%A0%81/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E9%9A%90%E7%A7%81%E6%89%93%E7%A0%81/')}else{window.location.href=this.href}">
+              隐私打码
+            </a>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="post-body">
+    <div class="markdown-content">
+      <p>第一人称录制的视频里，屏幕几乎无处不在。手里操作的手机、背景开着的 MacBook，上面可能有聊天记录、密码输入、账户信息。这是规则 7 要解决的事：检测视频帧里的屏幕，对屏幕区域打码。</p>
+<h2 id="检测器：腾讯玄武的-HaS"><a href="#检测器：腾讯玄武的-HaS" class="headerlink" title="检测器：腾讯玄武的 HaS"></a>检测器：腾讯玄武的 HaS</h2><p>选型上我直接用了腾讯玄武实验室开源的 HaS（Hide-and-Seek），<code>xuanwulab/HaS_Image_0209_FP32</code>，MIT 协议，HuggingFace 上能直接拉。</p>
+<p>技术上是 YOLO11 实例分割，ultralytics 原生加载，和项目里已有的 YOLO 栈完全一致。权重文件 <code>sensitive_seg_best.pt</code>，119MB，识别 21 类隐私对象。我需要的两类：</p>
+<ul>
+<li><code>class 15 = mobile_screen</code>（手机屏幕）</li>
+<li><code>class 16 = monitor_screen</code>（电脑显示器）</li>
+</ul>
+<p>实例分割的好处是直接给像素级 mask，比矩形框精确得多。打码只盖屏幕显示区域，不会误伤手机边框或者显示器边框。其余 19 类（身份证、银行卡、护照、二维码等）以后做证件打码也能复用，先留着。</p>
+<h2 id="两段式管道"><a href="#两段式管道" class="headerlink" title="两段式管道"></a>两段式管道</h2><p>架构复用了人脸打码（<code>gpu_deface.py</code>）的双段式设计，只把检测器换掉：</p>
+<ol>
+<li><strong>CPU 检测段</strong>：低频（3fps）跑 HaS，标出”有屏幕”的帧，合并成时间段 segments，输出 JSON</li>
+<li><strong>GPU 打码段</strong>：对有屏幕的 segments 做分段重编码，每帧取 HaS mask 打马赛克，其余段无损 copy</li>
+</ol>
+<p>这样 CPU 段只跑 3fps，不用全程高精度扫描。GPU 只处理有内容的片段，编码管道和人脸打码完全一致（闭合 GOP + 时间戳对齐拼接），接进生产 workflow 几乎零改动。</p>
+<h2 id="五轮调参"><a href="#五轮调参" class="headerlink" title="五轮调参"></a>五轮调参</h2><p>测试视频是 <code>VID_20260615T074031_654Z.mp4</code>，31 秒，1920×1440，办公室场景，手持手机加背景多台 MacBook。</p>
+<table>
+<thead>
+<tr>
+<th>轮次</th>
+<th>问题</th>
+<th>根因</th>
+<th>解法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>v1</td>
+<td>深色主题屏幕漏打</td>
+<td><code>mean_L≥40</code> 亮屏判断把黑底白字屏误当息屏</td>
+<td>降 <code>mean_L</code> 阈值到 15，靠 <code>lap_var</code> 判内容</td>
+</tr>
+<tr>
+<td>v2</td>
+<td>旁边电脑屏没识别</td>
+<td>只启用了 class 15，没加显示器</td>
+<td>加入 class 16（monitor_screen）</td>
+</tr>
+<tr>
+<td>v3</td>
+<td>背景远处小屏漏检</td>
+<td>默认 <code>imgsz=640</code>，高分视频里的小屏被压糊了</td>
+<td><code>--imgsz 1280</code>，总检出 +37%</td>
+</tr>
+<tr>
+<td>v4</td>
+<td>低亮度手机屏仍漏打</td>
+<td>亮屏阈值对低亮度真屏仍判”息屏”</td>
+<td><code>--no-active-filter</code>，信任 HaS，检到即打</td>
+</tr>
+<tr>
+<td>v5</td>
+<td>电脑背板被当屏幕检出</td>
+<td><code>conf=0.2</code> 太低，引入大量低置信假阳性</td>
+<td><code>--conf 0.70</code>，滤掉背板</td>
+</tr>
+</tbody></table>
+<p>最终配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">--conf 0.70 --imgsz 1280 --no-active-filter</span><br></pre></td></tr></table></figure>
+
+<h2 id="为什么扔掉亮屏判断"><a href="#为什么扔掉亮屏判断" class="headerlink" title="为什么扔掉亮屏判断"></a>为什么扔掉亮屏判断</h2><p>最初的需求是”只在屏幕有内容时打码”，用亮度（<code>mean_L</code>）和纹理（<code>lap_var</code>）来判断屏幕是不是亮着。听起来合理，实操起来是个陷阱。</p>
+<p>深色主题（黑底白字）、系统深色模式、低亮度环境下，亮屏阈值会把真屏幕踢掉。五轮调参里有三轮都在和亮屏判断较劲，每次改参数都有一类场景被误杀。</p>
+<p>调头看 HaS 的检测输出才发现：真屏幕（含低亮度手机屏）的置信度基本稳在 0.9 以上，根本不需要再用亮度来过一遍。<code>--no-active-filter</code> 直接信任模型，检到就打。代价是偶尔打到息屏的手机，隐私层面无害。</p>
+<h2 id="conf-0-70-这个数怎么来的"><a href="#conf-0-70-这个数怎么来的" class="headerlink" title="conf&#x3D;0.70 这个数怎么来的"></a>conf&#x3D;0.70 这个数怎么来的</h2><p>v5 发现电脑背板被当屏幕检出，根因是 <code>conf=0.2</code> 太松了。看了一遍各类检测的置信度分布之后发现：</p>
+<ul>
+<li>背板假阳性集中在 conf 0.2 到 0.65</li>
+<li>真屏幕（含低亮度手机）基本全在 0.9 以上</li>
+</ul>
+<p><code>conf=0.70</code> 卡在中间，两侧分得很清楚。这也说明 HaS 对屏幕的置信度分布两极化，不是那种在阈值附近飘的模型，用单一阈值就能干净切开。</p>
+<h2 id="小屏幕召回靠分辨率"><a href="#小屏幕召回靠分辨率" class="headerlink" title="小屏幕召回靠分辨率"></a>小屏幕召回靠分辨率</h2><p>高分视频（1920×1440）里，背景的 MacBook 屏幕在画面里很小。<code>imgsz=640</code> 推理时这些小屏被压到几个像素，检不到。提到 <code>imgsz=1280</code> 之后，总检出量增加了 37%，主要来自背景小屏。</p>
+<p>推理变慢是代价，分辨率翻倍大约翻 4 倍时间，但 CPU 段只跑 3fps，可以接受。</p>
+<h2 id="遗留的两个坑"><a href="#遗留的两个坑" class="headerlink" title="遗留的两个坑"></a>遗留的两个坑</h2><p>背景极远处的小屏，<code>conf=0.70</code> 下会漏。要覆盖这类目标需要 SAHI 切片推理，工程量不小。当前手机和近处显示器已经满足，背景远屏是否必须打是产品层面的决策。</p>
+<p>“检到即打”会打到息屏手机，和最初”只打有内容屏”的需求有出入。若严格要求只打有内容的屏，应该走 OCR 路线（如 PP-OCRv6），检测文字而非屏幕物体，深色主题也能通吃。当前 HaS 召回够用，先留着。</p>
+<h2 id="几点收获"><a href="#几点收获" class="headerlink" title="几点收获"></a>几点收获</h2><ol>
+<li>亮屏阈值这类手工规则比想象中脆，深色主题、低亮度、反光都能让它失效。不如直接信任模型的置信度，一个参数解决。</li>
+<li>看置信度分布值得花时间。不同类别误检的 conf 范围往往不同，单一阈值经常能干净切开真假阳性，不需要多级规则。</li>
+<li>高分视频里的小目标一定要提 <code>imgsz</code>，默认分辨率下根本进不了模型的感受野。</li>
+<li>架构上复用已有管道（分段重编码、闭合 GOP、时间戳对齐）省了大量工作，前期把管道抽象好是值得的投入。</li>
+</ol>
+
+    </div>
+  </div>
+
+</article>
+
+<!-- ═══════════ Window Mode ═══════════ -->
+<article class="post-window">
+
+  <!-- Header: avatar + name (left) | close button (right) -->
+  <div class="post-window-header">
+    <div class="post-window-author">
+      <img class="post-window-avatar" src="/img/avatar.svg" alt=""
+           onerror="this.onerror=null;this.style.display='none'">
+      <div class="post-window-author-info">
+        <span class="post-window-author-name">Elysio</span>
+      </div>
+    </div>
+    <button class="pw-close" onclick="try{window.parent.closeWindow()}catch(e){}" title="关闭">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 130">
+        <path fill-rule="evenodd" fill="rgb(196,34,9)"
+          d="M0.373,65.000 C0.087,51.609 3.792,38.466 11.131,27.293
+             C19.671,14.293 32.558,4.832 47.439,0.360
+             C90.023,0.360 132.606,0.360 175.190,0.360
+             C183.245,1.482 190.671,5.694 195.361,12.480
+             C201.498,21.357 202.014,33.317 196.706,43.453
+             C185.052,65.000 173.397,86.547 161.743,108.094
+             C156.410,114.144 150.041,119.160 142.916,122.907
+             C136.598,126.230 129.798,128.498 122.745,129.640
+             C99.884,129.640 77.024,129.640 54.163,129.640
+             C38.778,126.247 24.988,117.749 15.165,105.400
+             C6.284,94.236 0.695,80.120 0.373,65.000
+             ZM51.473,11.133 L171.156,11.133
+             C175.707,11.408 180.022,13.285 183.259,16.520
+             C187.160,20.420 189.059,25.857 188.637,31.333
+             C177.880,52.431 167.122,73.529 156.364,94.627
+             C152.903,101.201 147.810,106.769 141.571,110.787
+             C135.517,114.686 128.583,116.999 121.400,117.520
+             C98.988,117.520 76.575,117.520 54.163,117.520
+             C28.223,111.309 10.366,87.869 11.131,62.307
+             C11.831,38.916 28.017,17.942 51.473,11.133
+             ZM54.538,17.998
+             C91.618,17.954 128.697,17.910 165.777,17.866
+             C171.772,16.637 177.788,19.453 180.569,24.600
+             C183.069,29.227 182.591,35.067 179.224,39.413
+             C168.466,58.716 157.708,78.018 146.950,97.320
+             C144.417,101.017 141.229,104.211 137.537,106.747
+             C133.865,109.270 129.766,111.094 125.434,112.134
+             C102.574,112.134 79.713,112.134 56.852,112.134
+             C33.925,106.570 18.183,85.813 18.891,63.215
+             C19.538,42.562 33.826,24.045 54.538,17.998
+             ZM79.713,63.653
+             C74.334,58.267 68.955,52.880 63.576,47.493
+             C60.994,44.908 60.994,40.652 63.576,38.066
+             C66.158,35.481 70.407,35.481 72.989,38.066
+             C78.368,43.453 83.747,48.840 89.126,54.227
+             C94.505,48.840 99.884,43.453 105.263,38.066
+             C107.957,36.746 111.211,37.289 113.332,39.413
+             C115.452,41.537 115.995,44.796 114.676,47.493
+             C109.297,52.880 103.918,58.267 98.539,63.653
+             C103.918,69.040 109.297,74.427 114.676,79.813
+             C117.258,82.399 117.258,86.654 114.676,89.240
+             C112.094,91.826 107.845,91.826 105.263,89.240
+             C99.884,83.853 94.505,78.467 89.126,73.080
+             C83.299,78.916 77.472,84.751 71.645,90.587
+             C68.951,91.907 65.697,91.364 63.576,89.240
+             C61.455,87.116 60.913,83.858 62.231,81.160
+             C68.059,75.325 73.886,69.489 79.713,63.653 Z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Body: cover card (left) + scrollable content (right) -->
+  <div class="post-window-body">
+    
+    <aside class="post-window-cover-panel">
+      <div class="post-window-cover-card">
+        <img src="https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=1200&q=80" alt="用 HaS 模型做视频屏幕打码：五轮调参换来一个检到即打"
+             onerror="this.onerror=null;this.style.display='none'">
+      </div>
+    </aside>
+    
+
+    <section class="post-window-main">
+      <h1 class="post-window-title">用 HaS 模型做视频屏幕打码：五轮调参换来一个检到即打</h1>
+      <div class="post-window-content">
+        <div class="markdown-content">
+          <p>第一人称录制的视频里，屏幕几乎无处不在。手里操作的手机、背景开着的 MacBook，上面可能有聊天记录、密码输入、账户信息。这是规则 7 要解决的事：检测视频帧里的屏幕，对屏幕区域打码。</p>
+<h2 id="检测器：腾讯玄武的-HaS"><a href="#检测器：腾讯玄武的-HaS" class="headerlink" title="检测器：腾讯玄武的 HaS"></a>检测器：腾讯玄武的 HaS</h2><p>选型上我直接用了腾讯玄武实验室开源的 HaS（Hide-and-Seek），<code>xuanwulab/HaS_Image_0209_FP32</code>，MIT 协议，HuggingFace 上能直接拉。</p>
+<p>技术上是 YOLO11 实例分割，ultralytics 原生加载，和项目里已有的 YOLO 栈完全一致。权重文件 <code>sensitive_seg_best.pt</code>，119MB，识别 21 类隐私对象。我需要的两类：</p>
+<ul>
+<li><code>class 15 = mobile_screen</code>（手机屏幕）</li>
+<li><code>class 16 = monitor_screen</code>（电脑显示器）</li>
+</ul>
+<p>实例分割的好处是直接给像素级 mask，比矩形框精确得多。打码只盖屏幕显示区域，不会误伤手机边框或者显示器边框。其余 19 类（身份证、银行卡、护照、二维码等）以后做证件打码也能复用，先留着。</p>
+<h2 id="两段式管道"><a href="#两段式管道" class="headerlink" title="两段式管道"></a>两段式管道</h2><p>架构复用了人脸打码（<code>gpu_deface.py</code>）的双段式设计，只把检测器换掉：</p>
+<ol>
+<li><strong>CPU 检测段</strong>：低频（3fps）跑 HaS，标出”有屏幕”的帧，合并成时间段 segments，输出 JSON</li>
+<li><strong>GPU 打码段</strong>：对有屏幕的 segments 做分段重编码，每帧取 HaS mask 打马赛克，其余段无损 copy</li>
+</ol>
+<p>这样 CPU 段只跑 3fps，不用全程高精度扫描。GPU 只处理有内容的片段，编码管道和人脸打码完全一致（闭合 GOP + 时间戳对齐拼接），接进生产 workflow 几乎零改动。</p>
+<h2 id="五轮调参"><a href="#五轮调参" class="headerlink" title="五轮调参"></a>五轮调参</h2><p>测试视频是 <code>VID_20260615T074031_654Z.mp4</code>，31 秒，1920×1440，办公室场景，手持手机加背景多台 MacBook。</p>
+<table>
+<thead>
+<tr>
+<th>轮次</th>
+<th>问题</th>
+<th>根因</th>
+<th>解法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>v1</td>
+<td>深色主题屏幕漏打</td>
+<td><code>mean_L≥40</code> 亮屏判断把黑底白字屏误当息屏</td>
+<td>降 <code>mean_L</code> 阈值到 15，靠 <code>lap_var</code> 判内容</td>
+</tr>
+<tr>
+<td>v2</td>
+<td>旁边电脑屏没识别</td>
+<td>只启用了 class 15，没加显示器</td>
+<td>加入 class 16（monitor_screen）</td>
+</tr>
+<tr>
+<td>v3</td>
+<td>背景远处小屏漏检</td>
+<td>默认 <code>imgsz=640</code>，高分视频里的小屏被压糊了</td>
+<td><code>--imgsz 1280</code>，总检出 +37%</td>
+</tr>
+<tr>
+<td>v4</td>
+<td>低亮度手机屏仍漏打</td>
+<td>亮屏阈值对低亮度真屏仍判”息屏”</td>
+<td><code>--no-active-filter</code>，信任 HaS，检到即打</td>
+</tr>
+<tr>
+<td>v5</td>
+<td>电脑背板被当屏幕检出</td>
+<td><code>conf=0.2</code> 太低，引入大量低置信假阳性</td>
+<td><code>--conf 0.70</code>，滤掉背板</td>
+</tr>
+</tbody></table>
+<p>最终配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">--conf 0.70 --imgsz 1280 --no-active-filter</span><br></pre></td></tr></table></figure>
+
+<h2 id="为什么扔掉亮屏判断"><a href="#为什么扔掉亮屏判断" class="headerlink" title="为什么扔掉亮屏判断"></a>为什么扔掉亮屏判断</h2><p>最初的需求是”只在屏幕有内容时打码”，用亮度（<code>mean_L</code>）和纹理（<code>lap_var</code>）来判断屏幕是不是亮着。听起来合理，实操起来是个陷阱。</p>
+<p>深色主题（黑底白字）、系统深色模式、低亮度环境下，亮屏阈值会把真屏幕踢掉。五轮调参里有三轮都在和亮屏判断较劲，每次改参数都有一类场景被误杀。</p>
+<p>调头看 HaS 的检测输出才发现：真屏幕（含低亮度手机屏）的置信度基本稳在 0.9 以上，根本不需要再用亮度来过一遍。<code>--no-active-filter</code> 直接信任模型，检到就打。代价是偶尔打到息屏的手机，隐私层面无害。</p>
+<h2 id="conf-0-70-这个数怎么来的"><a href="#conf-0-70-这个数怎么来的" class="headerlink" title="conf&#x3D;0.70 这个数怎么来的"></a>conf&#x3D;0.70 这个数怎么来的</h2><p>v5 发现电脑背板被当屏幕检出，根因是 <code>conf=0.2</code> 太松了。看了一遍各类检测的置信度分布之后发现：</p>
+<ul>
+<li>背板假阳性集中在 conf 0.2 到 0.65</li>
+<li>真屏幕（含低亮度手机）基本全在 0.9 以上</li>
+</ul>
+<p><code>conf=0.70</code> 卡在中间，两侧分得很清楚。这也说明 HaS 对屏幕的置信度分布两极化，不是那种在阈值附近飘的模型，用单一阈值就能干净切开。</p>
+<h2 id="小屏幕召回靠分辨率"><a href="#小屏幕召回靠分辨率" class="headerlink" title="小屏幕召回靠分辨率"></a>小屏幕召回靠分辨率</h2><p>高分视频（1920×1440）里，背景的 MacBook 屏幕在画面里很小。<code>imgsz=640</code> 推理时这些小屏被压到几个像素，检不到。提到 <code>imgsz=1280</code> 之后，总检出量增加了 37%，主要来自背景小屏。</p>
+<p>推理变慢是代价，分辨率翻倍大约翻 4 倍时间，但 CPU 段只跑 3fps，可以接受。</p>
+<h2 id="遗留的两个坑"><a href="#遗留的两个坑" class="headerlink" title="遗留的两个坑"></a>遗留的两个坑</h2><p>背景极远处的小屏，<code>conf=0.70</code> 下会漏。要覆盖这类目标需要 SAHI 切片推理，工程量不小。当前手机和近处显示器已经满足，背景远屏是否必须打是产品层面的决策。</p>
+<p>“检到即打”会打到息屏手机，和最初”只打有内容屏”的需求有出入。若严格要求只打有内容的屏，应该走 OCR 路线（如 PP-OCRv6），检测文字而非屏幕物体，深色主题也能通吃。当前 HaS 召回够用，先留着。</p>
+<h2 id="几点收获"><a href="#几点收获" class="headerlink" title="几点收获"></a>几点收获</h2><ol>
+<li>亮屏阈值这类手工规则比想象中脆，深色主题、低亮度、反光都能让它失效。不如直接信任模型的置信度，一个参数解决。</li>
+<li>看置信度分布值得花时间。不同类别误检的 conf 范围往往不同，单一阈值经常能干净切开真假阳性，不需要多级规则。</li>
+<li>高分视频里的小目标一定要提 <code>imgsz</code>，默认分辨率下根本进不了模型的感受野。</li>
+<li>架构上复用已有管道（分段重编码、闭合 GOP、时间戳对齐）省了大量工作，前期把管道抽象好是值得的投入。</li>
+</ol>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+</article>
+
+  </main>
+
+  <!-- Window Popup (article iframe viewer) -->
+  <div class="window" id="hl-window">
+    <div class="window-content">
+      <iframe class="window-frame" id="hl-window-frame"></iframe>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ---- Loading overlay: fade out on page load ---- */
+    window.addEventListener('load', function() {
+      var loading = document.getElementById('hl-loading');
+      if (!loading) return;
+      loading.classList.add('fade-out');
+      setTimeout(function() {
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+      }, 400);
+    });
+
+    /* ---- _0kd page transition (globally callable) ---- */
+    window._0kd = function(callback) {
+      var el = document.getElementById('hl-0kd');
+      if (!el) return;
+      el.style.display = 'block';
+      el.style.animationPlayState = 'running';
+      setTimeout(function() {
+        if (typeof callback === 'function') callback();
+        setTimeout(function() {
+          el.style.animationPlayState = 'paused';
+          el.style.display = 'none';
+        }, 500);
+      }, 1000);
+    };
+
+    /* ---- Window popup controls (globally callable) ---- */
+    var _windowPrevUrl = null;
+
+    window.openWindow = function(url) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win || !frame) return;
+      _windowPrevUrl = window.location.href;   // remember where we came from
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      frame.src = url + sep + 'window=true';
+      history.pushState({ hollowWindow: true }, '', url);
+      win.style.display = 'flex';
+    };
+
+    window.closeWindow = function(fromPopstate) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win) return;
+      win.style.display = 'none';
+      if (frame) frame.src = '';
+      if (!fromPopstate) {
+        // Replace article URL with original page URL — no popstate, no navigation side-effects
+        history.replaceState(null, '', _windowPrevUrl || window.location.pathname);
+      }
+      _windowPrevUrl = null;
+    };
+
+    /* Close window on Escape key */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.closeWindow();
+    });
+
+    /* Close window when clicking backdrop (outside content) */
+    var winEl = document.getElementById('hl-window');
+    if (winEl) {
+      winEl.addEventListener('click', function(e) {
+        if (e.target === winEl) window.closeWindow();
+      });
+    }
+
+    /* Close window on browser back */
+    window.addEventListener('popstate', function() {
+      var win = document.getElementById('hl-window');
+      if (win && win.style.display !== 'none') closeWindow(true);
+    });
+  })();
+  </script>
+
+  
+<!-- HL Search Modal -->
+<div class="hl-search-overlay" id="hl-search-overlay" hidden>
+  <div class="hl-search-backdrop" id="hl-search-backdrop"></div>
+  <div class="hl-search-modal" role="dialog" aria-label="搜索">
+    <div class="hl-search-header">
+      <svg class="hl-search-icon-prefix" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="hl-search-input" id="hl-search-input"
+             type="search" placeholder="搜索文章…"
+             autocomplete="off" spellcheck="false" aria-label="搜索关键字">
+      <button class="hl-search-close" id="hl-search-close" title="关闭 (Esc)" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hl-search-divider"></div>
+
+    <div class="hl-search-body" id="hl-search-body">
+      <div class="hl-search-hint" id="hl-search-hint">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>输入关键字开始搜索</span>
+      </div>
+      <div class="hl-search-results" id="hl-search-results" role="listbox" aria-label="搜索结果"></div>
+    </div>
+
+    <div class="hl-search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/search.css">
+<script>window.__HL_SEARCH_PATH__ = '/search.json';</script>
+<script src="/js/search.js"></script>
+
+
+  <script src="/js/code-copy.js"></script>
+
+</body>
+</html>

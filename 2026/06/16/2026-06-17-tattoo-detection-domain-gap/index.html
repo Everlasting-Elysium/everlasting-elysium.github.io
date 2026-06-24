@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>纹身检测的 Domain Gap：三重 OOD 为什么让所有现成方案全部失效 | Elysian Realm</title>
+  <meta name="description" content="">
+  
+  <!-- Font: MaoKen Assorted Sans (unpkg CDN, same as interknot reference) -->
+  <style>@import url('https://unpkg.com/@chinese-fonts/mksjh@1.4.0/dist/MaokenAssortedSans1.30/result.css');</style>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="description" content="我们在给第一人称视频做数据质检时，有一条规则是检测并打码视频里的人体纹身。需求很直接：找到纹身区域，生成分割 mask，覆盖上去。这种任务，正常流程是找个现成模型测一下，能用就上，不行再想别的。 规则 7（屏幕检测）和规则 8（裸露检测）都是这么走下来的，现成模型调调阈值就上线了。我以为纹身也差不多。 事实不是这样的。 找到了一个看起来不错的模型HuggingFace 上有个 jun710&#x2F;dee">
+<meta property="og:type" content="article">
+<meta property="og:title" content="纹身检测的 Domain Gap：三重 OOD 为什么让所有现成方案全部失效">
+<meta property="og:url" content="https://everlasting-elysium.github.io/2026/06/16/2026-06-17-tattoo-detection-domain-gap/index.html">
+<meta property="og:site_name" content="Elysian Realm">
+<meta property="og:description" content="我们在给第一人称视频做数据质检时，有一条规则是检测并打码视频里的人体纹身。需求很直接：找到纹身区域，生成分割 mask，覆盖上去。这种任务，正常流程是找个现成模型测一下，能用就上，不行再想别的。 规则 7（屏幕检测）和规则 8（裸露检测）都是这么走下来的，现成模型调调阈值就上线了。我以为纹身也差不多。 事实不是这样的。 找到了一个看起来不错的模型HuggingFace 上有个 jun710&#x2F;dee">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-06-16T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-06-24T02:47:22.530Z">
+<meta property="article:author" content="Everlasting Elysium">
+<meta property="article:tag" content="YOLO">
+<meta property="article:tag" content="Computer Vision">
+<meta property="article:tag" content="Domain Gap">
+<meta property="article:tag" content="Object Detection">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading" id="hl-loading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading</span>
+  </div>
+
+  <!-- _0kd Page Transition Layer -->
+  <div class="_0kd" id="hl-0kd"></div>
+
+  <!-- Background Layer -->
+  
+  <div class="bg" style="background-image: url('/img/bg.png');"></div>
+
+  <!-- Header -->
+  
+  <header>
+  <!-- Personal Info Card -->
+  <a href="/" class="personal">
+    <span class="avatar-link">
+      <img
+        src="/img/avatar.svg"
+        alt="Elysio"
+        class="avatar"
+        onerror="this.onerror=null;this.style.background='#333';"
+      >
+    </span>
+    <span class="info-bar">
+      <span class="info-bio">知行合一,学以致用；但行好事，莫问前程。</span>
+      <span class="info-url">
+        <span class="info-url-lock">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/>
+            <path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        https://everlasting-elysium.github.io/
+      </span>
+    </span>
+  </a>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    
+      
+      <span class="tab">
+        <a href="/">推送</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/archives/">归档</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/tags/">标签</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/album/">相册</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/friends/">伙伴</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/about/">关于</a>
+      </span>
+    
+  </div>
+
+  <!-- Search Button -->
+  
+  <button class="hl-search-btn" id="hl-search-btn"
+          title="搜索 (Ctrl+K)" aria-label="搜索">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+  
+</header>
+
+
+  <!-- Main Content -->
+  <main class="has-hero">
+    <link rel="stylesheet" href="/css/post.css">
+<link rel="stylesheet" href="/css/post-window.css">
+
+<script>
+(function () {
+  var isWindow = false;
+  try { isWindow = new URLSearchParams(window.location.search).get('window') === 'true'; } catch(e) {}
+  if (!isWindow) { try { isWindow = window.self !== window.top; } catch(e) { isWindow = true; } }
+  if (isWindow) document.documentElement.classList.add('window-mode');
+})();
+</script>
+
+
+
+<!-- ═══════════ Normal Mode ═══════════ -->
+<article class="post-article">
+
+  
+  <div class="post-hero" style="background-image:url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80')">
+    <div class="post-hero-overlay">
+      <div class="post-hero-inner">
+        <h1 class="post-title">纹身检测的 Domain Gap：三重 OOD 为什么让所有现成方案全部失效</h1>
+        <div class="post-meta">
+          <time datetime="2026-06-17">
+            2026 / 06 / 17
+          </time>
+          
+          <div class="post-tags">
+            
+            <a class="tag-pill" href="/tags/YOLO/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/YOLO/')}else{window.location.href=this.href}">
+              YOLO
+            </a>
+            
+            <a class="tag-pill" href="/tags/Computer-Vision/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/Computer-Vision/')}else{window.location.href=this.href}">
+              Computer Vision
+            </a>
+            
+            <a class="tag-pill" href="/tags/Domain-Gap/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/Domain-Gap/')}else{window.location.href=this.href}">
+              Domain Gap
+            </a>
+            
+            <a class="tag-pill" href="/tags/Object-Detection/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/Object-Detection/')}else{window.location.href=this.href}">
+              Object Detection
+            </a>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="post-body">
+    <div class="markdown-content">
+      <p>我们在给第一人称视频做数据质检时，有一条规则是检测并打码视频里的人体纹身。需求很直接：找到纹身区域，生成分割 mask，覆盖上去。这种任务，正常流程是找个现成模型测一下，能用就上，不行再想别的。</p>
+<p>规则 7（屏幕检测）和规则 8（裸露检测）都是这么走下来的，现成模型调调阈值就上线了。我以为纹身也差不多。</p>
+<p><strong>事实不是这样的。</strong></p>
+<h2 id="找到了一个看起来不错的模型"><a href="#找到了一个看起来不错的模型" class="headerlink" title="找到了一个看起来不错的模型"></a>找到了一个看起来不错的模型</h2><p>HuggingFace 上有个 <code>jun710/deep-tattoo-yolov8</code>，MIT 协议，YOLOv8s-seg 架构，有分割输出，ultralytics 直接加载，v3 权重只有 23MB。看着完全符合要求，加载进来测。</p>
+<p>测试用的是含颈部花卉纹身和手臂纹身的真人第一人称视频。</p>
+<table>
+<thead>
+<tr>
+<th>现象</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>浅色小臂纹身</td>
+<td>偶尔能检到（conf 0.75~0.82）</td>
+</tr>
+<tr>
+<td>颈部纹身、深色皮肤纹身</td>
+<td>大量漏检，t&#x3D;150 帧清晰可见却 0 检出</td>
+</tr>
+<tr>
+<td>误检</td>
+<td>频繁把鞋子、头发、画面角落标成纹身</td>
+</tr>
+<tr>
+<td>conf 分布</td>
+<td>真纹身 0.33~0.82 与误检 &lt;0.5 重叠，无法用阈值切开</td>
+</tr>
+<tr>
+<td>打码定位</td>
+<td>conf 0.82 的框打在头部，不在纹身上</td>
+</tr>
+</tbody></table>
+<p>conf 分布重叠是最致命的一条。如果真纹身的置信度普遍高于误检，还能调个阈值凑合用。但这里两组分布深度交叠：调高阈值漏真纹身，调低阈值误检爆炸，没有合理的操作点。</p>
+<h2 id="根因：三重-OOD-叠加"><a href="#根因：三重-OOD-叠加" class="headerlink" title="根因：三重 OOD 叠加"></a>根因：三重 OOD 叠加</h2><p>deep-tattoo 和几乎所有公开纹身模型，训练数据都是”标准摆拍”，正面、好光照、固定距离、展示给镜头看的纹身。</p>
+<p>我们的场景叠了三层偏移：</p>
+<ol>
+<li><strong>第一人称俯视角</strong>：拍摄者从上往下看自己的手臂，视角在训练分布里几乎不存在</li>
+<li><strong>颈部纹身</strong>：俯视时颈部出现变形和遮挡，与正面摆拍差异极大</li>
+<li><strong>深色皮肤</strong>：纹身与皮肤的色差本来就小，深色皮肤进一步压缩这个信号</li>
+</ol>
+<p>纹身本身的类内方差就极大，图案、颜色、部位千变万化，任何一个训练集的覆盖都是有限的。三重 OOD 叠加之后，模型基本在做随机猜测，漏检的恰好是最需要检出的那些情况。</p>
+<h2 id="穷尽了所有替代方向"><a href="#穷尽了所有替代方向" class="headerlink" title="穷尽了所有替代方向"></a>穷尽了所有替代方向</h2><p>我们没有只测 deep-tattoo 就放弃，把能想到的路都走了一遍：</p>
+<table>
+<thead>
+<tr>
+<th>方向</th>
+<th>结论</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>jun710 的 U-Net 版（Dice 90%）</td>
+<td>仅 189 张训练图、无公开推理代码、同样 OOD</td>
+</tr>
+<tr>
+<td>Roboflow &#x2F; UMass 纹身模型</td>
+<td>全正面摆拍训练，对我们场景没有优势</td>
+</tr>
+<tr>
+<td>YOLOE &#x2F; Grounding DINO 开放词汇</td>
+<td>本地 CLIP 装不上；纹身零样本召回本来就低</td>
+</tr>
+<tr>
+<td>SAM2</td>
+<td>只能精细化已有检测框，解决不了漏检根本</td>
+</tr>
+<tr>
+<td>PiiBlur 商业 API</td>
+<td>底层对本场景的召回未知，且引入外部依赖</td>
+</tr>
+<tr>
+<td>2025~26 最新研究</td>
+<td>不存在第一人称纹身检测相关工作</td>
+</tr>
+</tbody></table>
+<p>SAM2 那条值得单说。SAM2 做分割本来很强，但它是分割工具，不是检测器，需要一个初始框或点作为 prompt。我们的问题是检测漏了，SAM2 只能精化已经检到的东西，无法凭空找到漏检的纹身。开放词汇检测器（YOLOE &#x2F; Grounding DINO）也试了，纹身这个概念在视觉上太模糊，零样本效果同样差。</p>
+<h2 id="和规则-7-8-的对比"><a href="#和规则-7-8-的对比" class="headerlink" title="和规则 7&#x2F;8 的对比"></a>和规则 7&#x2F;8 的对比</h2><p>同一个质检框架里，之前做的两条规则现成模型都能用：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>规则 7 屏幕检测（HaS）</th>
+<th>规则 8 裸露检测（NudeNet）</th>
+<th>规则 9 纹身检测（deep-tattoo）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>现成模型能用吗</td>
+<td>可用</td>
+<td>可用</td>
+<td>不可用，需微调</td>
+</tr>
+<tr>
+<td>难点</td>
+<td>白墙假阳性</td>
+<td>困难样本漏检</td>
+<td>类内方差极大 + OOD</td>
+</tr>
+</tbody></table>
+<p>区别在哪？屏幕和人体裸露的类内方差小：屏幕就是屏幕，形状颜色相对固定；裸露检测的目标类别也是有限的几种。纹身的类内方差极大，图案可以是任何东西，颜色无限，部位分散在全身。这种目标，现成模型的泛化性能天然脆弱，遇到哪怕一点分布偏移就容易崩掉。</p>
+<h2 id="唯一可行路径：微调"><a href="#唯一可行路径：微调" class="headerlink" title="唯一可行路径：微调"></a>唯一可行路径：微调</h2><p>调研结论是没有捷径，只有微调。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">数据：</span><br><span class="line">  TattooTest（5190 张分割标注，Roboflow）</span><br><span class="line">  + 自采第一人称纹身帧（重点标注颈部/深色/俯视难例，几十帧）</span><br><span class="line"></span><br><span class="line">训练：</span><br><span class="line">  yolov8s-seg.pt 基础上 fine-tune ~30 epochs</span><br><span class="line">  增广：旋转 / 饱和度 / 亮度</span><br><span class="line"></span><br><span class="line">约束：</span><br><span class="line">  需要 GPU（本地 Mac 无法训练）</span><br><span class="line">  预计 1 天（标注 0.5 天 + 训练约 2 小时）</span><br></pre></td></tr></table></figure>
+
+<p>微调完成后，<code>tattoo_benchmark.py</code> 换 <code>--model</code> 参数直接接入，脚本和流程已经就绪。这条路的成本是确定的，不再是”试试看能不能用”的状态。</p>
+<p>这篇记录的价值不在于方案成功，而在于把”现成模型全部行不通”这个结论走到了实测层面。”以为模型应该能用，上线后才发现大量漏检”这个坑，是真实存在的，不是杞人忧天。</p>
+<h2 id="收获"><a href="#收获" class="headerlink" title="收获"></a>收获</h2><ul>
+<li>Conf 分布重叠是调参失败的早期信号。一旦两类置信度范围深度交叠，不要继续调阈值，直接考虑下一层方案</li>
+<li>SAM2 是分割工具不是检测器，漏检问题靠它解决不了，不要混淆两者</li>
+<li>类内方差极大的目标（纹身、艺术字、特殊图案）不要对现成模型抱期望，从一开始就把微调成本纳入计划</li>
+<li>测一个场景要专门测最难的子集，不要只测容易案例就下可用结论。这次颈部+深色皮肤+俯视恰好是三重叠加，任何一层单独都不足以揭露问题</li>
+<li>“现成模型不行”本身是有价值的结论，值得记录，避免以后重走调研路</li>
+</ul>
+
+    </div>
+  </div>
+
+</article>
+
+<!-- ═══════════ Window Mode ═══════════ -->
+<article class="post-window">
+
+  <!-- Header: avatar + name (left) | close button (right) -->
+  <div class="post-window-header">
+    <div class="post-window-author">
+      <img class="post-window-avatar" src="/img/avatar.svg" alt=""
+           onerror="this.onerror=null;this.style.display='none'">
+      <div class="post-window-author-info">
+        <span class="post-window-author-name">Elysio</span>
+      </div>
+    </div>
+    <button class="pw-close" onclick="try{window.parent.closeWindow()}catch(e){}" title="关闭">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 130">
+        <path fill-rule="evenodd" fill="rgb(196,34,9)"
+          d="M0.373,65.000 C0.087,51.609 3.792,38.466 11.131,27.293
+             C19.671,14.293 32.558,4.832 47.439,0.360
+             C90.023,0.360 132.606,0.360 175.190,0.360
+             C183.245,1.482 190.671,5.694 195.361,12.480
+             C201.498,21.357 202.014,33.317 196.706,43.453
+             C185.052,65.000 173.397,86.547 161.743,108.094
+             C156.410,114.144 150.041,119.160 142.916,122.907
+             C136.598,126.230 129.798,128.498 122.745,129.640
+             C99.884,129.640 77.024,129.640 54.163,129.640
+             C38.778,126.247 24.988,117.749 15.165,105.400
+             C6.284,94.236 0.695,80.120 0.373,65.000
+             ZM51.473,11.133 L171.156,11.133
+             C175.707,11.408 180.022,13.285 183.259,16.520
+             C187.160,20.420 189.059,25.857 188.637,31.333
+             C177.880,52.431 167.122,73.529 156.364,94.627
+             C152.903,101.201 147.810,106.769 141.571,110.787
+             C135.517,114.686 128.583,116.999 121.400,117.520
+             C98.988,117.520 76.575,117.520 54.163,117.520
+             C28.223,111.309 10.366,87.869 11.131,62.307
+             C11.831,38.916 28.017,17.942 51.473,11.133
+             ZM54.538,17.998
+             C91.618,17.954 128.697,17.910 165.777,17.866
+             C171.772,16.637 177.788,19.453 180.569,24.600
+             C183.069,29.227 182.591,35.067 179.224,39.413
+             C168.466,58.716 157.708,78.018 146.950,97.320
+             C144.417,101.017 141.229,104.211 137.537,106.747
+             C133.865,109.270 129.766,111.094 125.434,112.134
+             C102.574,112.134 79.713,112.134 56.852,112.134
+             C33.925,106.570 18.183,85.813 18.891,63.215
+             C19.538,42.562 33.826,24.045 54.538,17.998
+             ZM79.713,63.653
+             C74.334,58.267 68.955,52.880 63.576,47.493
+             C60.994,44.908 60.994,40.652 63.576,38.066
+             C66.158,35.481 70.407,35.481 72.989,38.066
+             C78.368,43.453 83.747,48.840 89.126,54.227
+             C94.505,48.840 99.884,43.453 105.263,38.066
+             C107.957,36.746 111.211,37.289 113.332,39.413
+             C115.452,41.537 115.995,44.796 114.676,47.493
+             C109.297,52.880 103.918,58.267 98.539,63.653
+             C103.918,69.040 109.297,74.427 114.676,79.813
+             C117.258,82.399 117.258,86.654 114.676,89.240
+             C112.094,91.826 107.845,91.826 105.263,89.240
+             C99.884,83.853 94.505,78.467 89.126,73.080
+             C83.299,78.916 77.472,84.751 71.645,90.587
+             C68.951,91.907 65.697,91.364 63.576,89.240
+             C61.455,87.116 60.913,83.858 62.231,81.160
+             C68.059,75.325 73.886,69.489 79.713,63.653 Z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Body: cover card (left) + scrollable content (right) -->
+  <div class="post-window-body">
+    
+    <aside class="post-window-cover-panel">
+      <div class="post-window-cover-card">
+        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80" alt="纹身检测的 Domain Gap：三重 OOD 为什么让所有现成方案全部失效"
+             onerror="this.onerror=null;this.style.display='none'">
+      </div>
+    </aside>
+    
+
+    <section class="post-window-main">
+      <h1 class="post-window-title">纹身检测的 Domain Gap：三重 OOD 为什么让所有现成方案全部失效</h1>
+      <div class="post-window-content">
+        <div class="markdown-content">
+          <p>我们在给第一人称视频做数据质检时，有一条规则是检测并打码视频里的人体纹身。需求很直接：找到纹身区域，生成分割 mask，覆盖上去。这种任务，正常流程是找个现成模型测一下，能用就上，不行再想别的。</p>
+<p>规则 7（屏幕检测）和规则 8（裸露检测）都是这么走下来的，现成模型调调阈值就上线了。我以为纹身也差不多。</p>
+<p><strong>事实不是这样的。</strong></p>
+<h2 id="找到了一个看起来不错的模型"><a href="#找到了一个看起来不错的模型" class="headerlink" title="找到了一个看起来不错的模型"></a>找到了一个看起来不错的模型</h2><p>HuggingFace 上有个 <code>jun710/deep-tattoo-yolov8</code>，MIT 协议，YOLOv8s-seg 架构，有分割输出，ultralytics 直接加载，v3 权重只有 23MB。看着完全符合要求，加载进来测。</p>
+<p>测试用的是含颈部花卉纹身和手臂纹身的真人第一人称视频。</p>
+<table>
+<thead>
+<tr>
+<th>现象</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>浅色小臂纹身</td>
+<td>偶尔能检到（conf 0.75~0.82）</td>
+</tr>
+<tr>
+<td>颈部纹身、深色皮肤纹身</td>
+<td>大量漏检，t&#x3D;150 帧清晰可见却 0 检出</td>
+</tr>
+<tr>
+<td>误检</td>
+<td>频繁把鞋子、头发、画面角落标成纹身</td>
+</tr>
+<tr>
+<td>conf 分布</td>
+<td>真纹身 0.33~0.82 与误检 &lt;0.5 重叠，无法用阈值切开</td>
+</tr>
+<tr>
+<td>打码定位</td>
+<td>conf 0.82 的框打在头部，不在纹身上</td>
+</tr>
+</tbody></table>
+<p>conf 分布重叠是最致命的一条。如果真纹身的置信度普遍高于误检，还能调个阈值凑合用。但这里两组分布深度交叠：调高阈值漏真纹身，调低阈值误检爆炸，没有合理的操作点。</p>
+<h2 id="根因：三重-OOD-叠加"><a href="#根因：三重-OOD-叠加" class="headerlink" title="根因：三重 OOD 叠加"></a>根因：三重 OOD 叠加</h2><p>deep-tattoo 和几乎所有公开纹身模型，训练数据都是”标准摆拍”，正面、好光照、固定距离、展示给镜头看的纹身。</p>
+<p>我们的场景叠了三层偏移：</p>
+<ol>
+<li><strong>第一人称俯视角</strong>：拍摄者从上往下看自己的手臂，视角在训练分布里几乎不存在</li>
+<li><strong>颈部纹身</strong>：俯视时颈部出现变形和遮挡，与正面摆拍差异极大</li>
+<li><strong>深色皮肤</strong>：纹身与皮肤的色差本来就小，深色皮肤进一步压缩这个信号</li>
+</ol>
+<p>纹身本身的类内方差就极大，图案、颜色、部位千变万化，任何一个训练集的覆盖都是有限的。三重 OOD 叠加之后，模型基本在做随机猜测，漏检的恰好是最需要检出的那些情况。</p>
+<h2 id="穷尽了所有替代方向"><a href="#穷尽了所有替代方向" class="headerlink" title="穷尽了所有替代方向"></a>穷尽了所有替代方向</h2><p>我们没有只测 deep-tattoo 就放弃，把能想到的路都走了一遍：</p>
+<table>
+<thead>
+<tr>
+<th>方向</th>
+<th>结论</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>jun710 的 U-Net 版（Dice 90%）</td>
+<td>仅 189 张训练图、无公开推理代码、同样 OOD</td>
+</tr>
+<tr>
+<td>Roboflow &#x2F; UMass 纹身模型</td>
+<td>全正面摆拍训练，对我们场景没有优势</td>
+</tr>
+<tr>
+<td>YOLOE &#x2F; Grounding DINO 开放词汇</td>
+<td>本地 CLIP 装不上；纹身零样本召回本来就低</td>
+</tr>
+<tr>
+<td>SAM2</td>
+<td>只能精细化已有检测框，解决不了漏检根本</td>
+</tr>
+<tr>
+<td>PiiBlur 商业 API</td>
+<td>底层对本场景的召回未知，且引入外部依赖</td>
+</tr>
+<tr>
+<td>2025~26 最新研究</td>
+<td>不存在第一人称纹身检测相关工作</td>
+</tr>
+</tbody></table>
+<p>SAM2 那条值得单说。SAM2 做分割本来很强，但它是分割工具，不是检测器，需要一个初始框或点作为 prompt。我们的问题是检测漏了，SAM2 只能精化已经检到的东西，无法凭空找到漏检的纹身。开放词汇检测器（YOLOE &#x2F; Grounding DINO）也试了，纹身这个概念在视觉上太模糊，零样本效果同样差。</p>
+<h2 id="和规则-7-8-的对比"><a href="#和规则-7-8-的对比" class="headerlink" title="和规则 7&#x2F;8 的对比"></a>和规则 7&#x2F;8 的对比</h2><p>同一个质检框架里，之前做的两条规则现成模型都能用：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>规则 7 屏幕检测（HaS）</th>
+<th>规则 8 裸露检测（NudeNet）</th>
+<th>规则 9 纹身检测（deep-tattoo）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>现成模型能用吗</td>
+<td>可用</td>
+<td>可用</td>
+<td>不可用，需微调</td>
+</tr>
+<tr>
+<td>难点</td>
+<td>白墙假阳性</td>
+<td>困难样本漏检</td>
+<td>类内方差极大 + OOD</td>
+</tr>
+</tbody></table>
+<p>区别在哪？屏幕和人体裸露的类内方差小：屏幕就是屏幕，形状颜色相对固定；裸露检测的目标类别也是有限的几种。纹身的类内方差极大，图案可以是任何东西，颜色无限，部位分散在全身。这种目标，现成模型的泛化性能天然脆弱，遇到哪怕一点分布偏移就容易崩掉。</p>
+<h2 id="唯一可行路径：微调"><a href="#唯一可行路径：微调" class="headerlink" title="唯一可行路径：微调"></a>唯一可行路径：微调</h2><p>调研结论是没有捷径，只有微调。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">数据：</span><br><span class="line">  TattooTest（5190 张分割标注，Roboflow）</span><br><span class="line">  + 自采第一人称纹身帧（重点标注颈部/深色/俯视难例，几十帧）</span><br><span class="line"></span><br><span class="line">训练：</span><br><span class="line">  yolov8s-seg.pt 基础上 fine-tune ~30 epochs</span><br><span class="line">  增广：旋转 / 饱和度 / 亮度</span><br><span class="line"></span><br><span class="line">约束：</span><br><span class="line">  需要 GPU（本地 Mac 无法训练）</span><br><span class="line">  预计 1 天（标注 0.5 天 + 训练约 2 小时）</span><br></pre></td></tr></table></figure>
+
+<p>微调完成后，<code>tattoo_benchmark.py</code> 换 <code>--model</code> 参数直接接入，脚本和流程已经就绪。这条路的成本是确定的，不再是”试试看能不能用”的状态。</p>
+<p>这篇记录的价值不在于方案成功，而在于把”现成模型全部行不通”这个结论走到了实测层面。”以为模型应该能用，上线后才发现大量漏检”这个坑，是真实存在的，不是杞人忧天。</p>
+<h2 id="收获"><a href="#收获" class="headerlink" title="收获"></a>收获</h2><ul>
+<li>Conf 分布重叠是调参失败的早期信号。一旦两类置信度范围深度交叠，不要继续调阈值，直接考虑下一层方案</li>
+<li>SAM2 是分割工具不是检测器，漏检问题靠它解决不了，不要混淆两者</li>
+<li>类内方差极大的目标（纹身、艺术字、特殊图案）不要对现成模型抱期望，从一开始就把微调成本纳入计划</li>
+<li>测一个场景要专门测最难的子集，不要只测容易案例就下可用结论。这次颈部+深色皮肤+俯视恰好是三重叠加，任何一层单独都不足以揭露问题</li>
+<li>“现成模型不行”本身是有价值的结论，值得记录，避免以后重走调研路</li>
+</ul>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+</article>
+
+  </main>
+
+  <!-- Window Popup (article iframe viewer) -->
+  <div class="window" id="hl-window">
+    <div class="window-content">
+      <iframe class="window-frame" id="hl-window-frame"></iframe>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ---- Loading overlay: fade out on page load ---- */
+    window.addEventListener('load', function() {
+      var loading = document.getElementById('hl-loading');
+      if (!loading) return;
+      loading.classList.add('fade-out');
+      setTimeout(function() {
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+      }, 400);
+    });
+
+    /* ---- _0kd page transition (globally callable) ---- */
+    window._0kd = function(callback) {
+      var el = document.getElementById('hl-0kd');
+      if (!el) return;
+      el.style.display = 'block';
+      el.style.animationPlayState = 'running';
+      setTimeout(function() {
+        if (typeof callback === 'function') callback();
+        setTimeout(function() {
+          el.style.animationPlayState = 'paused';
+          el.style.display = 'none';
+        }, 500);
+      }, 1000);
+    };
+
+    /* ---- Window popup controls (globally callable) ---- */
+    var _windowPrevUrl = null;
+
+    window.openWindow = function(url) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win || !frame) return;
+      _windowPrevUrl = window.location.href;   // remember where we came from
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      frame.src = url + sep + 'window=true';
+      history.pushState({ hollowWindow: true }, '', url);
+      win.style.display = 'flex';
+    };
+
+    window.closeWindow = function(fromPopstate) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win) return;
+      win.style.display = 'none';
+      if (frame) frame.src = '';
+      if (!fromPopstate) {
+        // Replace article URL with original page URL — no popstate, no navigation side-effects
+        history.replaceState(null, '', _windowPrevUrl || window.location.pathname);
+      }
+      _windowPrevUrl = null;
+    };
+
+    /* Close window on Escape key */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.closeWindow();
+    });
+
+    /* Close window when clicking backdrop (outside content) */
+    var winEl = document.getElementById('hl-window');
+    if (winEl) {
+      winEl.addEventListener('click', function(e) {
+        if (e.target === winEl) window.closeWindow();
+      });
+    }
+
+    /* Close window on browser back */
+    window.addEventListener('popstate', function() {
+      var win = document.getElementById('hl-window');
+      if (win && win.style.display !== 'none') closeWindow(true);
+    });
+  })();
+  </script>
+
+  
+<!-- HL Search Modal -->
+<div class="hl-search-overlay" id="hl-search-overlay" hidden>
+  <div class="hl-search-backdrop" id="hl-search-backdrop"></div>
+  <div class="hl-search-modal" role="dialog" aria-label="搜索">
+    <div class="hl-search-header">
+      <svg class="hl-search-icon-prefix" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="hl-search-input" id="hl-search-input"
+             type="search" placeholder="搜索文章…"
+             autocomplete="off" spellcheck="false" aria-label="搜索关键字">
+      <button class="hl-search-close" id="hl-search-close" title="关闭 (Esc)" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hl-search-divider"></div>
+
+    <div class="hl-search-body" id="hl-search-body">
+      <div class="hl-search-hint" id="hl-search-hint">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>输入关键字开始搜索</span>
+      </div>
+      <div class="hl-search-results" id="hl-search-results" role="listbox" aria-label="搜索结果"></div>
+    </div>
+
+    <div class="hl-search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/search.css">
+<script>window.__HL_SEARCH_PATH__ = '/search.json';</script>
+<script src="/js/search.js"></script>
+
+
+  <script src="/js/code-copy.js"></script>
+
+</body>
+</html>

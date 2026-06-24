@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>WIDER FACE 高分不等于实战强：第一人称视频人脸检测模型评测 | Elysian Realm</title>
+  <meta name="description" content="">
+  
+  <!-- Font: MaoKen Assorted Sans (unpkg CDN, same as interknot reference) -->
+  <style>@import url('https://unpkg.com/@chinese-fonts/mksjh@1.4.0/dist/MaokenAssortedSans1.30/result.css');</style>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="description" content="项目里有一条质检规则：第一人称视频里必须有人脸才算有效。场景是 iPhone 拍的第一人称视频（1920×1440，30fps），人脸通常偏小、角度多变，漏检代价高。 听起来找个人脸检测模型跑上去就好了。结果一测，WIDER FACE 基准上得分高的模型，在这个场景里直接翻车。记录一下。  怎么测的拿了 3 段有人脸的视频，从 COS 下载原视频（非打码版）。按 fps&#x3D;2 抽帧，总共">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WIDER FACE 高分不等于实战强：第一人称视频人脸检测模型评测">
+<meta property="og:url" content="https://everlasting-elysium.github.io/2026/06/22/2026-06-23-face-detection-model-benchmark/index.html">
+<meta property="og:site_name" content="Elysian Realm">
+<meta property="og:description" content="项目里有一条质检规则：第一人称视频里必须有人脸才算有效。场景是 iPhone 拍的第一人称视频（1920×1440，30fps），人脸通常偏小、角度多变，漏检代价高。 听起来找个人脸检测模型跑上去就好了。结果一测，WIDER FACE 基准上得分高的模型，在这个场景里直接翻车。记录一下。  怎么测的拿了 3 段有人脸的视频，从 COS 下载原视频（非打码版）。按 fps&#x3D;2 抽帧，总共">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-06-22T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-06-24T02:47:22.530Z">
+<meta property="article:author" content="Everlasting Elysium">
+<meta property="article:tag" content="计算机视觉">
+<meta property="article:tag" content="模型选型">
+<meta property="article:tag" content="YOLO">
+<meta property="article:tag" content="人脸检测">
+<meta property="article:tag" content="SCRFD">
+<meta property="article:tag" content="WIDER FACE">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading" id="hl-loading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading</span>
+  </div>
+
+  <!-- _0kd Page Transition Layer -->
+  <div class="_0kd" id="hl-0kd"></div>
+
+  <!-- Background Layer -->
+  
+  <div class="bg" style="background-image: url('/img/bg.png');"></div>
+
+  <!-- Header -->
+  
+  <header>
+  <!-- Personal Info Card -->
+  <a href="/" class="personal">
+    <span class="avatar-link">
+      <img
+        src="/img/avatar.svg"
+        alt="Elysio"
+        class="avatar"
+        onerror="this.onerror=null;this.style.background='#333';"
+      >
+    </span>
+    <span class="info-bar">
+      <span class="info-bio">知行合一,学以致用；但行好事，莫问前程。</span>
+      <span class="info-url">
+        <span class="info-url-lock">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/>
+            <path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        https://everlasting-elysium.github.io/
+      </span>
+    </span>
+  </a>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    
+      
+      <span class="tab">
+        <a href="/">推送</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/archives/">归档</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/tags/">标签</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/album/">相册</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/friends/">伙伴</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/about/">关于</a>
+      </span>
+    
+  </div>
+
+  <!-- Search Button -->
+  
+  <button class="hl-search-btn" id="hl-search-btn"
+          title="搜索 (Ctrl+K)" aria-label="搜索">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+  
+</header>
+
+
+  <!-- Main Content -->
+  <main class="has-hero">
+    <link rel="stylesheet" href="/css/post.css">
+<link rel="stylesheet" href="/css/post-window.css">
+
+<script>
+(function () {
+  var isWindow = false;
+  try { isWindow = new URLSearchParams(window.location.search).get('window') === 'true'; } catch(e) {}
+  if (!isWindow) { try { isWindow = window.self !== window.top; } catch(e) { isWindow = true; } }
+  if (isWindow) document.documentElement.classList.add('window-mode');
+})();
+</script>
+
+
+
+<!-- ═══════════ Normal Mode ═══════════ -->
+<article class="post-article">
+
+  
+  <div class="post-hero" style="background-image:url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80')">
+    <div class="post-hero-overlay">
+      <div class="post-hero-inner">
+        <h1 class="post-title">WIDER FACE 高分不等于实战强：第一人称视频人脸检测模型评测</h1>
+        <div class="post-meta">
+          <time datetime="2026-06-23">
+            2026 / 06 / 23
+          </time>
+          
+          <div class="post-tags">
+            
+            <a class="tag-pill" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/')}else{window.location.href=this.href}">
+              计算机视觉
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E6%A8%A1%E5%9E%8B%E9%80%89%E5%9E%8B/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E6%A8%A1%E5%9E%8B%E9%80%89%E5%9E%8B/')}else{window.location.href=this.href}">
+              模型选型
+            </a>
+            
+            <a class="tag-pill" href="/tags/YOLO/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/YOLO/')}else{window.location.href=this.href}">
+              YOLO
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E4%BA%BA%E8%84%B8%E6%A3%80%E6%B5%8B/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E4%BA%BA%E8%84%B8%E6%A3%80%E6%B5%8B/')}else{window.location.href=this.href}">
+              人脸检测
+            </a>
+            
+            <a class="tag-pill" href="/tags/SCRFD/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/SCRFD/')}else{window.location.href=this.href}">
+              SCRFD
+            </a>
+            
+            <a class="tag-pill" href="/tags/WIDER-FACE/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/WIDER-FACE/')}else{window.location.href=this.href}">
+              WIDER FACE
+            </a>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="post-body">
+    <div class="markdown-content">
+      <p>项目里有一条质检规则：第一人称视频里必须有人脸才算有效。场景是 iPhone 拍的第一人称视频（1920×1440，30fps），人脸通常偏小、角度多变，漏检代价高。</p>
+<p>听起来找个人脸检测模型跑上去就好了。结果一测，WIDER FACE 基准上得分高的模型，在这个场景里直接翻车。记录一下。</p>
+<hr>
+<h3 id="怎么测的"><a href="#怎么测的" class="headerlink" title="怎么测的"></a>怎么测的</h3><p>拿了 3 段有人脸的视频，从 COS 下载原视频（非打码版）。按 fps&#x3D;2 抽帧，总共 1815 帧——273 帧有人脸，1542 帧无人脸。每帧在 eval-deck 面板里人工标注了 <code>has_face</code> &#x2F; <code>no_face</code>，这是真值（GT）。</p>
+<p>测试方式有个关键点：<strong>每个模型先用极低阈值跑一轮，保留完整 score 分布，再用 <code>tune_threshold.py</code> 在 <code>[0,1]</code> 区间扫描，找最优工作点。</strong> 如果直接用默认阈值跑，低于阈值的框会被丢掉，就没法做阈值寻优了。</p>
+<p>运行环境：Apple M1，Python 3.9，CPU 推理。</p>
+<hr>
+<h3 id="候选模型"><a href="#候选模型" class="headerlink" title="候选模型"></a>候选模型</h3><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>来源</th>
+<th>参数量</th>
+<th>WIDER FACE Hard AP</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>YOLOv11n-face</td>
+<td>akanametov&#x2F;yolo-face</td>
+<td>~2.6M</td>
+<td>81.0%</td>
+</tr>
+<tr>
+<td>YuNet</td>
+<td>opencv&#x2F;face_detection_yunet</td>
+<td>75K</td>
+<td>75.0%</td>
+</tr>
+<tr>
+<td>SCRFD-2.5G (det_500m)</td>
+<td>insightface&#x2F;buffalo_sc</td>
+<td>0.67M</td>
+<td>77.9%</td>
+</tr>
+</tbody></table>
+<p>WIDER FACE Hard AP 是业界主流的人脸检测基准，专测小脸和遮挡场景。按这个指标看，SCRFD-2.5G（77.9%）和 YOLOv11n-face（81.0%）只差了 3 个点，应该在同一个量级。</p>
+<p>结果完全不是这回事。</p>
+<hr>
+<h3 id="结果：F1-差了将近一倍"><a href="#结果：F1-差了将近一倍" class="headerlink" title="结果：F1 差了将近一倍"></a>结果：F1 差了将近一倍</h3><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>最优 conf</th>
+<th>Precision</th>
+<th>Recall</th>
+<th><strong>F1</strong></th>
+<th>TP</th>
+<th>FP</th>
+<th>FN</th>
+<th>TN</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>YOLOv11n-face</strong></td>
+<td><strong>0.3012</strong></td>
+<td><strong>76.1%</strong></td>
+<td><strong>97.1%</strong></td>
+<td><strong>0.853</strong></td>
+<td>265</td>
+<td>83</td>
+<td>8</td>
+<td>1459</td>
+</tr>
+<tr>
+<td>SCRFD-2.5G@640</td>
+<td>0.3327</td>
+<td>42.2%</td>
+<td>51.6%</td>
+<td>0.465</td>
+<td>141</td>
+<td>193</td>
+<td>132</td>
+<td>1349</td>
+</tr>
+<tr>
+<td>SCRFD-2.5G@320</td>
+<td>0.0385</td>
+<td>15.1%</td>
+<td>100%</td>
+<td>0.262</td>
+<td>273</td>
+<td>1538</td>
+<td>0</td>
+<td>4</td>
+</tr>
+</tbody></table>
+<p>YuNet 根本没进入寻优阶段：默认 score_threshold&#x3D;0.3 下只检出了 185&#x2F;1815 帧（10%），检出太少，扫阈值没意义。</p>
+<p>YOLO 碾压。F1 0.853 vs SCRFD 0.465——WIDER FACE 上只差 3 点，实战差了将近一倍。</p>
+<hr>
+<h3 id="SCRFD-为什么翻车"><a href="#SCRFD-为什么翻车" class="headerlink" title="SCRFD 为什么翻车"></a>SCRFD 为什么翻车</h3><p>意外的结果，值得挖一下原因。</p>
+<p><strong>参数量太小。</strong> 测的是 SCRFD-2.5G 里的 det_500m 版本，参数量只有 0.67M。这是 insightface 里面最轻量的一档，对小脸&#x2F;侧脸场景能力有限。SCRFD-10G（WIDER FACE Hard 83%）和这个不是一回事，只是 CPU 单帧约 1.2 秒太慢，这次没条件测。</p>
+<p><strong>分辨率是决定性参数。</strong> 同一个模型，det_size&#x3D;640 和 det_size&#x3D;320 的 F1 是 0.465 vs 0.262，差距巨大。320 分辨率下精度直接崩，只有把阈值压到 0.0385 才能保住召回，代价是 1542 个负样本里误检了 1538 个——精度只剩 15.1%。</p>
+<p><strong>场景分布不同。</strong> 第一人称视角下，人脸通常从侧面、远距离、偏角度出现。WIDER FACE 的 Hard 档虽然有小脸和遮挡，但整体场景分布和第一人称 iPhone 视频不一样。benchmark 上的数字没法直接映射到这里。</p>
+<hr>
+<h3 id="YuNet-的问题"><a href="#YuNet-的问题" class="headerlink" title="YuNet 的问题"></a>YuNet 的问题</h3><p>YuNet 速度最快（9ms&#x2F;帧，是 YOLO 的 1&#x2F;3），参数量只有 75K，很诱人。但检出率 10% 完全不可用。</p>
+<p>YuNet 的设计定位是正脸、近距离的快速粗筛，比如自拍场景。第一人称视频里脸通常不在中心、不正对镜头，正好踩了它的软肋。速度快对这个场景没有意义。</p>
+<hr>
+<h3 id="YOLO-阈值寻优"><a href="#YOLO-阈值寻优" class="headerlink" title="YOLO 阈值寻优"></a>YOLO 阈值寻优</h3><p>默认 conf&#x3D;0.5 不是最优工作点。扫描之后几个典型工作点：</p>
+<table>
+<thead>
+<tr>
+<th>目标</th>
+<th>conf</th>
+<th>Precision</th>
+<th>Recall</th>
+<th>F1</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>默认 0.5</td>
+<td>0.5000</td>
+<td>100%</td>
+<td>59.3%</td>
+<td>0.706</td>
+</tr>
+<tr>
+<td><strong>F1 最优（生产推荐）</strong></td>
+<td><strong>0.3012</strong></td>
+<td><strong>76.1%</strong></td>
+<td><strong>97.1%</strong></td>
+<td><strong>0.853</strong></td>
+</tr>
+<tr>
+<td>召回&#x3D;100%</td>
+<td>0.0547</td>
+<td>25.0%</td>
+<td>100%</td>
+<td>0.399</td>
+</tr>
+</tbody></table>
+<p>把 conf 从 0.5 降到 0.3012，F1 从 0.706 涨到 0.853，召回从 59.3% 涨到 97.1%。代价是精度从 100% 降到 76.1%，即 1815 帧里多了 83 个误检。</p>
+<p>这个场景漏检（FN）的代价远大于误检（FP）：漏掉有人脸的帧会直接让质检误判视频无效。召回优先，conf&#x3D;0.3012 是合理的生产工作点，已经写入 <code>detectors.yaml</code>。</p>
+<hr>
+<h3 id="速度对比"><a href="#速度对比" class="headerlink" title="速度对比"></a>速度对比</h3><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>总时间（1815 帧）</th>
+<th>每帧</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>YuNet@320×240</td>
+<td>17s</td>
+<td>9ms</td>
+</tr>
+<tr>
+<td>SCRFD-2.5G@640</td>
+<td>86s</td>
+<td>47ms</td>
+</tr>
+<tr>
+<td>YOLOv11n-face@640 (lowconf)</td>
+<td>74s</td>
+<td>41ms</td>
+</tr>
+<tr>
+<td>YOLOv11n-face@640 (conf&#x3D;0.3012)</td>
+<td>55s</td>
+<td>30ms</td>
+</tr>
+</tbody></table>
+<p>YuNet 最快，但没有实用价值。YOLO 在 conf&#x3D;0.3012 下约 30ms&#x2F;帧，批量离线处理完全可接受。</p>
+<hr>
+<h3 id="几点收获"><a href="#几点收获" class="headerlink" title="几点收获"></a>几点收获</h3><p><strong>1. WIDER FACE AP 不等于实际场景效果。</strong> SCRFD-2.5G 在 WIDER FACE Hard 上 77.9%，比 YOLO 只低 3 点，但实际 F1 差了 0.388。benchmark 和目标场景的分布不同，选型必须在真实场景上实测，不能只看论文数字。</p>
+<p><strong>2. 模型系列内部差异很大，搞清楚版本再测。</strong> SCRFD 有多个子模型，det_500m 是最小的那档。如果有 GPU 条件，SCRFD-10G 结果可能完全不同。名字里都有 SCRFD，但能力差别很大。</p>
+<p><strong>3. 输入分辨率是敏感参数。</strong> 同一个模型 640 vs 320，F1 从 0.465 掉到 0.262，相当于基本不可用。换模型之前先确认输入分辨率够不够。</p>
+<p><strong>4. 低阈值预跑是阈值寻优的前提。</strong> 直接用默认阈值跑、看检出率是个思路陷阱。正确做法是用极低阈值跑一轮保留完整 score 分布，再做扫描寻优。</p>
+<hr>
+<h3 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h3><p>SCRFD-10G（WIDER FACE Hard 83%）和 RetinaFace-MNetV2（Hard 86.6%，需 Python ≥3.10）还没测，两者都需要 GPU 环境。如果后续有 GPU 实验机，值得补上这两个对比。目前在 CPU 场景下，YOLOv11n-face conf&#x3D;0.3012 是当前最优选。</p>
+
+    </div>
+  </div>
+
+</article>
+
+<!-- ═══════════ Window Mode ═══════════ -->
+<article class="post-window">
+
+  <!-- Header: avatar + name (left) | close button (right) -->
+  <div class="post-window-header">
+    <div class="post-window-author">
+      <img class="post-window-avatar" src="/img/avatar.svg" alt=""
+           onerror="this.onerror=null;this.style.display='none'">
+      <div class="post-window-author-info">
+        <span class="post-window-author-name">Elysio</span>
+      </div>
+    </div>
+    <button class="pw-close" onclick="try{window.parent.closeWindow()}catch(e){}" title="关闭">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 130">
+        <path fill-rule="evenodd" fill="rgb(196,34,9)"
+          d="M0.373,65.000 C0.087,51.609 3.792,38.466 11.131,27.293
+             C19.671,14.293 32.558,4.832 47.439,0.360
+             C90.023,0.360 132.606,0.360 175.190,0.360
+             C183.245,1.482 190.671,5.694 195.361,12.480
+             C201.498,21.357 202.014,33.317 196.706,43.453
+             C185.052,65.000 173.397,86.547 161.743,108.094
+             C156.410,114.144 150.041,119.160 142.916,122.907
+             C136.598,126.230 129.798,128.498 122.745,129.640
+             C99.884,129.640 77.024,129.640 54.163,129.640
+             C38.778,126.247 24.988,117.749 15.165,105.400
+             C6.284,94.236 0.695,80.120 0.373,65.000
+             ZM51.473,11.133 L171.156,11.133
+             C175.707,11.408 180.022,13.285 183.259,16.520
+             C187.160,20.420 189.059,25.857 188.637,31.333
+             C177.880,52.431 167.122,73.529 156.364,94.627
+             C152.903,101.201 147.810,106.769 141.571,110.787
+             C135.517,114.686 128.583,116.999 121.400,117.520
+             C98.988,117.520 76.575,117.520 54.163,117.520
+             C28.223,111.309 10.366,87.869 11.131,62.307
+             C11.831,38.916 28.017,17.942 51.473,11.133
+             ZM54.538,17.998
+             C91.618,17.954 128.697,17.910 165.777,17.866
+             C171.772,16.637 177.788,19.453 180.569,24.600
+             C183.069,29.227 182.591,35.067 179.224,39.413
+             C168.466,58.716 157.708,78.018 146.950,97.320
+             C144.417,101.017 141.229,104.211 137.537,106.747
+             C133.865,109.270 129.766,111.094 125.434,112.134
+             C102.574,112.134 79.713,112.134 56.852,112.134
+             C33.925,106.570 18.183,85.813 18.891,63.215
+             C19.538,42.562 33.826,24.045 54.538,17.998
+             ZM79.713,63.653
+             C74.334,58.267 68.955,52.880 63.576,47.493
+             C60.994,44.908 60.994,40.652 63.576,38.066
+             C66.158,35.481 70.407,35.481 72.989,38.066
+             C78.368,43.453 83.747,48.840 89.126,54.227
+             C94.505,48.840 99.884,43.453 105.263,38.066
+             C107.957,36.746 111.211,37.289 113.332,39.413
+             C115.452,41.537 115.995,44.796 114.676,47.493
+             C109.297,52.880 103.918,58.267 98.539,63.653
+             C103.918,69.040 109.297,74.427 114.676,79.813
+             C117.258,82.399 117.258,86.654 114.676,89.240
+             C112.094,91.826 107.845,91.826 105.263,89.240
+             C99.884,83.853 94.505,78.467 89.126,73.080
+             C83.299,78.916 77.472,84.751 71.645,90.587
+             C68.951,91.907 65.697,91.364 63.576,89.240
+             C61.455,87.116 60.913,83.858 62.231,81.160
+             C68.059,75.325 73.886,69.489 79.713,63.653 Z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Body: cover card (left) + scrollable content (right) -->
+  <div class="post-window-body">
+    
+    <aside class="post-window-cover-panel">
+      <div class="post-window-cover-card">
+        <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80" alt="WIDER FACE 高分不等于实战强：第一人称视频人脸检测模型评测"
+             onerror="this.onerror=null;this.style.display='none'">
+      </div>
+    </aside>
+    
+
+    <section class="post-window-main">
+      <h1 class="post-window-title">WIDER FACE 高分不等于实战强：第一人称视频人脸检测模型评测</h1>
+      <div class="post-window-content">
+        <div class="markdown-content">
+          <p>项目里有一条质检规则：第一人称视频里必须有人脸才算有效。场景是 iPhone 拍的第一人称视频（1920×1440，30fps），人脸通常偏小、角度多变，漏检代价高。</p>
+<p>听起来找个人脸检测模型跑上去就好了。结果一测，WIDER FACE 基准上得分高的模型，在这个场景里直接翻车。记录一下。</p>
+<hr>
+<h3 id="怎么测的"><a href="#怎么测的" class="headerlink" title="怎么测的"></a>怎么测的</h3><p>拿了 3 段有人脸的视频，从 COS 下载原视频（非打码版）。按 fps&#x3D;2 抽帧，总共 1815 帧——273 帧有人脸，1542 帧无人脸。每帧在 eval-deck 面板里人工标注了 <code>has_face</code> &#x2F; <code>no_face</code>，这是真值（GT）。</p>
+<p>测试方式有个关键点：<strong>每个模型先用极低阈值跑一轮，保留完整 score 分布，再用 <code>tune_threshold.py</code> 在 <code>[0,1]</code> 区间扫描，找最优工作点。</strong> 如果直接用默认阈值跑，低于阈值的框会被丢掉，就没法做阈值寻优了。</p>
+<p>运行环境：Apple M1，Python 3.9，CPU 推理。</p>
+<hr>
+<h3 id="候选模型"><a href="#候选模型" class="headerlink" title="候选模型"></a>候选模型</h3><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>来源</th>
+<th>参数量</th>
+<th>WIDER FACE Hard AP</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>YOLOv11n-face</td>
+<td>akanametov&#x2F;yolo-face</td>
+<td>~2.6M</td>
+<td>81.0%</td>
+</tr>
+<tr>
+<td>YuNet</td>
+<td>opencv&#x2F;face_detection_yunet</td>
+<td>75K</td>
+<td>75.0%</td>
+</tr>
+<tr>
+<td>SCRFD-2.5G (det_500m)</td>
+<td>insightface&#x2F;buffalo_sc</td>
+<td>0.67M</td>
+<td>77.9%</td>
+</tr>
+</tbody></table>
+<p>WIDER FACE Hard AP 是业界主流的人脸检测基准，专测小脸和遮挡场景。按这个指标看，SCRFD-2.5G（77.9%）和 YOLOv11n-face（81.0%）只差了 3 个点，应该在同一个量级。</p>
+<p>结果完全不是这回事。</p>
+<hr>
+<h3 id="结果：F1-差了将近一倍"><a href="#结果：F1-差了将近一倍" class="headerlink" title="结果：F1 差了将近一倍"></a>结果：F1 差了将近一倍</h3><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>最优 conf</th>
+<th>Precision</th>
+<th>Recall</th>
+<th><strong>F1</strong></th>
+<th>TP</th>
+<th>FP</th>
+<th>FN</th>
+<th>TN</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>YOLOv11n-face</strong></td>
+<td><strong>0.3012</strong></td>
+<td><strong>76.1%</strong></td>
+<td><strong>97.1%</strong></td>
+<td><strong>0.853</strong></td>
+<td>265</td>
+<td>83</td>
+<td>8</td>
+<td>1459</td>
+</tr>
+<tr>
+<td>SCRFD-2.5G@640</td>
+<td>0.3327</td>
+<td>42.2%</td>
+<td>51.6%</td>
+<td>0.465</td>
+<td>141</td>
+<td>193</td>
+<td>132</td>
+<td>1349</td>
+</tr>
+<tr>
+<td>SCRFD-2.5G@320</td>
+<td>0.0385</td>
+<td>15.1%</td>
+<td>100%</td>
+<td>0.262</td>
+<td>273</td>
+<td>1538</td>
+<td>0</td>
+<td>4</td>
+</tr>
+</tbody></table>
+<p>YuNet 根本没进入寻优阶段：默认 score_threshold&#x3D;0.3 下只检出了 185&#x2F;1815 帧（10%），检出太少，扫阈值没意义。</p>
+<p>YOLO 碾压。F1 0.853 vs SCRFD 0.465——WIDER FACE 上只差 3 点，实战差了将近一倍。</p>
+<hr>
+<h3 id="SCRFD-为什么翻车"><a href="#SCRFD-为什么翻车" class="headerlink" title="SCRFD 为什么翻车"></a>SCRFD 为什么翻车</h3><p>意外的结果，值得挖一下原因。</p>
+<p><strong>参数量太小。</strong> 测的是 SCRFD-2.5G 里的 det_500m 版本，参数量只有 0.67M。这是 insightface 里面最轻量的一档，对小脸&#x2F;侧脸场景能力有限。SCRFD-10G（WIDER FACE Hard 83%）和这个不是一回事，只是 CPU 单帧约 1.2 秒太慢，这次没条件测。</p>
+<p><strong>分辨率是决定性参数。</strong> 同一个模型，det_size&#x3D;640 和 det_size&#x3D;320 的 F1 是 0.465 vs 0.262，差距巨大。320 分辨率下精度直接崩，只有把阈值压到 0.0385 才能保住召回，代价是 1542 个负样本里误检了 1538 个——精度只剩 15.1%。</p>
+<p><strong>场景分布不同。</strong> 第一人称视角下，人脸通常从侧面、远距离、偏角度出现。WIDER FACE 的 Hard 档虽然有小脸和遮挡，但整体场景分布和第一人称 iPhone 视频不一样。benchmark 上的数字没法直接映射到这里。</p>
+<hr>
+<h3 id="YuNet-的问题"><a href="#YuNet-的问题" class="headerlink" title="YuNet 的问题"></a>YuNet 的问题</h3><p>YuNet 速度最快（9ms&#x2F;帧，是 YOLO 的 1&#x2F;3），参数量只有 75K，很诱人。但检出率 10% 完全不可用。</p>
+<p>YuNet 的设计定位是正脸、近距离的快速粗筛，比如自拍场景。第一人称视频里脸通常不在中心、不正对镜头，正好踩了它的软肋。速度快对这个场景没有意义。</p>
+<hr>
+<h3 id="YOLO-阈值寻优"><a href="#YOLO-阈值寻优" class="headerlink" title="YOLO 阈值寻优"></a>YOLO 阈值寻优</h3><p>默认 conf&#x3D;0.5 不是最优工作点。扫描之后几个典型工作点：</p>
+<table>
+<thead>
+<tr>
+<th>目标</th>
+<th>conf</th>
+<th>Precision</th>
+<th>Recall</th>
+<th>F1</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>默认 0.5</td>
+<td>0.5000</td>
+<td>100%</td>
+<td>59.3%</td>
+<td>0.706</td>
+</tr>
+<tr>
+<td><strong>F1 最优（生产推荐）</strong></td>
+<td><strong>0.3012</strong></td>
+<td><strong>76.1%</strong></td>
+<td><strong>97.1%</strong></td>
+<td><strong>0.853</strong></td>
+</tr>
+<tr>
+<td>召回&#x3D;100%</td>
+<td>0.0547</td>
+<td>25.0%</td>
+<td>100%</td>
+<td>0.399</td>
+</tr>
+</tbody></table>
+<p>把 conf 从 0.5 降到 0.3012，F1 从 0.706 涨到 0.853，召回从 59.3% 涨到 97.1%。代价是精度从 100% 降到 76.1%，即 1815 帧里多了 83 个误检。</p>
+<p>这个场景漏检（FN）的代价远大于误检（FP）：漏掉有人脸的帧会直接让质检误判视频无效。召回优先，conf&#x3D;0.3012 是合理的生产工作点，已经写入 <code>detectors.yaml</code>。</p>
+<hr>
+<h3 id="速度对比"><a href="#速度对比" class="headerlink" title="速度对比"></a>速度对比</h3><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>总时间（1815 帧）</th>
+<th>每帧</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>YuNet@320×240</td>
+<td>17s</td>
+<td>9ms</td>
+</tr>
+<tr>
+<td>SCRFD-2.5G@640</td>
+<td>86s</td>
+<td>47ms</td>
+</tr>
+<tr>
+<td>YOLOv11n-face@640 (lowconf)</td>
+<td>74s</td>
+<td>41ms</td>
+</tr>
+<tr>
+<td>YOLOv11n-face@640 (conf&#x3D;0.3012)</td>
+<td>55s</td>
+<td>30ms</td>
+</tr>
+</tbody></table>
+<p>YuNet 最快，但没有实用价值。YOLO 在 conf&#x3D;0.3012 下约 30ms&#x2F;帧，批量离线处理完全可接受。</p>
+<hr>
+<h3 id="几点收获"><a href="#几点收获" class="headerlink" title="几点收获"></a>几点收获</h3><p><strong>1. WIDER FACE AP 不等于实际场景效果。</strong> SCRFD-2.5G 在 WIDER FACE Hard 上 77.9%，比 YOLO 只低 3 点，但实际 F1 差了 0.388。benchmark 和目标场景的分布不同，选型必须在真实场景上实测，不能只看论文数字。</p>
+<p><strong>2. 模型系列内部差异很大，搞清楚版本再测。</strong> SCRFD 有多个子模型，det_500m 是最小的那档。如果有 GPU 条件，SCRFD-10G 结果可能完全不同。名字里都有 SCRFD，但能力差别很大。</p>
+<p><strong>3. 输入分辨率是敏感参数。</strong> 同一个模型 640 vs 320，F1 从 0.465 掉到 0.262，相当于基本不可用。换模型之前先确认输入分辨率够不够。</p>
+<p><strong>4. 低阈值预跑是阈值寻优的前提。</strong> 直接用默认阈值跑、看检出率是个思路陷阱。正确做法是用极低阈值跑一轮保留完整 score 分布，再做扫描寻优。</p>
+<hr>
+<h3 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h3><p>SCRFD-10G（WIDER FACE Hard 83%）和 RetinaFace-MNetV2（Hard 86.6%，需 Python ≥3.10）还没测，两者都需要 GPU 环境。如果后续有 GPU 实验机，值得补上这两个对比。目前在 CPU 场景下，YOLOv11n-face conf&#x3D;0.3012 是当前最优选。</p>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+</article>
+
+  </main>
+
+  <!-- Window Popup (article iframe viewer) -->
+  <div class="window" id="hl-window">
+    <div class="window-content">
+      <iframe class="window-frame" id="hl-window-frame"></iframe>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ---- Loading overlay: fade out on page load ---- */
+    window.addEventListener('load', function() {
+      var loading = document.getElementById('hl-loading');
+      if (!loading) return;
+      loading.classList.add('fade-out');
+      setTimeout(function() {
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+      }, 400);
+    });
+
+    /* ---- _0kd page transition (globally callable) ---- */
+    window._0kd = function(callback) {
+      var el = document.getElementById('hl-0kd');
+      if (!el) return;
+      el.style.display = 'block';
+      el.style.animationPlayState = 'running';
+      setTimeout(function() {
+        if (typeof callback === 'function') callback();
+        setTimeout(function() {
+          el.style.animationPlayState = 'paused';
+          el.style.display = 'none';
+        }, 500);
+      }, 1000);
+    };
+
+    /* ---- Window popup controls (globally callable) ---- */
+    var _windowPrevUrl = null;
+
+    window.openWindow = function(url) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win || !frame) return;
+      _windowPrevUrl = window.location.href;   // remember where we came from
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      frame.src = url + sep + 'window=true';
+      history.pushState({ hollowWindow: true }, '', url);
+      win.style.display = 'flex';
+    };
+
+    window.closeWindow = function(fromPopstate) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win) return;
+      win.style.display = 'none';
+      if (frame) frame.src = '';
+      if (!fromPopstate) {
+        // Replace article URL with original page URL — no popstate, no navigation side-effects
+        history.replaceState(null, '', _windowPrevUrl || window.location.pathname);
+      }
+      _windowPrevUrl = null;
+    };
+
+    /* Close window on Escape key */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.closeWindow();
+    });
+
+    /* Close window when clicking backdrop (outside content) */
+    var winEl = document.getElementById('hl-window');
+    if (winEl) {
+      winEl.addEventListener('click', function(e) {
+        if (e.target === winEl) window.closeWindow();
+      });
+    }
+
+    /* Close window on browser back */
+    window.addEventListener('popstate', function() {
+      var win = document.getElementById('hl-window');
+      if (win && win.style.display !== 'none') closeWindow(true);
+    });
+  })();
+  </script>
+
+  
+<!-- HL Search Modal -->
+<div class="hl-search-overlay" id="hl-search-overlay" hidden>
+  <div class="hl-search-backdrop" id="hl-search-backdrop"></div>
+  <div class="hl-search-modal" role="dialog" aria-label="搜索">
+    <div class="hl-search-header">
+      <svg class="hl-search-icon-prefix" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="hl-search-input" id="hl-search-input"
+             type="search" placeholder="搜索文章…"
+             autocomplete="off" spellcheck="false" aria-label="搜索关键字">
+      <button class="hl-search-close" id="hl-search-close" title="关闭 (Esc)" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hl-search-divider"></div>
+
+    <div class="hl-search-body" id="hl-search-body">
+      <div class="hl-search-hint" id="hl-search-hint">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>输入关键字开始搜索</span>
+      </div>
+      <div class="hl-search-results" id="hl-search-results" role="listbox" aria-label="搜索结果"></div>
+    </div>
+
+    <div class="hl-search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/search.css">
+<script>window.__HL_SEARCH_PATH__ = '/search.json';</script>
+<script src="/js/search.js"></script>
+
+
+  <script src="/js/code-copy.js"></script>
+
+</body>
+</html>

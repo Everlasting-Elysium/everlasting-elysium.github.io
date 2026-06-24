@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>IMU 30Hz + 三层架构：用陀螺仪检测视频卡顿和抖动 | Elysian Realm</title>
+  <meta name="description" content="">
+  
+  <!-- Font: MaoKen Assorted Sans (unpkg CDN, same as interknot reference) -->
+  <style>@import url('https://unpkg.com/@chinese-fonts/mksjh@1.4.0/dist/MaokenAssortedSans1.30/result.css');</style>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="description" content="项目里有一条质量规则：视频动作必须流畅，卡顿&#x2F;抖动帧占比不能超过 10%，最长连续异常不能超过 1 秒。 规则定下来了，但怎么检测是个问题。直觉上从视频分析入手——毕竟是视频质检——但这条路走不通。  为什么视频本身不够服务端对视频按 1fps 抽帧处理。1fps 有几个根本性的问题：  连续卡顿判定失效。 相邻帧间隔 1 秒，根本无法判断”这段卡顿是否超过了 1 秒的上限”。两帧之间发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="IMU 30Hz + 三层架构：用陀螺仪检测视频卡顿和抖动">
+<meta property="og:url" content="https://everlasting-elysium.github.io/2026/06/14/2026-06-15-imu-motion-smoothness-detection/index.html">
+<meta property="og:site_name" content="Elysian Realm">
+<meta property="og:description" content="项目里有一条质量规则：视频动作必须流畅，卡顿&#x2F;抖动帧占比不能超过 10%，最长连续异常不能超过 1 秒。 规则定下来了，但怎么检测是个问题。直觉上从视频分析入手——毕竟是视频质检——但这条路走不通。  为什么视频本身不够服务端对视频按 1fps 抽帧处理。1fps 有几个根本性的问题：  连续卡顿判定失效。 相邻帧间隔 1 秒，根本无法判断”这段卡顿是否超过了 1 秒的上限”。两帧之间发">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-06-14T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-06-24T02:47:22.530Z">
+<meta property="article:author" content="Everlasting Elysium">
+<meta property="article:tag" content="计算机视觉">
+<meta property="article:tag" content="IMU">
+<meta property="article:tag" content="信号处理">
+<meta property="article:tag" content="视频质检">
+<meta property="article:tag" content="陀螺仪">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading" id="hl-loading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading</span>
+  </div>
+
+  <!-- _0kd Page Transition Layer -->
+  <div class="_0kd" id="hl-0kd"></div>
+
+  <!-- Background Layer -->
+  
+  <div class="bg" style="background-image: url('/img/bg.png');"></div>
+
+  <!-- Header -->
+  
+  <header>
+  <!-- Personal Info Card -->
+  <a href="/" class="personal">
+    <span class="avatar-link">
+      <img
+        src="/img/avatar.svg"
+        alt="Elysio"
+        class="avatar"
+        onerror="this.onerror=null;this.style.background='#333';"
+      >
+    </span>
+    <span class="info-bar">
+      <span class="info-bio">知行合一,学以致用；但行好事，莫问前程。</span>
+      <span class="info-url">
+        <span class="info-url-lock">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/>
+            <path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        https://everlasting-elysium.github.io/
+      </span>
+    </span>
+  </a>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    
+      
+      <span class="tab">
+        <a href="/">推送</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/archives/">归档</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/tags/">标签</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/album/">相册</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/friends/">伙伴</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/about/">关于</a>
+      </span>
+    
+  </div>
+
+  <!-- Search Button -->
+  
+  <button class="hl-search-btn" id="hl-search-btn"
+          title="搜索 (Ctrl+K)" aria-label="搜索">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+  
+</header>
+
+
+  <!-- Main Content -->
+  <main class="has-hero">
+    <link rel="stylesheet" href="/css/post.css">
+<link rel="stylesheet" href="/css/post-window.css">
+
+<script>
+(function () {
+  var isWindow = false;
+  try { isWindow = new URLSearchParams(window.location.search).get('window') === 'true'; } catch(e) {}
+  if (!isWindow) { try { isWindow = window.self !== window.top; } catch(e) { isWindow = true; } }
+  if (isWindow) document.documentElement.classList.add('window-mode');
+})();
+</script>
+
+
+
+<!-- ═══════════ Normal Mode ═══════════ -->
+<article class="post-article">
+
+  
+  <div class="post-hero" style="background-image:url('https://images.unsplash.com/photo-1559028012-481c04fa702d?w=1200&q=80')">
+    <div class="post-hero-overlay">
+      <div class="post-hero-inner">
+        <h1 class="post-title">IMU 30Hz + 三层架构：用陀螺仪检测视频卡顿和抖动</h1>
+        <div class="post-meta">
+          <time datetime="2026-06-15">
+            2026 / 06 / 15
+          </time>
+          
+          <div class="post-tags">
+            
+            <a class="tag-pill" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/')}else{window.location.href=this.href}">
+              计算机视觉
+            </a>
+            
+            <a class="tag-pill" href="/tags/IMU/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/IMU/')}else{window.location.href=this.href}">
+              IMU
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E4%BF%A1%E5%8F%B7%E5%A4%84%E7%90%86/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E4%BF%A1%E5%8F%B7%E5%A4%84%E7%90%86/')}else{window.location.href=this.href}">
+              信号处理
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E8%A7%86%E9%A2%91%E8%B4%A8%E6%A3%80/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E8%A7%86%E9%A2%91%E8%B4%A8%E6%A3%80/')}else{window.location.href=this.href}">
+              视频质检
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E9%99%80%E8%9E%BA%E4%BB%AA/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E9%99%80%E8%9E%BA%E4%BB%AA/')}else{window.location.href=this.href}">
+              陀螺仪
+            </a>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="post-body">
+    <div class="markdown-content">
+      <p>项目里有一条质量规则：视频动作必须流畅，卡顿&#x2F;抖动帧占比不能超过 10%，最长连续异常不能超过 1 秒。</p>
+<p>规则定下来了，但怎么检测是个问题。直觉上从视频分析入手——毕竟是视频质检——但这条路走不通。</p>
+<hr>
+<h3 id="为什么视频本身不够"><a href="#为什么视频本身不够" class="headerlink" title="为什么视频本身不够"></a>为什么视频本身不够</h3><p>服务端对视频按 1fps 抽帧处理。1fps 有几个根本性的问题：</p>
+<ul>
+<li><strong>连续卡顿判定失效。</strong> 相邻帧间隔 1 秒，根本无法判断”这段卡顿是否超过了 1 秒的上限”。两帧之间发生了什么完全不知道。</li>
+<li><strong>抖动信息完全丢失。</strong> 抖动是高频信号，通常在 10-30Hz。1fps 采样率完全丢失这个信息，不满足奈奎斯特定理的基本要求。</li>
+<li><strong>光流只能看大位移。</strong> 1fps 下光流检测到的”大位移”分不清楚是正常快速移动还是真实抖动。</li>
+</ul>
+<p><strong>结论：必须依赖 IMU 数据（30Hz）作为主检测信号。</strong></p>
+<p>iPhone 录制时会同步记录加速度计和陀螺仪，采集格式里已经有 <code>observation.imu.gyro</code> 和 <code>observation.imu.accel</code>，30Hz，不需要任何额外采集工作。</p>
+<hr>
+<h3 id="三层架构"><a href="#三层架构" class="headerlink" title="三层架构"></a>三层架构</h3><p>方案拆成三层，每层做一件事：</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>位置</th>
+<th>时机</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Layer 0</td>
+<td>iPhone 客户端</td>
+<td>录制中实时</td>
+<td>实时告警，当场纠正</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>服务端</td>
+<td>上传后离线</td>
+<td>主检测，精确定位异常段</td>
+</tr>
+<tr>
+<td>Layer 2</td>
+<td>服务端</td>
+<td>Layer 1 结果可疑时</td>
+<td>语义复核，区分真异常和正常暂停</td>
+</tr>
+</tbody></table>
+<p>Layer 1 判完之后，明确正常的直接 PASS，明确异常的直接 FAIL，只有灰度区间的才进 Layer 2 做进一步复核。</p>
+<hr>
+<h3 id="Layer-0：客户端实时告警"><a href="#Layer-0：客户端实时告警" class="headerlink" title="Layer 0：客户端实时告警"></a>Layer 0：客户端实时告警</h3><p>iPhone 端读 CMMotionManager 的陀螺仪数据（iOS 默认 100Hz，降采样到 30Hz 省电）。逻辑极简：</p>
+<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 抖动告警：1s 滑动窗口内 gyro_mag 标准差超阈值</span></span><br><span class="line"><span class="keyword">let</span> gyroMag <span class="operator">=</span> sqrt(gyro.x² <span class="operator">+</span> gyro.y² <span class="operator">+</span> gyro.z²)</span><br><span class="line"><span class="keyword">let</span> gyroStd <span class="operator">=</span> stddev(gyroBuffer)  <span class="comment">// 维护 30 个样本的环形缓冲区</span></span><br><span class="line"><span class="keyword">if</span> gyroStd <span class="operator">&gt;</span> <span class="type">JITTER_THRESHOLD</span> &#123;   <span class="comment">// 建议 0.5 rad/s</span></span><br><span class="line">    showAlert(<span class="string">&quot;设备晃动较大，请保持稳定&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 卡顿告警：陀螺仪幅值持续低于阈值超过 2s</span></span><br><span class="line"><span class="keyword">if</span> gyroMag <span class="operator">&lt;</span> <span class="type">STILL_THRESHOLD</span> &#123;    <span class="comment">// 建议 0.03 rad/s</span></span><br><span class="line">    stillCounter <span class="operator">+=</span> <span class="number">1</span></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    stillCounter <span class="operator">=</span> <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> stillCounter <span class="operator">&gt;=</span> <span class="type">STILL_FRAMES</span> &#123;  <span class="comment">// 30Hz × 2s = 60 帧</span></span><br><span class="line">    showAlert(<span class="string">&quot;检测到设备静止，请继续操作&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>每帧计算量：gyro_mag 约 10ns，环形缓冲区写入约 1ns，stddev（30 个样本）约 100ns，阈值比较约 1ns。<strong>总计约 0.1μs&#x2F;帧，完全可以忽略。</strong> 不需要 FFT，不需要滤波器，不需要引入任何新库。约 20 行 Swift。</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>建议值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JITTER_THRESHOLD</td>
+<td>0.5 rad&#x2F;s</td>
+<td>1s 窗口内 gyro_mag 标准差，高于此为明显抖动</td>
+</tr>
+<tr>
+<td>STILL_THRESHOLD</td>
+<td>0.03 rad&#x2F;s</td>
+<td>gyro_mag 低于此视为静止</td>
+</tr>
+<tr>
+<td>STILL_FRAMES</td>
+<td>60（2s）</td>
+<td>连续静止触发告警，比规则的 1s 宽松一倍</td>
+</tr>
+<tr>
+<td>告警冷却</td>
+<td>5s</td>
+<td>两次告警间最短间隔，防刷屏</td>
+</tr>
+</tbody></table>
+<p>Layer 0 的局限很明显：单阈值分不清”真卡顿”和”用户主动暂停”，用户也可以无视告警继续录。所以它不做最终判定，只是减少废片产出，服务端做兜底。</p>
+<hr>
+<h3 id="Layer-1：IMU-信号分析"><a href="#Layer-1：IMU-信号分析" class="headerlink" title="Layer 1：IMU 信号分析"></a>Layer 1：IMU 信号分析</h3><p>服务端主检测。主信号是陀螺仪三轴角速度（<code>observation.imu.gyro</code>），30Hz。</p>
+<p><strong>卡顿检测（Stall Detection）</strong></p>
+<p>设备静止时陀螺仪三轴角速度趋近零。用 run-length encoding 找连续静止段：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">detect_stalls</span>(<span class="params">gyro, fs=<span class="number">30.0</span>, still_threshold=<span class="number">0.05</span>, min_stall_s=<span class="number">0.5</span></span>):</span><br><span class="line">    gyro_mag = np.sqrt(np.<span class="built_in">sum</span>(gyro ** <span class="number">2</span>, axis=<span class="number">1</span>))  <span class="comment"># 三轴合成幅值</span></span><br><span class="line">    is_still = gyro_mag &lt; still_threshold</span><br><span class="line"></span><br><span class="line">    stalls, in_stall, stall_start = [], <span class="literal">False</span>, <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i, still <span class="keyword">in</span> <span class="built_in">enumerate</span>(is_still):</span><br><span class="line">        <span class="keyword">if</span> still <span class="keyword">and</span> <span class="keyword">not</span> in_stall:</span><br><span class="line">            in_stall, stall_start = <span class="literal">True</span>, i</span><br><span class="line">        <span class="keyword">elif</span> <span class="keyword">not</span> still <span class="keyword">and</span> in_stall:</span><br><span class="line">            in_stall = <span class="literal">False</span></span><br><span class="line">            duration_s = (i - stall_start) / fs</span><br><span class="line">            <span class="keyword">if</span> duration_s &gt;= min_stall_s:</span><br><span class="line">                stalls.append(&#123;</span><br><span class="line">                    <span class="string">&quot;start_s&quot;</span>: <span class="built_in">round</span>(stall_start / fs, <span class="number">3</span>),</span><br><span class="line">                    <span class="string">&quot;end_s&quot;</span>: <span class="built_in">round</span>(i / fs, <span class="number">3</span>),</span><br><span class="line">                    <span class="string">&quot;duration_s&quot;</span>: <span class="built_in">round</span>(duration_s, <span class="number">3</span>),</span><br><span class="line">                &#125;)</span><br><span class="line">    <span class="keyword">return</span> stalls</span><br></pre></td></tr></table></figure>
+
+<p>still_threshold 推荐 0.05 rad&#x2F;s——手持设备正常操作的微抖通常大于 0.05，真正静止时小于 0.05。这个值需要用标注数据验证，但 0.05 是合理的起点。</p>
+<p><strong>抖动检测（Jitter Detection）</strong></p>
+<p>抖动 &#x3D; 陀螺仪信号高频能量突增。正常手部运动主频小于 3Hz，抖动频率大于 5Hz。用高通滤波提取高频分量：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> scipy.signal <span class="keyword">import</span> butter, sosfilt</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">detect_jitter</span>(<span class="params">gyro, fs=<span class="number">30.0</span>, highpass_hz=<span class="number">5.0</span>, jitter_threshold=<span class="number">0.3</span>, window_s=<span class="number">0.5</span></span>):</span><br><span class="line">    sos = butter(<span class="number">4</span>, highpass_hz, btype=<span class="string">&quot;high&quot;</span>, fs=fs, output=<span class="string">&quot;sos&quot;</span>)</span><br><span class="line">    gyro_hf = sosfilt(sos, gyro, axis=<span class="number">0</span>)</span><br><span class="line">    hf_mag = np.sqrt(np.<span class="built_in">sum</span>(gyro_hf ** <span class="number">2</span>, axis=<span class="number">1</span>))</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 滑动窗口 RMS</span></span><br><span class="line">    win_samples = <span class="built_in">max</span>(<span class="number">1</span>, <span class="built_in">int</span>(window_s * fs))</span><br><span class="line">    kernel = np.ones(win_samples) / win_samples</span><br><span class="line">    hf_rms = np.sqrt(np.convolve(hf_mag ** <span class="number">2</span>, kernel, mode=<span class="string">&quot;same&quot;</span>))</span><br><span class="line">    is_jittery = hf_rms &gt; jitter_threshold</span><br><span class="line">    <span class="comment"># ... run-length encoding 找连续抖动段</span></span><br></pre></td></tr></table></figure>
+
+<p>4 阶 Butterworth 高通，过渡带够陡，不引入振铃。highpass_hz&#x3D;5.0 的选择依据是正常手部运动主频小于 3Hz，留了 2Hz 的裕量。jitter_threshold&#x3D;0.3 rad&#x2F;s 是高频分量 RMS 的判定阈值。</p>
+<p><strong>综合判定</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">evaluate_smoothness</span>(<span class="params">gyro, fs=<span class="number">30.0</span></span>):</span><br><span class="line">    stalls = detect_stalls(gyro, fs)</span><br><span class="line">    jitters = detect_jitter(gyro, fs)</span><br><span class="line"></span><br><span class="line">    total_s = <span class="built_in">len</span>(gyro) / fs</span><br><span class="line">    abnormal_s = <span class="built_in">sum</span>(s[<span class="string">&quot;duration_s&quot;</span>] <span class="keyword">for</span> s <span class="keyword">in</span> stalls + jitters)</span><br><span class="line">    abnormal_ratio = abnormal_s / total_s</span><br><span class="line">    max_continuous_s = <span class="built_in">max</span>((s[<span class="string">&quot;duration_s&quot;</span>] <span class="keyword">for</span> s <span class="keyword">in</span> stalls + jitters), default=<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">    passed = (abnormal_ratio &lt;= <span class="number">0.10</span>) <span class="keyword">and</span> (max_continuous_s &lt;= <span class="number">1.0</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 灰度区间，触发 Layer 2</span></span><br><span class="line">    needs_llm_review = (</span><br><span class="line">        (<span class="number">0.05</span> &lt;= abnormal_ratio &lt;= <span class="number">0.15</span>)</span><br><span class="line">        <span class="keyword">or</span> (<span class="number">0.7</span> &lt;= max_continuous_s &lt;= <span class="number">1.5</span>)</span><br><span class="line">    )</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;passed&quot;</span>: passed, <span class="string">&quot;needs_llm_review&quot;</span>: needs_llm_review, ...&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="Layer-2：LLM-语义复核"><a href="#Layer-2：LLM-语义复核" class="headerlink" title="Layer 2：LLM 语义复核"></a>Layer 2：LLM 语义复核</h3><p>IMU 的根本局限是看不懂语义。陀螺仪静止可能是真卡顿，也可能是用户在思考、在看物品、在等水烧开。这些情况 IMU 无法区分，但视频帧能说明。</p>
+<p>Layer 2 只在灰度区间触发：异常占比在 5%-15% 之间，或最长连续段在 0.7-1.5s 之间。预计约 10-15% 的视频需要走到这一层。</p>
+<p>触发后，从 Layer 1 标记的异常段采样视频帧（每段前后各 2 帧加段中 1 帧，合并去重，上限 20 帧），发给 Gemini 做多帧理解，判断：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">需要区分的情况：</span><br><span class="line">- 卡顿（设备死机/录制卡住）  → 质量问题，FAIL</span><br><span class="line">- 抖动（设备剧烈晃动）       → 质量问题，FAIL</span><br><span class="line">- 操作暂停（在看/思考/调整）  → 正常行为，PASS</span><br><span class="line">- 快速移动（走动/转身）       → 正常行为，PASS</span><br></pre></td></tr></table></figure>
+
+<p>LLM 置信度 &gt;&#x3D; 0.7 时覆盖 IMU 判定，低于 0.7 时保留 IMU 原始结果。</p>
+<hr>
+<h3 id="成本几乎为零"><a href="#成本几乎为零" class="headerlink" title="成本几乎为零"></a>成本几乎为零</h3><table>
+<thead>
+<tr>
+<th>层</th>
+<th>触发率</th>
+<th>单视频成本</th>
+<th>延迟</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Layer 1 (IMU)</td>
+<td>100%</td>
+<td>$0</td>
+<td>&lt;100ms（纯 numpy 计算）</td>
+</tr>
+<tr>
+<td>Layer 2 (LLM)</td>
+<td>~10-15%</td>
+<td>~$0.002</td>
+<td>~3-5s</td>
+</tr>
+</tbody></table>
+<p>综合成本：$0 × 85% + $0.002 × 15% ≈ <strong>$0.0003&#x2F;视频</strong>。</p>
+<p>零新增依赖——numpy、scipy、opencv、google-generativeai 项目里全都已经有了。</p>
+<hr>
+<h3 id="几点收获"><a href="#几点收获" class="headerlink" title="几点收获"></a>几点收获</h3><p><strong>1. IMU 是视频质检里被低估的信号。</strong> 习惯上从视频出发做质检，但对动作流畅性这类时序精度要求高的规则，30Hz 的 IMU 远比 1fps 视频可靠。不要因为是”视频质检”就只盯着视频看。</p>
+<p><strong>2. 分层让每一层只做它擅长的事。</strong> 客户端极轻量做实时告警，服务端 IMU 做精确分析，LLM 只处理语义模糊的边界情况。每层都有局限，但三层配合之后覆盖了几乎所有情况。</p>
+<p><strong>3. 灰度区间触发 LLM 是压成本的关键。</strong> 大多数视频要么明显正常要么明显异常，LLM 只处理那 15% 的模糊地带，成本就压到了几乎可以忽略的程度。如果对所有视频都跑 LLM，成本会高出 7 倍以上。</p>
+<p><strong>4. 客户端告警不是替代服务端质检的。</strong> 录制时告诉用户”你卡了&#x2F;你在抖”，比事后判废片再让用户重录效率高很多。两者互补，不是替代关系。</p>
+
+    </div>
+  </div>
+
+</article>
+
+<!-- ═══════════ Window Mode ═══════════ -->
+<article class="post-window">
+
+  <!-- Header: avatar + name (left) | close button (right) -->
+  <div class="post-window-header">
+    <div class="post-window-author">
+      <img class="post-window-avatar" src="/img/avatar.svg" alt=""
+           onerror="this.onerror=null;this.style.display='none'">
+      <div class="post-window-author-info">
+        <span class="post-window-author-name">Elysio</span>
+      </div>
+    </div>
+    <button class="pw-close" onclick="try{window.parent.closeWindow()}catch(e){}" title="关闭">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 130">
+        <path fill-rule="evenodd" fill="rgb(196,34,9)"
+          d="M0.373,65.000 C0.087,51.609 3.792,38.466 11.131,27.293
+             C19.671,14.293 32.558,4.832 47.439,0.360
+             C90.023,0.360 132.606,0.360 175.190,0.360
+             C183.245,1.482 190.671,5.694 195.361,12.480
+             C201.498,21.357 202.014,33.317 196.706,43.453
+             C185.052,65.000 173.397,86.547 161.743,108.094
+             C156.410,114.144 150.041,119.160 142.916,122.907
+             C136.598,126.230 129.798,128.498 122.745,129.640
+             C99.884,129.640 77.024,129.640 54.163,129.640
+             C38.778,126.247 24.988,117.749 15.165,105.400
+             C6.284,94.236 0.695,80.120 0.373,65.000
+             ZM51.473,11.133 L171.156,11.133
+             C175.707,11.408 180.022,13.285 183.259,16.520
+             C187.160,20.420 189.059,25.857 188.637,31.333
+             C177.880,52.431 167.122,73.529 156.364,94.627
+             C152.903,101.201 147.810,106.769 141.571,110.787
+             C135.517,114.686 128.583,116.999 121.400,117.520
+             C98.988,117.520 76.575,117.520 54.163,117.520
+             C28.223,111.309 10.366,87.869 11.131,62.307
+             C11.831,38.916 28.017,17.942 51.473,11.133
+             ZM54.538,17.998
+             C91.618,17.954 128.697,17.910 165.777,17.866
+             C171.772,16.637 177.788,19.453 180.569,24.600
+             C183.069,29.227 182.591,35.067 179.224,39.413
+             C168.466,58.716 157.708,78.018 146.950,97.320
+             C144.417,101.017 141.229,104.211 137.537,106.747
+             C133.865,109.270 129.766,111.094 125.434,112.134
+             C102.574,112.134 79.713,112.134 56.852,112.134
+             C33.925,106.570 18.183,85.813 18.891,63.215
+             C19.538,42.562 33.826,24.045 54.538,17.998
+             ZM79.713,63.653
+             C74.334,58.267 68.955,52.880 63.576,47.493
+             C60.994,44.908 60.994,40.652 63.576,38.066
+             C66.158,35.481 70.407,35.481 72.989,38.066
+             C78.368,43.453 83.747,48.840 89.126,54.227
+             C94.505,48.840 99.884,43.453 105.263,38.066
+             C107.957,36.746 111.211,37.289 113.332,39.413
+             C115.452,41.537 115.995,44.796 114.676,47.493
+             C109.297,52.880 103.918,58.267 98.539,63.653
+             C103.918,69.040 109.297,74.427 114.676,79.813
+             C117.258,82.399 117.258,86.654 114.676,89.240
+             C112.094,91.826 107.845,91.826 105.263,89.240
+             C99.884,83.853 94.505,78.467 89.126,73.080
+             C83.299,78.916 77.472,84.751 71.645,90.587
+             C68.951,91.907 65.697,91.364 63.576,89.240
+             C61.455,87.116 60.913,83.858 62.231,81.160
+             C68.059,75.325 73.886,69.489 79.713,63.653 Z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Body: cover card (left) + scrollable content (right) -->
+  <div class="post-window-body">
+    
+    <aside class="post-window-cover-panel">
+      <div class="post-window-cover-card">
+        <img src="https://images.unsplash.com/photo-1559028012-481c04fa702d?w=1200&q=80" alt="IMU 30Hz + 三层架构：用陀螺仪检测视频卡顿和抖动"
+             onerror="this.onerror=null;this.style.display='none'">
+      </div>
+    </aside>
+    
+
+    <section class="post-window-main">
+      <h1 class="post-window-title">IMU 30Hz + 三层架构：用陀螺仪检测视频卡顿和抖动</h1>
+      <div class="post-window-content">
+        <div class="markdown-content">
+          <p>项目里有一条质量规则：视频动作必须流畅，卡顿&#x2F;抖动帧占比不能超过 10%，最长连续异常不能超过 1 秒。</p>
+<p>规则定下来了，但怎么检测是个问题。直觉上从视频分析入手——毕竟是视频质检——但这条路走不通。</p>
+<hr>
+<h3 id="为什么视频本身不够"><a href="#为什么视频本身不够" class="headerlink" title="为什么视频本身不够"></a>为什么视频本身不够</h3><p>服务端对视频按 1fps 抽帧处理。1fps 有几个根本性的问题：</p>
+<ul>
+<li><strong>连续卡顿判定失效。</strong> 相邻帧间隔 1 秒，根本无法判断”这段卡顿是否超过了 1 秒的上限”。两帧之间发生了什么完全不知道。</li>
+<li><strong>抖动信息完全丢失。</strong> 抖动是高频信号，通常在 10-30Hz。1fps 采样率完全丢失这个信息，不满足奈奎斯特定理的基本要求。</li>
+<li><strong>光流只能看大位移。</strong> 1fps 下光流检测到的”大位移”分不清楚是正常快速移动还是真实抖动。</li>
+</ul>
+<p><strong>结论：必须依赖 IMU 数据（30Hz）作为主检测信号。</strong></p>
+<p>iPhone 录制时会同步记录加速度计和陀螺仪，采集格式里已经有 <code>observation.imu.gyro</code> 和 <code>observation.imu.accel</code>，30Hz，不需要任何额外采集工作。</p>
+<hr>
+<h3 id="三层架构"><a href="#三层架构" class="headerlink" title="三层架构"></a>三层架构</h3><p>方案拆成三层，每层做一件事：</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>位置</th>
+<th>时机</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Layer 0</td>
+<td>iPhone 客户端</td>
+<td>录制中实时</td>
+<td>实时告警，当场纠正</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>服务端</td>
+<td>上传后离线</td>
+<td>主检测，精确定位异常段</td>
+</tr>
+<tr>
+<td>Layer 2</td>
+<td>服务端</td>
+<td>Layer 1 结果可疑时</td>
+<td>语义复核，区分真异常和正常暂停</td>
+</tr>
+</tbody></table>
+<p>Layer 1 判完之后，明确正常的直接 PASS，明确异常的直接 FAIL，只有灰度区间的才进 Layer 2 做进一步复核。</p>
+<hr>
+<h3 id="Layer-0：客户端实时告警"><a href="#Layer-0：客户端实时告警" class="headerlink" title="Layer 0：客户端实时告警"></a>Layer 0：客户端实时告警</h3><p>iPhone 端读 CMMotionManager 的陀螺仪数据（iOS 默认 100Hz，降采样到 30Hz 省电）。逻辑极简：</p>
+<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 抖动告警：1s 滑动窗口内 gyro_mag 标准差超阈值</span></span><br><span class="line"><span class="keyword">let</span> gyroMag <span class="operator">=</span> sqrt(gyro.x² <span class="operator">+</span> gyro.y² <span class="operator">+</span> gyro.z²)</span><br><span class="line"><span class="keyword">let</span> gyroStd <span class="operator">=</span> stddev(gyroBuffer)  <span class="comment">// 维护 30 个样本的环形缓冲区</span></span><br><span class="line"><span class="keyword">if</span> gyroStd <span class="operator">&gt;</span> <span class="type">JITTER_THRESHOLD</span> &#123;   <span class="comment">// 建议 0.5 rad/s</span></span><br><span class="line">    showAlert(<span class="string">&quot;设备晃动较大，请保持稳定&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 卡顿告警：陀螺仪幅值持续低于阈值超过 2s</span></span><br><span class="line"><span class="keyword">if</span> gyroMag <span class="operator">&lt;</span> <span class="type">STILL_THRESHOLD</span> &#123;    <span class="comment">// 建议 0.03 rad/s</span></span><br><span class="line">    stillCounter <span class="operator">+=</span> <span class="number">1</span></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    stillCounter <span class="operator">=</span> <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> stillCounter <span class="operator">&gt;=</span> <span class="type">STILL_FRAMES</span> &#123;  <span class="comment">// 30Hz × 2s = 60 帧</span></span><br><span class="line">    showAlert(<span class="string">&quot;检测到设备静止，请继续操作&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>每帧计算量：gyro_mag 约 10ns，环形缓冲区写入约 1ns，stddev（30 个样本）约 100ns，阈值比较约 1ns。<strong>总计约 0.1μs&#x2F;帧，完全可以忽略。</strong> 不需要 FFT，不需要滤波器，不需要引入任何新库。约 20 行 Swift。</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>建议值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JITTER_THRESHOLD</td>
+<td>0.5 rad&#x2F;s</td>
+<td>1s 窗口内 gyro_mag 标准差，高于此为明显抖动</td>
+</tr>
+<tr>
+<td>STILL_THRESHOLD</td>
+<td>0.03 rad&#x2F;s</td>
+<td>gyro_mag 低于此视为静止</td>
+</tr>
+<tr>
+<td>STILL_FRAMES</td>
+<td>60（2s）</td>
+<td>连续静止触发告警，比规则的 1s 宽松一倍</td>
+</tr>
+<tr>
+<td>告警冷却</td>
+<td>5s</td>
+<td>两次告警间最短间隔，防刷屏</td>
+</tr>
+</tbody></table>
+<p>Layer 0 的局限很明显：单阈值分不清”真卡顿”和”用户主动暂停”，用户也可以无视告警继续录。所以它不做最终判定，只是减少废片产出，服务端做兜底。</p>
+<hr>
+<h3 id="Layer-1：IMU-信号分析"><a href="#Layer-1：IMU-信号分析" class="headerlink" title="Layer 1：IMU 信号分析"></a>Layer 1：IMU 信号分析</h3><p>服务端主检测。主信号是陀螺仪三轴角速度（<code>observation.imu.gyro</code>），30Hz。</p>
+<p><strong>卡顿检测（Stall Detection）</strong></p>
+<p>设备静止时陀螺仪三轴角速度趋近零。用 run-length encoding 找连续静止段：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">detect_stalls</span>(<span class="params">gyro, fs=<span class="number">30.0</span>, still_threshold=<span class="number">0.05</span>, min_stall_s=<span class="number">0.5</span></span>):</span><br><span class="line">    gyro_mag = np.sqrt(np.<span class="built_in">sum</span>(gyro ** <span class="number">2</span>, axis=<span class="number">1</span>))  <span class="comment"># 三轴合成幅值</span></span><br><span class="line">    is_still = gyro_mag &lt; still_threshold</span><br><span class="line"></span><br><span class="line">    stalls, in_stall, stall_start = [], <span class="literal">False</span>, <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i, still <span class="keyword">in</span> <span class="built_in">enumerate</span>(is_still):</span><br><span class="line">        <span class="keyword">if</span> still <span class="keyword">and</span> <span class="keyword">not</span> in_stall:</span><br><span class="line">            in_stall, stall_start = <span class="literal">True</span>, i</span><br><span class="line">        <span class="keyword">elif</span> <span class="keyword">not</span> still <span class="keyword">and</span> in_stall:</span><br><span class="line">            in_stall = <span class="literal">False</span></span><br><span class="line">            duration_s = (i - stall_start) / fs</span><br><span class="line">            <span class="keyword">if</span> duration_s &gt;= min_stall_s:</span><br><span class="line">                stalls.append(&#123;</span><br><span class="line">                    <span class="string">&quot;start_s&quot;</span>: <span class="built_in">round</span>(stall_start / fs, <span class="number">3</span>),</span><br><span class="line">                    <span class="string">&quot;end_s&quot;</span>: <span class="built_in">round</span>(i / fs, <span class="number">3</span>),</span><br><span class="line">                    <span class="string">&quot;duration_s&quot;</span>: <span class="built_in">round</span>(duration_s, <span class="number">3</span>),</span><br><span class="line">                &#125;)</span><br><span class="line">    <span class="keyword">return</span> stalls</span><br></pre></td></tr></table></figure>
+
+<p>still_threshold 推荐 0.05 rad&#x2F;s——手持设备正常操作的微抖通常大于 0.05，真正静止时小于 0.05。这个值需要用标注数据验证，但 0.05 是合理的起点。</p>
+<p><strong>抖动检测（Jitter Detection）</strong></p>
+<p>抖动 &#x3D; 陀螺仪信号高频能量突增。正常手部运动主频小于 3Hz，抖动频率大于 5Hz。用高通滤波提取高频分量：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> scipy.signal <span class="keyword">import</span> butter, sosfilt</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">detect_jitter</span>(<span class="params">gyro, fs=<span class="number">30.0</span>, highpass_hz=<span class="number">5.0</span>, jitter_threshold=<span class="number">0.3</span>, window_s=<span class="number">0.5</span></span>):</span><br><span class="line">    sos = butter(<span class="number">4</span>, highpass_hz, btype=<span class="string">&quot;high&quot;</span>, fs=fs, output=<span class="string">&quot;sos&quot;</span>)</span><br><span class="line">    gyro_hf = sosfilt(sos, gyro, axis=<span class="number">0</span>)</span><br><span class="line">    hf_mag = np.sqrt(np.<span class="built_in">sum</span>(gyro_hf ** <span class="number">2</span>, axis=<span class="number">1</span>))</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 滑动窗口 RMS</span></span><br><span class="line">    win_samples = <span class="built_in">max</span>(<span class="number">1</span>, <span class="built_in">int</span>(window_s * fs))</span><br><span class="line">    kernel = np.ones(win_samples) / win_samples</span><br><span class="line">    hf_rms = np.sqrt(np.convolve(hf_mag ** <span class="number">2</span>, kernel, mode=<span class="string">&quot;same&quot;</span>))</span><br><span class="line">    is_jittery = hf_rms &gt; jitter_threshold</span><br><span class="line">    <span class="comment"># ... run-length encoding 找连续抖动段</span></span><br></pre></td></tr></table></figure>
+
+<p>4 阶 Butterworth 高通，过渡带够陡，不引入振铃。highpass_hz&#x3D;5.0 的选择依据是正常手部运动主频小于 3Hz，留了 2Hz 的裕量。jitter_threshold&#x3D;0.3 rad&#x2F;s 是高频分量 RMS 的判定阈值。</p>
+<p><strong>综合判定</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">evaluate_smoothness</span>(<span class="params">gyro, fs=<span class="number">30.0</span></span>):</span><br><span class="line">    stalls = detect_stalls(gyro, fs)</span><br><span class="line">    jitters = detect_jitter(gyro, fs)</span><br><span class="line"></span><br><span class="line">    total_s = <span class="built_in">len</span>(gyro) / fs</span><br><span class="line">    abnormal_s = <span class="built_in">sum</span>(s[<span class="string">&quot;duration_s&quot;</span>] <span class="keyword">for</span> s <span class="keyword">in</span> stalls + jitters)</span><br><span class="line">    abnormal_ratio = abnormal_s / total_s</span><br><span class="line">    max_continuous_s = <span class="built_in">max</span>((s[<span class="string">&quot;duration_s&quot;</span>] <span class="keyword">for</span> s <span class="keyword">in</span> stalls + jitters), default=<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">    passed = (abnormal_ratio &lt;= <span class="number">0.10</span>) <span class="keyword">and</span> (max_continuous_s &lt;= <span class="number">1.0</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 灰度区间，触发 Layer 2</span></span><br><span class="line">    needs_llm_review = (</span><br><span class="line">        (<span class="number">0.05</span> &lt;= abnormal_ratio &lt;= <span class="number">0.15</span>)</span><br><span class="line">        <span class="keyword">or</span> (<span class="number">0.7</span> &lt;= max_continuous_s &lt;= <span class="number">1.5</span>)</span><br><span class="line">    )</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;passed&quot;</span>: passed, <span class="string">&quot;needs_llm_review&quot;</span>: needs_llm_review, ...&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="Layer-2：LLM-语义复核"><a href="#Layer-2：LLM-语义复核" class="headerlink" title="Layer 2：LLM 语义复核"></a>Layer 2：LLM 语义复核</h3><p>IMU 的根本局限是看不懂语义。陀螺仪静止可能是真卡顿，也可能是用户在思考、在看物品、在等水烧开。这些情况 IMU 无法区分，但视频帧能说明。</p>
+<p>Layer 2 只在灰度区间触发：异常占比在 5%-15% 之间，或最长连续段在 0.7-1.5s 之间。预计约 10-15% 的视频需要走到这一层。</p>
+<p>触发后，从 Layer 1 标记的异常段采样视频帧（每段前后各 2 帧加段中 1 帧，合并去重，上限 20 帧），发给 Gemini 做多帧理解，判断：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">需要区分的情况：</span><br><span class="line">- 卡顿（设备死机/录制卡住）  → 质量问题，FAIL</span><br><span class="line">- 抖动（设备剧烈晃动）       → 质量问题，FAIL</span><br><span class="line">- 操作暂停（在看/思考/调整）  → 正常行为，PASS</span><br><span class="line">- 快速移动（走动/转身）       → 正常行为，PASS</span><br></pre></td></tr></table></figure>
+
+<p>LLM 置信度 &gt;&#x3D; 0.7 时覆盖 IMU 判定，低于 0.7 时保留 IMU 原始结果。</p>
+<hr>
+<h3 id="成本几乎为零"><a href="#成本几乎为零" class="headerlink" title="成本几乎为零"></a>成本几乎为零</h3><table>
+<thead>
+<tr>
+<th>层</th>
+<th>触发率</th>
+<th>单视频成本</th>
+<th>延迟</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Layer 1 (IMU)</td>
+<td>100%</td>
+<td>$0</td>
+<td>&lt;100ms（纯 numpy 计算）</td>
+</tr>
+<tr>
+<td>Layer 2 (LLM)</td>
+<td>~10-15%</td>
+<td>~$0.002</td>
+<td>~3-5s</td>
+</tr>
+</tbody></table>
+<p>综合成本：$0 × 85% + $0.002 × 15% ≈ <strong>$0.0003&#x2F;视频</strong>。</p>
+<p>零新增依赖——numpy、scipy、opencv、google-generativeai 项目里全都已经有了。</p>
+<hr>
+<h3 id="几点收获"><a href="#几点收获" class="headerlink" title="几点收获"></a>几点收获</h3><p><strong>1. IMU 是视频质检里被低估的信号。</strong> 习惯上从视频出发做质检，但对动作流畅性这类时序精度要求高的规则，30Hz 的 IMU 远比 1fps 视频可靠。不要因为是”视频质检”就只盯着视频看。</p>
+<p><strong>2. 分层让每一层只做它擅长的事。</strong> 客户端极轻量做实时告警，服务端 IMU 做精确分析，LLM 只处理语义模糊的边界情况。每层都有局限，但三层配合之后覆盖了几乎所有情况。</p>
+<p><strong>3. 灰度区间触发 LLM 是压成本的关键。</strong> 大多数视频要么明显正常要么明显异常，LLM 只处理那 15% 的模糊地带，成本就压到了几乎可以忽略的程度。如果对所有视频都跑 LLM，成本会高出 7 倍以上。</p>
+<p><strong>4. 客户端告警不是替代服务端质检的。</strong> 录制时告诉用户”你卡了&#x2F;你在抖”，比事后判废片再让用户重录效率高很多。两者互补，不是替代关系。</p>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+</article>
+
+  </main>
+
+  <!-- Window Popup (article iframe viewer) -->
+  <div class="window" id="hl-window">
+    <div class="window-content">
+      <iframe class="window-frame" id="hl-window-frame"></iframe>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ---- Loading overlay: fade out on page load ---- */
+    window.addEventListener('load', function() {
+      var loading = document.getElementById('hl-loading');
+      if (!loading) return;
+      loading.classList.add('fade-out');
+      setTimeout(function() {
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+      }, 400);
+    });
+
+    /* ---- _0kd page transition (globally callable) ---- */
+    window._0kd = function(callback) {
+      var el = document.getElementById('hl-0kd');
+      if (!el) return;
+      el.style.display = 'block';
+      el.style.animationPlayState = 'running';
+      setTimeout(function() {
+        if (typeof callback === 'function') callback();
+        setTimeout(function() {
+          el.style.animationPlayState = 'paused';
+          el.style.display = 'none';
+        }, 500);
+      }, 1000);
+    };
+
+    /* ---- Window popup controls (globally callable) ---- */
+    var _windowPrevUrl = null;
+
+    window.openWindow = function(url) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win || !frame) return;
+      _windowPrevUrl = window.location.href;   // remember where we came from
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      frame.src = url + sep + 'window=true';
+      history.pushState({ hollowWindow: true }, '', url);
+      win.style.display = 'flex';
+    };
+
+    window.closeWindow = function(fromPopstate) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win) return;
+      win.style.display = 'none';
+      if (frame) frame.src = '';
+      if (!fromPopstate) {
+        // Replace article URL with original page URL — no popstate, no navigation side-effects
+        history.replaceState(null, '', _windowPrevUrl || window.location.pathname);
+      }
+      _windowPrevUrl = null;
+    };
+
+    /* Close window on Escape key */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.closeWindow();
+    });
+
+    /* Close window when clicking backdrop (outside content) */
+    var winEl = document.getElementById('hl-window');
+    if (winEl) {
+      winEl.addEventListener('click', function(e) {
+        if (e.target === winEl) window.closeWindow();
+      });
+    }
+
+    /* Close window on browser back */
+    window.addEventListener('popstate', function() {
+      var win = document.getElementById('hl-window');
+      if (win && win.style.display !== 'none') closeWindow(true);
+    });
+  })();
+  </script>
+
+  
+<!-- HL Search Modal -->
+<div class="hl-search-overlay" id="hl-search-overlay" hidden>
+  <div class="hl-search-backdrop" id="hl-search-backdrop"></div>
+  <div class="hl-search-modal" role="dialog" aria-label="搜索">
+    <div class="hl-search-header">
+      <svg class="hl-search-icon-prefix" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="hl-search-input" id="hl-search-input"
+             type="search" placeholder="搜索文章…"
+             autocomplete="off" spellcheck="false" aria-label="搜索关键字">
+      <button class="hl-search-close" id="hl-search-close" title="关闭 (Esc)" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hl-search-divider"></div>
+
+    <div class="hl-search-body" id="hl-search-body">
+      <div class="hl-search-hint" id="hl-search-hint">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>输入关键字开始搜索</span>
+      </div>
+      <div class="hl-search-results" id="hl-search-results" role="listbox" aria-label="搜索结果"></div>
+    </div>
+
+    <div class="hl-search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/search.css">
+<script>window.__HL_SEARCH_PATH__ = '/search.json';</script>
+<script src="/js/search.js"></script>
+
+
+  <script src="/js/code-copy.js"></script>
+
+</body>
+</html>

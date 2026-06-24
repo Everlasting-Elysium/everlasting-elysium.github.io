@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>零 AI 零成本的镜头遮挡检测：运动消歧如何解决平坦场景误判 | Elysian Realm</title>
+  <meta name="description" content="">
+  
+  <!-- Font: MaoKen Assorted Sans (unpkg CDN, same as interknot reference) -->
+  <style>@import url('https://unpkg.com/@chinese-fonts/mksjh@1.4.0/dist/MaokenAssortedSans1.30/result.css');</style>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="description" content="镜头遮挡检测听起来是个简单问题：画面黑了、模糊了、被手指挡住了，检出来就行。但真正做过之后，才发现难的不是检出，是误判。 白墙、天空、桌面，这些合法的平坦低纹理场景，和”手指贴住镜头”在画面特征上几乎一样：大面积低纹理、颜色均匀、Laplacian 方差低。只看纹理信号根本区分不开。 我们项目里有历史教训。另一条流水线曾经用过基于”分块低纹理”的 raw_occlusion，结果因为在第一人称头戴">
+<meta property="og:type" content="article">
+<meta property="og:title" content="零 AI 零成本的镜头遮挡检测：运动消歧如何解决平坦场景误判">
+<meta property="og:url" content="https://everlasting-elysium.github.io/2026/06/14/2026-06-15-camera-occlusion-detection-no-ai/index.html">
+<meta property="og:site_name" content="Elysian Realm">
+<meta property="og:description" content="镜头遮挡检测听起来是个简单问题：画面黑了、模糊了、被手指挡住了，检出来就行。但真正做过之后，才发现难的不是检出，是误判。 白墙、天空、桌面，这些合法的平坦低纹理场景，和”手指贴住镜头”在画面特征上几乎一样：大面积低纹理、颜色均匀、Laplacian 方差低。只看纹理信号根本区分不开。 我们项目里有历史教训。另一条流水线曾经用过基于”分块低纹理”的 raw_occlusion，结果因为在第一人称头戴">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-06-14T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-06-24T02:47:22.530Z">
+<meta property="article:author" content="Everlasting Elysium">
+<meta property="article:tag" content="Computer Vision">
+<meta property="article:tag" content="Algorithm">
+<meta property="article:tag" content="IMU">
+<meta property="article:tag" content="Video Quality">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading" id="hl-loading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading</span>
+  </div>
+
+  <!-- _0kd Page Transition Layer -->
+  <div class="_0kd" id="hl-0kd"></div>
+
+  <!-- Background Layer -->
+  
+  <div class="bg" style="background-image: url('/img/bg.png');"></div>
+
+  <!-- Header -->
+  
+  <header>
+  <!-- Personal Info Card -->
+  <a href="/" class="personal">
+    <span class="avatar-link">
+      <img
+        src="/img/avatar.svg"
+        alt="Elysio"
+        class="avatar"
+        onerror="this.onerror=null;this.style.background='#333';"
+      >
+    </span>
+    <span class="info-bar">
+      <span class="info-bio">知行合一,学以致用；但行好事，莫问前程。</span>
+      <span class="info-url">
+        <span class="info-url-lock">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/>
+            <path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        https://everlasting-elysium.github.io/
+      </span>
+    </span>
+  </a>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    
+      
+      <span class="tab">
+        <a href="/">推送</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/archives/">归档</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/tags/">标签</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/album/">相册</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/friends/">伙伴</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/about/">关于</a>
+      </span>
+    
+  </div>
+
+  <!-- Search Button -->
+  
+  <button class="hl-search-btn" id="hl-search-btn"
+          title="搜索 (Ctrl+K)" aria-label="搜索">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+  
+</header>
+
+
+  <!-- Main Content -->
+  <main class="has-hero">
+    <link rel="stylesheet" href="/css/post.css">
+<link rel="stylesheet" href="/css/post-window.css">
+
+<script>
+(function () {
+  var isWindow = false;
+  try { isWindow = new URLSearchParams(window.location.search).get('window') === 'true'; } catch(e) {}
+  if (!isWindow) { try { isWindow = window.self !== window.top; } catch(e) { isWindow = true; } }
+  if (isWindow) document.documentElement.classList.add('window-mode');
+})();
+</script>
+
+
+
+<!-- ═══════════ Normal Mode ═══════════ -->
+<article class="post-article">
+
+  
+  <div class="post-hero" style="background-image:url('https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=1200&q=80')">
+    <div class="post-hero-overlay">
+      <div class="post-hero-inner">
+        <h1 class="post-title">零 AI 零成本的镜头遮挡检测：运动消歧如何解决平坦场景误判</h1>
+        <div class="post-meta">
+          <time datetime="2026-06-15">
+            2026 / 06 / 15
+          </time>
+          
+          <div class="post-tags">
+            
+            <a class="tag-pill" href="/tags/Computer-Vision/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/Computer-Vision/')}else{window.location.href=this.href}">
+              Computer Vision
+            </a>
+            
+            <a class="tag-pill" href="/tags/Algorithm/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/Algorithm/')}else{window.location.href=this.href}">
+              Algorithm
+            </a>
+            
+            <a class="tag-pill" href="/tags/IMU/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/IMU/')}else{window.location.href=this.href}">
+              IMU
+            </a>
+            
+            <a class="tag-pill" href="/tags/Video-Quality/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/Video-Quality/')}else{window.location.href=this.href}">
+              Video Quality
+            </a>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="post-body">
+    <div class="markdown-content">
+      <p>镜头遮挡检测听起来是个简单问题：画面黑了、模糊了、被手指挡住了，检出来就行。但真正做过之后，才发现难的不是检出，是<strong>误判</strong>。</p>
+<p>白墙、天空、桌面，这些合法的平坦低纹理场景，和”手指贴住镜头”在画面特征上几乎一样：大面积低纹理、颜色均匀、Laplacian 方差低。只看纹理信号根本区分不开。</p>
+<p>我们项目里有历史教训。另一条流水线曾经用过基于”分块低纹理”的 <code>raw_occlusion</code>，结果因为在第一人称头戴相机上系统性假阳性，被整个剔除了。设计新版时，假阳性是排第一位的问题。</p>
+<h2 id="核心物理原理"><a href="#核心物理原理" class="headerlink" title="核心物理原理"></a>核心物理原理</h2><p>遮挡物（手指、布料）贴在镜头上，从相机坐标系看，它是固定的，不会随画面内容变化而移动。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">当设备在运动时：</span><br><span class="line">  ├─ 被遮挡的区域：无论设备怎么动，画面里那块不变</span><br><span class="line">  └─ 拍白墙的区域：设备移动 → 透视/光照梯度变化 → 像素仍会变</span><br></pre></td></tr></table></figure>
+
+<p>这是白墙和遮挡的根本物理差异。白墙在设备移动时，因为透视变化和光照角度，像素值会有变化。贴在镜头上的东西不会。<strong>运动信号是消歧的钥匙。</strong></p>
+<h2 id="为什么要分块，不能全局"><a href="#为什么要分块，不能全局" class="headerlink" title="为什么要分块，不能全局"></a>为什么要分块，不能全局</h2><p>全局帧差只能检出完全遮挡。部分遮挡时，画面大部分区域仍在随设备运动而变，全局帧差依然很大，部分遮挡的信号被平均掉了。</p>
+<p>把帧切成 4×4 网格，逐块计算帧差，情况就反过来：周围 15 个块都在动，唯独被遮挡的那几块死寂不动。部分遮挡变成强信号，而不是被稀释掉。完全遮挡&#x3D;所有块静止；部分遮挡&#x3D;一团块静止。</p>
+<h2 id="帧差必须平滑"><a href="#帧差必须平滑" class="headerlink" title="帧差必须平滑"></a>帧差必须平滑</h2><p>裸逐像素差对视频压缩颗粒噪声敏感。画面完全没有变化，裸像素差也会有非零值，抬高了”静止”的判据下限。分块帧差必须先做空间平滑：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">prev_s = cv2.GaussianBlur(prev_gray, (<span class="number">5</span>, <span class="number">5</span>), <span class="number">0</span>)</span><br><span class="line">cur_s  = cv2.GaussianBlur(cur_gray,  (<span class="number">5</span>, <span class="number">5</span>), <span class="number">0</span>)</span><br><span class="line">block_diff = mean(|cur_s_block - prev_s_block|)   <span class="comment"># 平滑后再算，不用裸帧差</span></span><br></pre></td></tr></table></figure>
+
+<p>手机端把预览帧缩到 120×90，降采样本身就是空间平滑，每帧计算量约等于 1 万次减法，不需要任何 ML 框架。</p>
+<p>帧率用 1fps 关键帧（FFmpeg fps filter 均匀抽帧）。相邻帧间隔 1 秒，Farneback 光流的小位移假设在这个间隔下已经失效（相机可能转了 30 度），帧差比光流更稳定，也更便宜。</p>
+<h2 id="运动信号：IMU-优先，全局帧差兜底"><a href="#运动信号：IMU-优先，全局帧差兜底" class="headerlink" title="运动信号：IMU 优先，全局帧差兜底"></a>运动信号：IMU 优先，全局帧差兜底</h2><p>运动消歧需要先判断”设备是否在动”，有两种来源：</p>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>信号来源</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IMU 模式（首选）</td>
+<td>parquet <code>observation.imu.gyro</code> 幅值</td>
+<td>最可靠，能区分”设备动”和”场景里有物体在动”</td>
+</tr>
+<tr>
+<td>纯视觉模式（无 IMU 时）</td>
+<td>全局帧差中位数（多数块的帧差）</td>
+<td>多数块在变则视为设备在动，无需 IMU</td>
+</tr>
+</tbody></table>
+<p>录制设备戴在人头或身上，人不可能长时间完全静止，运动门控大部分时间有效。</p>
+<h2 id="五条件全-AND，精确率优先"><a href="#五条件全-AND，精确率优先" class="headerlink" title="五条件全 AND，精确率优先"></a>五条件全 AND，精确率优先</h2><p>旧版 <code>raw_occlusion</code> 翻车的教训是条件太松。这次，判定一个块在锚点帧为”遮挡”，必须同时满足五个条件：</p>
+<table>
+<thead>
+<tr>
+<th>条件</th>
+<th>阈值方向</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>① 设备明显运动</td>
+<td>运动信号 &gt; 高阈值</td>
+<td>确保这是可靠的锚点帧</td>
+</tr>
+<tr>
+<td>② 该块帧差接近零</td>
+<td>block_diff &lt; 低阈值</td>
+<td>块纹丝不动</td>
+</tr>
+<tr>
+<td>③ 该块低纹理</td>
+<td>Laplacian 方差低于阈值</td>
+<td>符合贴近失焦的物理特征</td>
+</tr>
+<tr>
+<td>④ 时间持续</td>
+<td>连续 N 个锚点帧都满足</td>
+<td>排除单帧抽风</td>
+</tr>
+<tr>
+<td>⑤ 空间连通</td>
+<td>与相邻遮挡块成团</td>
+<td>排除孤立噪声</td>
+</tr>
+</tbody></table>
+<p>条件 ① 和 ② 两头收紧是核心设计：白墙在设备运动时帧差不为零，条件 ② 直接挡掉。五个 AND 下来，假阳性极低。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">motion = gyro_mag[t] <span class="keyword">if</span> has_imu <span class="keyword">else</span> np.median(diff_map)</span><br><span class="line">is_anchor = motion &gt; motion_high_thresh           <span class="comment"># ① 设备充分运动</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> each block (r, c):</span><br><span class="line">    static = diff_map[r, c] &lt; block_static_thresh <span class="comment"># ② 块接近静止</span></span><br><span class="line">    lowtex = texture_map[r, c] &lt; texture_thresh   <span class="comment"># ③ 低纹理</span></span><br><span class="line">    occ_run[r, c] = occ_run[r, c] + <span class="number">1</span> <span class="keyword">if</span> (is_anchor <span class="keyword">and</span> static <span class="keyword">and</span> lowtex) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line">    anchor_label[t, r, c] = (occ_run[r, c] &gt;= persist_frames)  <span class="comment"># ④ 持续 N 帧</span></span><br><span class="line"><span class="comment"># ⑤ 后续连通块过滤</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="时间一致性传播：IMU-失效帧怎么办"><a href="#时间一致性传播：IMU-失效帧怎么办" class="headerlink" title="时间一致性传播：IMU 失效帧怎么办"></a>时间一致性传播：IMU 失效帧怎么办</h2><p>设备短暂静止或微动时，运动门控失效，这些帧没有可靠的逐块判定。</p>
+<p>用遮挡的物理本质来补：遮挡是持续的空间状态，手指放上去会停留几秒，不会一帧闪现就消失。遮挡状态改变（手放上&#x2F;拿开）几乎总伴随手部动作，头戴设备时这段动作期间设备也在运动，会被锚点帧捕获。静止那一两秒内不会凭空冒出新的遮挡。</p>
+<p>所以：充分运动的帧设为锚点帧，逐块打好标签。非锚点帧，每块从时间最近的锚点帧继承标签。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> t where <span class="keyword">not</span> is_anchor[t]:</span><br><span class="line">    <span class="keyword">for</span> each block:</span><br><span class="line">        block_label[t] = nearest_anchor_label(t, block)   <span class="comment"># 继承最近锚点帧标签</span></span><br></pre></td></tr></table></figure>
+
+<p>每帧每块都有判定，不需要 AI，不需要 API。</p>
+<h2 id="双端部署"><a href="#双端部署" class="headerlink" title="双端部署"></a>双端部署</h2><p><strong>手机端 Layer 0</strong> 是录制时的实时告警，目的是让用户当场发现并挪开手指，减少废片。阈值宽松，提醒为主。算力极轻：120×90 × 16 块差分约等于 1 万次减法&#x2F;帧加读 IMU，在相机预览回调里加约 30 行代码，Toast 或震动告警即可。</p>
+<p><strong>服务端 Layer 1</strong> 是最终质检，精确率优先，阈值严格。处理 1fps 关键帧和 parquet gyro，全部基于 numpy 和 cv2，不引入任何新依赖，单视频延迟低于 200ms，成本 $0。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────┐</span><br><span class="line">│  手机端 Layer 0  (实时)                   │</span><br><span class="line">│  120×90 → 4×4 分块帧差 × CMMotionManager │</span><br><span class="line">│  宽松阈值，实时提醒                        │</span><br><span class="line">└─────────────────┬───────────────────────┘</span><br><span class="line">                  │ 上传</span><br><span class="line">                  ▼</span><br><span class="line">┌─────────────────────────────────────────┐</span><br><span class="line">│  服务端 Layer 1  (离线)                   │</span><br><span class="line">│  1A 黑帧/纯色硬判定                        │</span><br><span class="line">│  1B 平滑分块帧差 + Laplacian               │</span><br><span class="line">│  1C 运动消歧 → 锚点帧逐块判遮挡（5-AND）   │</span><br><span class="line">│  1D 时间传播 → 静止帧继承锚点标签          │</span><br><span class="line">│  1E 连通块聚合 → 遮挡面积比 → 视频判定     │</span><br><span class="line">└─────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<h2 id="边缘情况：关灯和完全遮挡"><a href="#边缘情况：关灯和完全遮挡" class="headerlink" title="边缘情况：关灯和完全遮挡"></a>边缘情况：关灯和完全遮挡</h2><p>全黑帧和完全遮挡的画面在视觉上长得一样，帧差都接近零，运动门控也失效。纯算法难以区分。</p>
+<p>处理方式是不强行区分：1A 步骤检测到全黑帧（<code>gray.mean() &lt; 10</code>）时，不直接判遮挡，而是交给 <code>black_frame_checker</code> 和 <code>exposure_checker</code> 结合任务场景配置综合判断（居家任务允许关灯）。遮挡检测器专注”局部&#x2F;部分遮挡 + 贴近失焦”这个核心案例。</p>
+<p>开关灯瞬间反而不是问题：所有块的帧差同时变大，没有哪块”独自静止”，天然不误判为遮挡。</p>
+<h2 id="和旧方案的对比"><a href="#和旧方案的对比" class="headerlink" title="和旧方案的对比"></a>和旧方案的对比</h2><table>
+<thead>
+<tr>
+<th></th>
+<th>旧方案：算法 + BRISQUE + Gemini</th>
+<th>本方案：纯算法双端</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>消歧核心</td>
+<td>BRISQUE（训练分布不匹配，对部分遮挡失灵）</td>
+<td>分块运动消歧</td>
+</tr>
+<tr>
+<td>部分遮挡</td>
+<td>全局漏检</td>
+<td>分块定位 + 连通块总面积</td>
+</tr>
+<tr>
+<td>IMU 失效帧</td>
+<td>无处理</td>
+<td>时间一致性传播</td>
+</tr>
+<tr>
+<td>AI 依赖</td>
+<td>依赖 Gemini</td>
+<td>零 AI</td>
+</tr>
+<tr>
+<td>操作点</td>
+<td>召回优先</td>
+<td>精确率优先</td>
+</tr>
+<tr>
+<td>成本</td>
+<td>~$0.0001&#x2F;视频</td>
+<td>$0&#x2F;视频</td>
+</tr>
+<tr>
+<td>部署端</td>
+<td>仅服务端</td>
+<td>手机端 + 服务端</td>
+</tr>
+</tbody></table>
+<h2 id="收获"><a href="#收获" class="headerlink" title="收获"></a>收获</h2><ul>
+<li>消歧比检出更难。从设计之初就把”合法相似场景”当第一对手，不要等假阳性出现再回来补</li>
+<li>运动门控是个通用思路：任何”固定在相机上的东西 vs 环境里的东西”的区分，都可以用这个物理原理，不只限于遮挡</li>
+<li>五条件全 AND 比单条件调阈值更可控，每个条件的物理含义清晰，调参有方向，出问题也知道从哪里查</li>
+<li>无法处理的边缘情况（全黑帧）应该剥离给专门的检测器，而不是在一个检测器里包罗万象。职责清晰，边界清晰</li>
+<li><code>raw_occlusion</code> 翻车的记录值得保留。新方案和旧方案的差异要写清楚，否则以后有人不知道这段历史，可能重走老路</li>
+</ul>
+
+    </div>
+  </div>
+
+</article>
+
+<!-- ═══════════ Window Mode ═══════════ -->
+<article class="post-window">
+
+  <!-- Header: avatar + name (left) | close button (right) -->
+  <div class="post-window-header">
+    <div class="post-window-author">
+      <img class="post-window-avatar" src="/img/avatar.svg" alt=""
+           onerror="this.onerror=null;this.style.display='none'">
+      <div class="post-window-author-info">
+        <span class="post-window-author-name">Elysio</span>
+      </div>
+    </div>
+    <button class="pw-close" onclick="try{window.parent.closeWindow()}catch(e){}" title="关闭">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 130">
+        <path fill-rule="evenodd" fill="rgb(196,34,9)"
+          d="M0.373,65.000 C0.087,51.609 3.792,38.466 11.131,27.293
+             C19.671,14.293 32.558,4.832 47.439,0.360
+             C90.023,0.360 132.606,0.360 175.190,0.360
+             C183.245,1.482 190.671,5.694 195.361,12.480
+             C201.498,21.357 202.014,33.317 196.706,43.453
+             C185.052,65.000 173.397,86.547 161.743,108.094
+             C156.410,114.144 150.041,119.160 142.916,122.907
+             C136.598,126.230 129.798,128.498 122.745,129.640
+             C99.884,129.640 77.024,129.640 54.163,129.640
+             C38.778,126.247 24.988,117.749 15.165,105.400
+             C6.284,94.236 0.695,80.120 0.373,65.000
+             ZM51.473,11.133 L171.156,11.133
+             C175.707,11.408 180.022,13.285 183.259,16.520
+             C187.160,20.420 189.059,25.857 188.637,31.333
+             C177.880,52.431 167.122,73.529 156.364,94.627
+             C152.903,101.201 147.810,106.769 141.571,110.787
+             C135.517,114.686 128.583,116.999 121.400,117.520
+             C98.988,117.520 76.575,117.520 54.163,117.520
+             C28.223,111.309 10.366,87.869 11.131,62.307
+             C11.831,38.916 28.017,17.942 51.473,11.133
+             ZM54.538,17.998
+             C91.618,17.954 128.697,17.910 165.777,17.866
+             C171.772,16.637 177.788,19.453 180.569,24.600
+             C183.069,29.227 182.591,35.067 179.224,39.413
+             C168.466,58.716 157.708,78.018 146.950,97.320
+             C144.417,101.017 141.229,104.211 137.537,106.747
+             C133.865,109.270 129.766,111.094 125.434,112.134
+             C102.574,112.134 79.713,112.134 56.852,112.134
+             C33.925,106.570 18.183,85.813 18.891,63.215
+             C19.538,42.562 33.826,24.045 54.538,17.998
+             ZM79.713,63.653
+             C74.334,58.267 68.955,52.880 63.576,47.493
+             C60.994,44.908 60.994,40.652 63.576,38.066
+             C66.158,35.481 70.407,35.481 72.989,38.066
+             C78.368,43.453 83.747,48.840 89.126,54.227
+             C94.505,48.840 99.884,43.453 105.263,38.066
+             C107.957,36.746 111.211,37.289 113.332,39.413
+             C115.452,41.537 115.995,44.796 114.676,47.493
+             C109.297,52.880 103.918,58.267 98.539,63.653
+             C103.918,69.040 109.297,74.427 114.676,79.813
+             C117.258,82.399 117.258,86.654 114.676,89.240
+             C112.094,91.826 107.845,91.826 105.263,89.240
+             C99.884,83.853 94.505,78.467 89.126,73.080
+             C83.299,78.916 77.472,84.751 71.645,90.587
+             C68.951,91.907 65.697,91.364 63.576,89.240
+             C61.455,87.116 60.913,83.858 62.231,81.160
+             C68.059,75.325 73.886,69.489 79.713,63.653 Z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Body: cover card (left) + scrollable content (right) -->
+  <div class="post-window-body">
+    
+    <aside class="post-window-cover-panel">
+      <div class="post-window-cover-card">
+        <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=1200&q=80" alt="零 AI 零成本的镜头遮挡检测：运动消歧如何解决平坦场景误判"
+             onerror="this.onerror=null;this.style.display='none'">
+      </div>
+    </aside>
+    
+
+    <section class="post-window-main">
+      <h1 class="post-window-title">零 AI 零成本的镜头遮挡检测：运动消歧如何解决平坦场景误判</h1>
+      <div class="post-window-content">
+        <div class="markdown-content">
+          <p>镜头遮挡检测听起来是个简单问题：画面黑了、模糊了、被手指挡住了，检出来就行。但真正做过之后，才发现难的不是检出，是<strong>误判</strong>。</p>
+<p>白墙、天空、桌面，这些合法的平坦低纹理场景，和”手指贴住镜头”在画面特征上几乎一样：大面积低纹理、颜色均匀、Laplacian 方差低。只看纹理信号根本区分不开。</p>
+<p>我们项目里有历史教训。另一条流水线曾经用过基于”分块低纹理”的 <code>raw_occlusion</code>，结果因为在第一人称头戴相机上系统性假阳性，被整个剔除了。设计新版时，假阳性是排第一位的问题。</p>
+<h2 id="核心物理原理"><a href="#核心物理原理" class="headerlink" title="核心物理原理"></a>核心物理原理</h2><p>遮挡物（手指、布料）贴在镜头上，从相机坐标系看，它是固定的，不会随画面内容变化而移动。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">当设备在运动时：</span><br><span class="line">  ├─ 被遮挡的区域：无论设备怎么动，画面里那块不变</span><br><span class="line">  └─ 拍白墙的区域：设备移动 → 透视/光照梯度变化 → 像素仍会变</span><br></pre></td></tr></table></figure>
+
+<p>这是白墙和遮挡的根本物理差异。白墙在设备移动时，因为透视变化和光照角度，像素值会有变化。贴在镜头上的东西不会。<strong>运动信号是消歧的钥匙。</strong></p>
+<h2 id="为什么要分块，不能全局"><a href="#为什么要分块，不能全局" class="headerlink" title="为什么要分块，不能全局"></a>为什么要分块，不能全局</h2><p>全局帧差只能检出完全遮挡。部分遮挡时，画面大部分区域仍在随设备运动而变，全局帧差依然很大，部分遮挡的信号被平均掉了。</p>
+<p>把帧切成 4×4 网格，逐块计算帧差，情况就反过来：周围 15 个块都在动，唯独被遮挡的那几块死寂不动。部分遮挡变成强信号，而不是被稀释掉。完全遮挡&#x3D;所有块静止；部分遮挡&#x3D;一团块静止。</p>
+<h2 id="帧差必须平滑"><a href="#帧差必须平滑" class="headerlink" title="帧差必须平滑"></a>帧差必须平滑</h2><p>裸逐像素差对视频压缩颗粒噪声敏感。画面完全没有变化，裸像素差也会有非零值，抬高了”静止”的判据下限。分块帧差必须先做空间平滑：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">prev_s = cv2.GaussianBlur(prev_gray, (<span class="number">5</span>, <span class="number">5</span>), <span class="number">0</span>)</span><br><span class="line">cur_s  = cv2.GaussianBlur(cur_gray,  (<span class="number">5</span>, <span class="number">5</span>), <span class="number">0</span>)</span><br><span class="line">block_diff = mean(|cur_s_block - prev_s_block|)   <span class="comment"># 平滑后再算，不用裸帧差</span></span><br></pre></td></tr></table></figure>
+
+<p>手机端把预览帧缩到 120×90，降采样本身就是空间平滑，每帧计算量约等于 1 万次减法，不需要任何 ML 框架。</p>
+<p>帧率用 1fps 关键帧（FFmpeg fps filter 均匀抽帧）。相邻帧间隔 1 秒，Farneback 光流的小位移假设在这个间隔下已经失效（相机可能转了 30 度），帧差比光流更稳定，也更便宜。</p>
+<h2 id="运动信号：IMU-优先，全局帧差兜底"><a href="#运动信号：IMU-优先，全局帧差兜底" class="headerlink" title="运动信号：IMU 优先，全局帧差兜底"></a>运动信号：IMU 优先，全局帧差兜底</h2><p>运动消歧需要先判断”设备是否在动”，有两种来源：</p>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>信号来源</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IMU 模式（首选）</td>
+<td>parquet <code>observation.imu.gyro</code> 幅值</td>
+<td>最可靠，能区分”设备动”和”场景里有物体在动”</td>
+</tr>
+<tr>
+<td>纯视觉模式（无 IMU 时）</td>
+<td>全局帧差中位数（多数块的帧差）</td>
+<td>多数块在变则视为设备在动，无需 IMU</td>
+</tr>
+</tbody></table>
+<p>录制设备戴在人头或身上，人不可能长时间完全静止，运动门控大部分时间有效。</p>
+<h2 id="五条件全-AND，精确率优先"><a href="#五条件全-AND，精确率优先" class="headerlink" title="五条件全 AND，精确率优先"></a>五条件全 AND，精确率优先</h2><p>旧版 <code>raw_occlusion</code> 翻车的教训是条件太松。这次，判定一个块在锚点帧为”遮挡”，必须同时满足五个条件：</p>
+<table>
+<thead>
+<tr>
+<th>条件</th>
+<th>阈值方向</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>① 设备明显运动</td>
+<td>运动信号 &gt; 高阈值</td>
+<td>确保这是可靠的锚点帧</td>
+</tr>
+<tr>
+<td>② 该块帧差接近零</td>
+<td>block_diff &lt; 低阈值</td>
+<td>块纹丝不动</td>
+</tr>
+<tr>
+<td>③ 该块低纹理</td>
+<td>Laplacian 方差低于阈值</td>
+<td>符合贴近失焦的物理特征</td>
+</tr>
+<tr>
+<td>④ 时间持续</td>
+<td>连续 N 个锚点帧都满足</td>
+<td>排除单帧抽风</td>
+</tr>
+<tr>
+<td>⑤ 空间连通</td>
+<td>与相邻遮挡块成团</td>
+<td>排除孤立噪声</td>
+</tr>
+</tbody></table>
+<p>条件 ① 和 ② 两头收紧是核心设计：白墙在设备运动时帧差不为零，条件 ② 直接挡掉。五个 AND 下来，假阳性极低。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">motion = gyro_mag[t] <span class="keyword">if</span> has_imu <span class="keyword">else</span> np.median(diff_map)</span><br><span class="line">is_anchor = motion &gt; motion_high_thresh           <span class="comment"># ① 设备充分运动</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> each block (r, c):</span><br><span class="line">    static = diff_map[r, c] &lt; block_static_thresh <span class="comment"># ② 块接近静止</span></span><br><span class="line">    lowtex = texture_map[r, c] &lt; texture_thresh   <span class="comment"># ③ 低纹理</span></span><br><span class="line">    occ_run[r, c] = occ_run[r, c] + <span class="number">1</span> <span class="keyword">if</span> (is_anchor <span class="keyword">and</span> static <span class="keyword">and</span> lowtex) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line">    anchor_label[t, r, c] = (occ_run[r, c] &gt;= persist_frames)  <span class="comment"># ④ 持续 N 帧</span></span><br><span class="line"><span class="comment"># ⑤ 后续连通块过滤</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="时间一致性传播：IMU-失效帧怎么办"><a href="#时间一致性传播：IMU-失效帧怎么办" class="headerlink" title="时间一致性传播：IMU 失效帧怎么办"></a>时间一致性传播：IMU 失效帧怎么办</h2><p>设备短暂静止或微动时，运动门控失效，这些帧没有可靠的逐块判定。</p>
+<p>用遮挡的物理本质来补：遮挡是持续的空间状态，手指放上去会停留几秒，不会一帧闪现就消失。遮挡状态改变（手放上&#x2F;拿开）几乎总伴随手部动作，头戴设备时这段动作期间设备也在运动，会被锚点帧捕获。静止那一两秒内不会凭空冒出新的遮挡。</p>
+<p>所以：充分运动的帧设为锚点帧，逐块打好标签。非锚点帧，每块从时间最近的锚点帧继承标签。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> t where <span class="keyword">not</span> is_anchor[t]:</span><br><span class="line">    <span class="keyword">for</span> each block:</span><br><span class="line">        block_label[t] = nearest_anchor_label(t, block)   <span class="comment"># 继承最近锚点帧标签</span></span><br></pre></td></tr></table></figure>
+
+<p>每帧每块都有判定，不需要 AI，不需要 API。</p>
+<h2 id="双端部署"><a href="#双端部署" class="headerlink" title="双端部署"></a>双端部署</h2><p><strong>手机端 Layer 0</strong> 是录制时的实时告警，目的是让用户当场发现并挪开手指，减少废片。阈值宽松，提醒为主。算力极轻：120×90 × 16 块差分约等于 1 万次减法&#x2F;帧加读 IMU，在相机预览回调里加约 30 行代码，Toast 或震动告警即可。</p>
+<p><strong>服务端 Layer 1</strong> 是最终质检，精确率优先，阈值严格。处理 1fps 关键帧和 parquet gyro，全部基于 numpy 和 cv2，不引入任何新依赖，单视频延迟低于 200ms，成本 $0。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────┐</span><br><span class="line">│  手机端 Layer 0  (实时)                   │</span><br><span class="line">│  120×90 → 4×4 分块帧差 × CMMotionManager │</span><br><span class="line">│  宽松阈值，实时提醒                        │</span><br><span class="line">└─────────────────┬───────────────────────┘</span><br><span class="line">                  │ 上传</span><br><span class="line">                  ▼</span><br><span class="line">┌─────────────────────────────────────────┐</span><br><span class="line">│  服务端 Layer 1  (离线)                   │</span><br><span class="line">│  1A 黑帧/纯色硬判定                        │</span><br><span class="line">│  1B 平滑分块帧差 + Laplacian               │</span><br><span class="line">│  1C 运动消歧 → 锚点帧逐块判遮挡（5-AND）   │</span><br><span class="line">│  1D 时间传播 → 静止帧继承锚点标签          │</span><br><span class="line">│  1E 连通块聚合 → 遮挡面积比 → 视频判定     │</span><br><span class="line">└─────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<h2 id="边缘情况：关灯和完全遮挡"><a href="#边缘情况：关灯和完全遮挡" class="headerlink" title="边缘情况：关灯和完全遮挡"></a>边缘情况：关灯和完全遮挡</h2><p>全黑帧和完全遮挡的画面在视觉上长得一样，帧差都接近零，运动门控也失效。纯算法难以区分。</p>
+<p>处理方式是不强行区分：1A 步骤检测到全黑帧（<code>gray.mean() &lt; 10</code>）时，不直接判遮挡，而是交给 <code>black_frame_checker</code> 和 <code>exposure_checker</code> 结合任务场景配置综合判断（居家任务允许关灯）。遮挡检测器专注”局部&#x2F;部分遮挡 + 贴近失焦”这个核心案例。</p>
+<p>开关灯瞬间反而不是问题：所有块的帧差同时变大，没有哪块”独自静止”，天然不误判为遮挡。</p>
+<h2 id="和旧方案的对比"><a href="#和旧方案的对比" class="headerlink" title="和旧方案的对比"></a>和旧方案的对比</h2><table>
+<thead>
+<tr>
+<th></th>
+<th>旧方案：算法 + BRISQUE + Gemini</th>
+<th>本方案：纯算法双端</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>消歧核心</td>
+<td>BRISQUE（训练分布不匹配，对部分遮挡失灵）</td>
+<td>分块运动消歧</td>
+</tr>
+<tr>
+<td>部分遮挡</td>
+<td>全局漏检</td>
+<td>分块定位 + 连通块总面积</td>
+</tr>
+<tr>
+<td>IMU 失效帧</td>
+<td>无处理</td>
+<td>时间一致性传播</td>
+</tr>
+<tr>
+<td>AI 依赖</td>
+<td>依赖 Gemini</td>
+<td>零 AI</td>
+</tr>
+<tr>
+<td>操作点</td>
+<td>召回优先</td>
+<td>精确率优先</td>
+</tr>
+<tr>
+<td>成本</td>
+<td>~$0.0001&#x2F;视频</td>
+<td>$0&#x2F;视频</td>
+</tr>
+<tr>
+<td>部署端</td>
+<td>仅服务端</td>
+<td>手机端 + 服务端</td>
+</tr>
+</tbody></table>
+<h2 id="收获"><a href="#收获" class="headerlink" title="收获"></a>收获</h2><ul>
+<li>消歧比检出更难。从设计之初就把”合法相似场景”当第一对手，不要等假阳性出现再回来补</li>
+<li>运动门控是个通用思路：任何”固定在相机上的东西 vs 环境里的东西”的区分，都可以用这个物理原理，不只限于遮挡</li>
+<li>五条件全 AND 比单条件调阈值更可控，每个条件的物理含义清晰，调参有方向，出问题也知道从哪里查</li>
+<li>无法处理的边缘情况（全黑帧）应该剥离给专门的检测器，而不是在一个检测器里包罗万象。职责清晰，边界清晰</li>
+<li><code>raw_occlusion</code> 翻车的记录值得保留。新方案和旧方案的差异要写清楚，否则以后有人不知道这段历史，可能重走老路</li>
+</ul>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+</article>
+
+  </main>
+
+  <!-- Window Popup (article iframe viewer) -->
+  <div class="window" id="hl-window">
+    <div class="window-content">
+      <iframe class="window-frame" id="hl-window-frame"></iframe>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ---- Loading overlay: fade out on page load ---- */
+    window.addEventListener('load', function() {
+      var loading = document.getElementById('hl-loading');
+      if (!loading) return;
+      loading.classList.add('fade-out');
+      setTimeout(function() {
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+      }, 400);
+    });
+
+    /* ---- _0kd page transition (globally callable) ---- */
+    window._0kd = function(callback) {
+      var el = document.getElementById('hl-0kd');
+      if (!el) return;
+      el.style.display = 'block';
+      el.style.animationPlayState = 'running';
+      setTimeout(function() {
+        if (typeof callback === 'function') callback();
+        setTimeout(function() {
+          el.style.animationPlayState = 'paused';
+          el.style.display = 'none';
+        }, 500);
+      }, 1000);
+    };
+
+    /* ---- Window popup controls (globally callable) ---- */
+    var _windowPrevUrl = null;
+
+    window.openWindow = function(url) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win || !frame) return;
+      _windowPrevUrl = window.location.href;   // remember where we came from
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      frame.src = url + sep + 'window=true';
+      history.pushState({ hollowWindow: true }, '', url);
+      win.style.display = 'flex';
+    };
+
+    window.closeWindow = function(fromPopstate) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win) return;
+      win.style.display = 'none';
+      if (frame) frame.src = '';
+      if (!fromPopstate) {
+        // Replace article URL with original page URL — no popstate, no navigation side-effects
+        history.replaceState(null, '', _windowPrevUrl || window.location.pathname);
+      }
+      _windowPrevUrl = null;
+    };
+
+    /* Close window on Escape key */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.closeWindow();
+    });
+
+    /* Close window when clicking backdrop (outside content) */
+    var winEl = document.getElementById('hl-window');
+    if (winEl) {
+      winEl.addEventListener('click', function(e) {
+        if (e.target === winEl) window.closeWindow();
+      });
+    }
+
+    /* Close window on browser back */
+    window.addEventListener('popstate', function() {
+      var win = document.getElementById('hl-window');
+      if (win && win.style.display !== 'none') closeWindow(true);
+    });
+  })();
+  </script>
+
+  
+<!-- HL Search Modal -->
+<div class="hl-search-overlay" id="hl-search-overlay" hidden>
+  <div class="hl-search-backdrop" id="hl-search-backdrop"></div>
+  <div class="hl-search-modal" role="dialog" aria-label="搜索">
+    <div class="hl-search-header">
+      <svg class="hl-search-icon-prefix" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="hl-search-input" id="hl-search-input"
+             type="search" placeholder="搜索文章…"
+             autocomplete="off" spellcheck="false" aria-label="搜索关键字">
+      <button class="hl-search-close" id="hl-search-close" title="关闭 (Esc)" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hl-search-divider"></div>
+
+    <div class="hl-search-body" id="hl-search-body">
+      <div class="hl-search-hint" id="hl-search-hint">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>输入关键字开始搜索</span>
+      </div>
+      <div class="hl-search-results" id="hl-search-results" role="listbox" aria-label="搜索结果"></div>
+    </div>
+
+    <div class="hl-search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/search.css">
+<script>window.__HL_SEARCH_PATH__ = '/search.json';</script>
+<script src="/js/search.js"></script>
+
+
+  <script src="/js/code-copy.js"></script>
+
+</body>
+</html>

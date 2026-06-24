@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>NudeNet v3 裸露检测打码：七轮踩坑，三个关键设计 | Elysian Realm</title>
+  <meta name="description" content="">
+  
+  <!-- Font: MaoKen Assorted Sans (unpkg CDN, same as interknot reference) -->
+  <style>@import url('https://unpkg.com/@chinese-fonts/mksjh@1.4.0/dist/MaokenAssortedSans1.30/result.css');</style>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="description" content="规则 8 要做的事：视频里出现低于”背心+短裤”着装标准的裸露部位时，检测并打码。听起来直接，实际上从可行性验证到打出合格效果，跑了七轮迭代。这篇记录完整踩坑过程，避免以后重蹈。 检测器：NudeNet v3可选方案里，NudeNet v3（notAI-tech&#x2F;NudeNet，AGPL-3.0）有个独特优势：18 个类别，每类都区分 EXPOSED 和 COVERED。 这正好实现”该遮的有没有">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NudeNet v3 裸露检测打码：七轮踩坑，三个关键设计">
+<meta property="og:url" content="https://everlasting-elysium.github.io/2026/06/16/2026-06-17-nudity-detection-nudenet/index.html">
+<meta property="og:site_name" content="Elysian Realm">
+<meta property="og:description" content="规则 8 要做的事：视频里出现低于”背心+短裤”着装标准的裸露部位时，检测并打码。听起来直接，实际上从可行性验证到打出合格效果，跑了七轮迭代。这篇记录完整踩坑过程，避免以后重蹈。 检测器：NudeNet v3可选方案里，NudeNet v3（notAI-tech&#x2F;NudeNet，AGPL-3.0）有个独特优势：18 个类别，每类都区分 EXPOSED 和 COVERED。 这正好实现”该遮的有没有">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-06-16T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-06-24T02:47:22.530Z">
+<meta property="article:author" content="Everlasting Elysium">
+<meta property="article:tag" content="视频处理">
+<meta property="article:tag" content="隐私打码">
+<meta property="article:tag" content="目标检测">
+<meta property="article:tag" content="NudeNet">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading" id="hl-loading">
+    <div class="loading-spinner"></div>
+    <span class="loading-text">Loading</span>
+  </div>
+
+  <!-- _0kd Page Transition Layer -->
+  <div class="_0kd" id="hl-0kd"></div>
+
+  <!-- Background Layer -->
+  
+  <div class="bg" style="background-image: url('/img/bg.png');"></div>
+
+  <!-- Header -->
+  
+  <header>
+  <!-- Personal Info Card -->
+  <a href="/" class="personal">
+    <span class="avatar-link">
+      <img
+        src="/img/avatar.svg"
+        alt="Elysio"
+        class="avatar"
+        onerror="this.onerror=null;this.style.background='#333';"
+      >
+    </span>
+    <span class="info-bar">
+      <span class="info-bio">知行合一,学以致用；但行好事，莫问前程。</span>
+      <span class="info-url">
+        <span class="info-url-lock">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="6" width="10" height="7" rx="1.5" fill="currentColor"/>
+            <path d="M3 6V4a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        https://everlasting-elysium.github.io/
+      </span>
+    </span>
+  </a>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    
+      
+      <span class="tab">
+        <a href="/">推送</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/archives/">归档</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/tags/">标签</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/album/">相册</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/friends/">伙伴</a>
+      </span>
+    
+      
+      <span class="tab">
+        <a href="/about/">关于</a>
+      </span>
+    
+  </div>
+
+  <!-- Search Button -->
+  
+  <button class="hl-search-btn" id="hl-search-btn"
+          title="搜索 (Ctrl+K)" aria-label="搜索">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+  
+</header>
+
+
+  <!-- Main Content -->
+  <main class="has-hero">
+    <link rel="stylesheet" href="/css/post.css">
+<link rel="stylesheet" href="/css/post-window.css">
+
+<script>
+(function () {
+  var isWindow = false;
+  try { isWindow = new URLSearchParams(window.location.search).get('window') === 'true'; } catch(e) {}
+  if (!isWindow) { try { isWindow = window.self !== window.top; } catch(e) { isWindow = true; } }
+  if (isWindow) document.documentElement.classList.add('window-mode');
+})();
+</script>
+
+
+
+<!-- ═══════════ Normal Mode ═══════════ -->
+<article class="post-article">
+
+  
+  <div class="post-hero" style="background-image:url('https://images.unsplash.com/photo-1563986768494-4747b3168d7b?w=1200&q=80')">
+    <div class="post-hero-overlay">
+      <div class="post-hero-inner">
+        <h1 class="post-title">NudeNet v3 裸露检测打码：七轮踩坑，三个关键设计</h1>
+        <div class="post-meta">
+          <time datetime="2026-06-17">
+            2026 / 06 / 17
+          </time>
+          
+          <div class="post-tags">
+            
+            <a class="tag-pill" href="/tags/%E8%A7%86%E9%A2%91%E5%A4%84%E7%90%86/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E8%A7%86%E9%A2%91%E5%A4%84%E7%90%86/')}else{window.location.href=this.href}">
+              视频处理
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E9%9A%90%E7%A7%81%E6%89%93%E7%A0%81/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E9%9A%90%E7%A7%81%E6%89%93%E7%A0%81/')}else{window.location.href=this.href}">
+              隐私打码
+            </a>
+            
+            <a class="tag-pill" href="/tags/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B/')}else{window.location.href=this.href}">
+              目标检测
+            </a>
+            
+            <a class="tag-pill" href="/tags/NudeNet/"
+               onclick="event.preventDefault();if(typeof openWindow==='function'){openWindow('/tags/NudeNet/')}else{window.location.href=this.href}">
+              NudeNet
+            </a>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="post-body">
+    <div class="markdown-content">
+      <p>规则 8 要做的事：视频里出现低于”背心+短裤”着装标准的裸露部位时，检测并打码。听起来直接，实际上从可行性验证到打出合格效果，跑了七轮迭代。这篇记录完整踩坑过程，避免以后重蹈。</p>
+<h2 id="检测器：NudeNet-v3"><a href="#检测器：NudeNet-v3" class="headerlink" title="检测器：NudeNet v3"></a>检测器：NudeNet v3</h2><p>可选方案里，NudeNet v3（<code>notAI-tech/NudeNet</code>，AGPL-3.0）有个独特优势：18 个类别，每类都区分 EXPOSED 和 COVERED。</p>
+<p>这正好实现”该遮的有没有遮”的着装合规逻辑，不需要额外写规则判断”这块被遮住了吗”，模型输出直接告诉你。技术上是 YOLOv8 ONNX，默认加载 320n（12MB），纯 CPU 50 到 150ms 每帧，<code>pip install nudenet</code> 自带。</p>
+<p>需求确认结果：男性裸胸算超标（背心遮胸，光膀子就低于标准）；女性露腹、露肩不打（背心短裤本就露腹肩）。打码触发的六类：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FEMALE_BREAST_EXPOSED / MALE_BREAST_EXPOSED</span><br><span class="line">FEMALE_GENITALIA_EXPOSED / MALE_GENITALIA_EXPOSED</span><br><span class="line">BUTTOCKS_EXPOSED / ANUS_EXPOSED</span><br></pre></td></tr></table></figure>
+
+<p>性别误判存在，男胸常被标成 <code>FEMALE_BREAST_EXPOSED</code>，但不影响打码，两类都打。</p>
+<h2 id="七轮调参全记录"><a href="#七轮调参全记录" class="headerlink" title="七轮调参全记录"></a>七轮调参全记录</h2><p>测试用两段视频：一段办公室视频（无裸露，验证误检率），一段含裸露视频（289 帧，验证召回）。</p>
+<table>
+<thead>
+<tr>
+<th>轮次</th>
+<th>问题</th>
+<th>根因</th>
+<th>解法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>可行性验证</td>
+<td>—</td>
+<td>NudeNet 能检到女胸、男胸、裆、臀，召回合理（和纹身检测不同）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>打码框太小，盖不全</td>
+<td>NudeNet bbox 只框乳头等核心像素</td>
+<td><code>box_expand</code> 统一放大框</td>
+</tr>
+<tr>
+<td>3</td>
+<td>男性裸胸没打</td>
+<td>初始只启用女性类</td>
+<td>加入 <code>MALE_BREAST_EXPOSED</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>打码薄、显色</td>
+<td>马赛克保留肤色和轮廓（低频信息透出来）</td>
+<td>改实心黑块（<code>fill_mode=solid</code>）</td>
+</tr>
+<tr>
+<td>5</td>
+<td>画面一闪一闪</td>
+<td>320n 在 1fps 下连续裸露段间歇漏检</td>
+<td>时间填充：漏检帧用最近邻检测帧的框补</td>
+</tr>
+<tr>
+<td>6</td>
+<td>横向放大太宽，波及周围</td>
+<td>全局横向放大在成对检测时也扩</td>
+<td>只对落单框横向加宽</td>
+</tr>
+<tr>
+<td>7</td>
+<td>第 3 秒缺了一半</td>
+<td>NudeNet 完全漏检该帧（困难样本）</td>
+<td>落单横向加宽缓解（非根治）</td>
+</tr>
+</tbody></table>
+<h2 id="马赛克为什么不行"><a href="#马赛克为什么不行" class="headerlink" title="马赛克为什么不行"></a>马赛克为什么不行</h2><p>第 4 轮发现一个有点反直觉的问题：马赛克在裸露场景里效果很差。</p>
+<p>马赛克是降采样再放大，会保留低频信息，肤色和大致轮廓透过来。隔着马赛克仍然能看出颜色和形状，对隐私保护来说不够用。</p>
+<p>换成实心黑块（<code>fill_mode=solid</code>）之后，彻底不透，视觉上没有任何信息残留。这一改带来最大的感知改善，也是最值得记录的一点：<strong>遮挡类打码要用实心块，不要用马赛克</strong>。</p>
+<h2 id="落单框条件横向加宽"><a href="#落单框条件横向加宽" class="headerlink" title="落单框条件横向加宽"></a>落单框条件横向加宽</h2><p>乳房是左右并排的。NudeNet 有时只检到一侧，另一侧漏了。简单解法是全局横向放大，但这样成对检测时也一起扩，太宽，影响旁边的区域。</p>
+<p>解法：判断这个框在同一水平行（y 坐标有重叠）上有没有并排的伙伴。</p>
+<ul>
+<li>落单（只检到一侧）：横向大幅加宽（<code>box_expand_x_lonely=5.0</code>），覆盖漏检的另一半</li>
+<li>成对（左右都检到）：横向适度（<code>box_expand_x=2.5</code>），不影响周围</li>
+</ul>
+<p>“缺一半”时补，”两个都有”时不过宽。这样在没有额外误检的情况下，落单漏检问题基本解决。</p>
+<h2 id="时间填充的三个版本"><a href="#时间填充的三个版本" class="headerlink" title="时间填充的三个版本"></a>时间填充的三个版本</h2><p>第 5 轮发现打码在时序上一闪一闪。320n 模型在 1fps 下连续裸露段会间歇漏检，漏检帧没打码，正常帧打了，来回切换就闪。</p>
+<p>消除闪烁试了三个方案：</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>单帧最近邻：漏检帧用时间最近的检测帧的框补</td>
+<td>稳定，不乱</td>
+</tr>
+<tr>
+<td>前后框并集：漏检帧用前一帧和后一帧的框叠加</td>
+<td>填充帧 2 框 vs 检测帧 1 框，大小跳变，产生新的闪动</td>
+</tr>
+<tr>
+<td>滑动窗口并集：用滑动窗口内所有帧的框堆叠</td>
+<td>7 帧的框全堆一起，乱打多层，比原来更差</td>
+</tr>
+</tbody></table>
+<p>只有第一版对。原因在于：框的数量和大小在相邻帧之间跳变，本身就是新的抖动来源。最近邻填充让漏检帧和最近的成功检测帧用完全一样的框，不会引入跳变。</p>
+<p>教训：时序稳定不能靠”堆叠框”，越聪明的方案越容易引入新问题，单帧最近邻最稳。</p>
+<h2 id="最终配置"><a href="#最终配置" class="headerlink" title="最终配置"></a>最终配置</h2><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">conf:</span> <span class="number">0.20</span></span><br><span class="line"><span class="attr">box_expand_x:</span> <span class="number">2.5</span></span><br><span class="line"><span class="attr">box_expand_x_lonely:</span> <span class="number">5.0</span></span><br><span class="line"><span class="attr">box_expand_y:</span> <span class="number">2.5</span></span><br><span class="line"><span class="attr">fill_mode:</span> <span class="string">solid</span></span><br><span class="line"><span class="attr">temporal_gap:</span> <span class="number">3</span></span><br></pre></td></tr></table></figure>
+
+<p><code>conf=0.20</code> 是召回优先，宁可多打。<code>temporal_gap=3</code> 表示最多用相邻 3 帧的检测结果填充漏检帧。全部参数通过 CLI 可调：<code>--conf/--box-expand-x/--box-expand-x-lonely/--fill-mode/--temporal-gap</code>。</p>
+<h2 id="能力边界在哪里"><a href="#能力边界在哪里" class="headerlink" title="能力边界在哪里"></a>能力边界在哪里</h2><p>第 7 轮缓解的那个第 3 秒困难样本没根治，要说清楚这是检测能力边界，不是代码问题。</p>
+<p>那个场景叠了五个不利因素：隔玻璃窗、侧后方角度、远距离、暗光、玻璃反光。NudeNet 完全漏检，靠相邻帧借框填充，位置偏，横向加宽缓解，不能根治。</p>
+<p>要从根本上提升这类漏检，最直接的路径是换更大的模型：NudeNet 640m（98MB），精度更高，对困难样本召回更好。官方 GitHub release 有重定向到登录页的问题，HuggingFace 上有镜像（<code>SimonJoz/nudenet</code>、<code>zhangsongbo365/nudenet_onnx</code>），<code>--model 640m.onnx</code> 加载即可。</p>
+<p>另一个生产上更稳的思路是段级保守打码：检测到裸露时间段后，整段都打，困难帧靠段内其他帧带进去，单帧逐帧判断本来就不稳。</p>
+<p>最后，NudeNet 是 AGPL-3.0，商用或分发需要法务过一遍。商用友好的替代是 EraX-Anti-NSFW（Apache-2.0），但没有 EXPOSED&#x2F;COVERED 区分，着装合规这个语义精度差一级。</p>
+<h2 id="几点收获"><a href="#几点收获" class="headerlink" title="几点收获"></a>几点收获</h2><ol>
+<li>遮挡类打码要用实心块，不要用马赛克。马赛克保留低频信息（肤色、轮廓），实心块才是真正不透。</li>
+<li>时序稳定靠”简单”，堆叠框只会引入跳变。单帧最近邻填充，框不变、位置不变，视觉上最稳。</li>
+<li>有并排语义的目标（左右乳房）需要单独处理”落单”情况，全局放大会误伤旁边区域。</li>
+<li>困难样本（多个不利因素叠加）是模型能力边界，工程上的兜底是段级打码，不是在单帧检测上死磕。</li>
+</ol>
+
+    </div>
+  </div>
+
+</article>
+
+<!-- ═══════════ Window Mode ═══════════ -->
+<article class="post-window">
+
+  <!-- Header: avatar + name (left) | close button (right) -->
+  <div class="post-window-header">
+    <div class="post-window-author">
+      <img class="post-window-avatar" src="/img/avatar.svg" alt=""
+           onerror="this.onerror=null;this.style.display='none'">
+      <div class="post-window-author-info">
+        <span class="post-window-author-name">Elysio</span>
+      </div>
+    </div>
+    <button class="pw-close" onclick="try{window.parent.closeWindow()}catch(e){}" title="关闭">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 201 130">
+        <path fill-rule="evenodd" fill="rgb(196,34,9)"
+          d="M0.373,65.000 C0.087,51.609 3.792,38.466 11.131,27.293
+             C19.671,14.293 32.558,4.832 47.439,0.360
+             C90.023,0.360 132.606,0.360 175.190,0.360
+             C183.245,1.482 190.671,5.694 195.361,12.480
+             C201.498,21.357 202.014,33.317 196.706,43.453
+             C185.052,65.000 173.397,86.547 161.743,108.094
+             C156.410,114.144 150.041,119.160 142.916,122.907
+             C136.598,126.230 129.798,128.498 122.745,129.640
+             C99.884,129.640 77.024,129.640 54.163,129.640
+             C38.778,126.247 24.988,117.749 15.165,105.400
+             C6.284,94.236 0.695,80.120 0.373,65.000
+             ZM51.473,11.133 L171.156,11.133
+             C175.707,11.408 180.022,13.285 183.259,16.520
+             C187.160,20.420 189.059,25.857 188.637,31.333
+             C177.880,52.431 167.122,73.529 156.364,94.627
+             C152.903,101.201 147.810,106.769 141.571,110.787
+             C135.517,114.686 128.583,116.999 121.400,117.520
+             C98.988,117.520 76.575,117.520 54.163,117.520
+             C28.223,111.309 10.366,87.869 11.131,62.307
+             C11.831,38.916 28.017,17.942 51.473,11.133
+             ZM54.538,17.998
+             C91.618,17.954 128.697,17.910 165.777,17.866
+             C171.772,16.637 177.788,19.453 180.569,24.600
+             C183.069,29.227 182.591,35.067 179.224,39.413
+             C168.466,58.716 157.708,78.018 146.950,97.320
+             C144.417,101.017 141.229,104.211 137.537,106.747
+             C133.865,109.270 129.766,111.094 125.434,112.134
+             C102.574,112.134 79.713,112.134 56.852,112.134
+             C33.925,106.570 18.183,85.813 18.891,63.215
+             C19.538,42.562 33.826,24.045 54.538,17.998
+             ZM79.713,63.653
+             C74.334,58.267 68.955,52.880 63.576,47.493
+             C60.994,44.908 60.994,40.652 63.576,38.066
+             C66.158,35.481 70.407,35.481 72.989,38.066
+             C78.368,43.453 83.747,48.840 89.126,54.227
+             C94.505,48.840 99.884,43.453 105.263,38.066
+             C107.957,36.746 111.211,37.289 113.332,39.413
+             C115.452,41.537 115.995,44.796 114.676,47.493
+             C109.297,52.880 103.918,58.267 98.539,63.653
+             C103.918,69.040 109.297,74.427 114.676,79.813
+             C117.258,82.399 117.258,86.654 114.676,89.240
+             C112.094,91.826 107.845,91.826 105.263,89.240
+             C99.884,83.853 94.505,78.467 89.126,73.080
+             C83.299,78.916 77.472,84.751 71.645,90.587
+             C68.951,91.907 65.697,91.364 63.576,89.240
+             C61.455,87.116 60.913,83.858 62.231,81.160
+             C68.059,75.325 73.886,69.489 79.713,63.653 Z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Body: cover card (left) + scrollable content (right) -->
+  <div class="post-window-body">
+    
+    <aside class="post-window-cover-panel">
+      <div class="post-window-cover-card">
+        <img src="https://images.unsplash.com/photo-1563986768494-4747b3168d7b?w=1200&q=80" alt="NudeNet v3 裸露检测打码：七轮踩坑，三个关键设计"
+             onerror="this.onerror=null;this.style.display='none'">
+      </div>
+    </aside>
+    
+
+    <section class="post-window-main">
+      <h1 class="post-window-title">NudeNet v3 裸露检测打码：七轮踩坑，三个关键设计</h1>
+      <div class="post-window-content">
+        <div class="markdown-content">
+          <p>规则 8 要做的事：视频里出现低于”背心+短裤”着装标准的裸露部位时，检测并打码。听起来直接，实际上从可行性验证到打出合格效果，跑了七轮迭代。这篇记录完整踩坑过程，避免以后重蹈。</p>
+<h2 id="检测器：NudeNet-v3"><a href="#检测器：NudeNet-v3" class="headerlink" title="检测器：NudeNet v3"></a>检测器：NudeNet v3</h2><p>可选方案里，NudeNet v3（<code>notAI-tech/NudeNet</code>，AGPL-3.0）有个独特优势：18 个类别，每类都区分 EXPOSED 和 COVERED。</p>
+<p>这正好实现”该遮的有没有遮”的着装合规逻辑，不需要额外写规则判断”这块被遮住了吗”，模型输出直接告诉你。技术上是 YOLOv8 ONNX，默认加载 320n（12MB），纯 CPU 50 到 150ms 每帧，<code>pip install nudenet</code> 自带。</p>
+<p>需求确认结果：男性裸胸算超标（背心遮胸，光膀子就低于标准）；女性露腹、露肩不打（背心短裤本就露腹肩）。打码触发的六类：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FEMALE_BREAST_EXPOSED / MALE_BREAST_EXPOSED</span><br><span class="line">FEMALE_GENITALIA_EXPOSED / MALE_GENITALIA_EXPOSED</span><br><span class="line">BUTTOCKS_EXPOSED / ANUS_EXPOSED</span><br></pre></td></tr></table></figure>
+
+<p>性别误判存在，男胸常被标成 <code>FEMALE_BREAST_EXPOSED</code>，但不影响打码，两类都打。</p>
+<h2 id="七轮调参全记录"><a href="#七轮调参全记录" class="headerlink" title="七轮调参全记录"></a>七轮调参全记录</h2><p>测试用两段视频：一段办公室视频（无裸露，验证误检率），一段含裸露视频（289 帧，验证召回）。</p>
+<table>
+<thead>
+<tr>
+<th>轮次</th>
+<th>问题</th>
+<th>根因</th>
+<th>解法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>可行性验证</td>
+<td>—</td>
+<td>NudeNet 能检到女胸、男胸、裆、臀，召回合理（和纹身检测不同）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>打码框太小，盖不全</td>
+<td>NudeNet bbox 只框乳头等核心像素</td>
+<td><code>box_expand</code> 统一放大框</td>
+</tr>
+<tr>
+<td>3</td>
+<td>男性裸胸没打</td>
+<td>初始只启用女性类</td>
+<td>加入 <code>MALE_BREAST_EXPOSED</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>打码薄、显色</td>
+<td>马赛克保留肤色和轮廓（低频信息透出来）</td>
+<td>改实心黑块（<code>fill_mode=solid</code>）</td>
+</tr>
+<tr>
+<td>5</td>
+<td>画面一闪一闪</td>
+<td>320n 在 1fps 下连续裸露段间歇漏检</td>
+<td>时间填充：漏检帧用最近邻检测帧的框补</td>
+</tr>
+<tr>
+<td>6</td>
+<td>横向放大太宽，波及周围</td>
+<td>全局横向放大在成对检测时也扩</td>
+<td>只对落单框横向加宽</td>
+</tr>
+<tr>
+<td>7</td>
+<td>第 3 秒缺了一半</td>
+<td>NudeNet 完全漏检该帧（困难样本）</td>
+<td>落单横向加宽缓解（非根治）</td>
+</tr>
+</tbody></table>
+<h2 id="马赛克为什么不行"><a href="#马赛克为什么不行" class="headerlink" title="马赛克为什么不行"></a>马赛克为什么不行</h2><p>第 4 轮发现一个有点反直觉的问题：马赛克在裸露场景里效果很差。</p>
+<p>马赛克是降采样再放大，会保留低频信息，肤色和大致轮廓透过来。隔着马赛克仍然能看出颜色和形状，对隐私保护来说不够用。</p>
+<p>换成实心黑块（<code>fill_mode=solid</code>）之后，彻底不透，视觉上没有任何信息残留。这一改带来最大的感知改善，也是最值得记录的一点：<strong>遮挡类打码要用实心块，不要用马赛克</strong>。</p>
+<h2 id="落单框条件横向加宽"><a href="#落单框条件横向加宽" class="headerlink" title="落单框条件横向加宽"></a>落单框条件横向加宽</h2><p>乳房是左右并排的。NudeNet 有时只检到一侧，另一侧漏了。简单解法是全局横向放大，但这样成对检测时也一起扩，太宽，影响旁边的区域。</p>
+<p>解法：判断这个框在同一水平行（y 坐标有重叠）上有没有并排的伙伴。</p>
+<ul>
+<li>落单（只检到一侧）：横向大幅加宽（<code>box_expand_x_lonely=5.0</code>），覆盖漏检的另一半</li>
+<li>成对（左右都检到）：横向适度（<code>box_expand_x=2.5</code>），不影响周围</li>
+</ul>
+<p>“缺一半”时补，”两个都有”时不过宽。这样在没有额外误检的情况下，落单漏检问题基本解决。</p>
+<h2 id="时间填充的三个版本"><a href="#时间填充的三个版本" class="headerlink" title="时间填充的三个版本"></a>时间填充的三个版本</h2><p>第 5 轮发现打码在时序上一闪一闪。320n 模型在 1fps 下连续裸露段会间歇漏检，漏检帧没打码，正常帧打了，来回切换就闪。</p>
+<p>消除闪烁试了三个方案：</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>单帧最近邻：漏检帧用时间最近的检测帧的框补</td>
+<td>稳定，不乱</td>
+</tr>
+<tr>
+<td>前后框并集：漏检帧用前一帧和后一帧的框叠加</td>
+<td>填充帧 2 框 vs 检测帧 1 框，大小跳变，产生新的闪动</td>
+</tr>
+<tr>
+<td>滑动窗口并集：用滑动窗口内所有帧的框堆叠</td>
+<td>7 帧的框全堆一起，乱打多层，比原来更差</td>
+</tr>
+</tbody></table>
+<p>只有第一版对。原因在于：框的数量和大小在相邻帧之间跳变，本身就是新的抖动来源。最近邻填充让漏检帧和最近的成功检测帧用完全一样的框，不会引入跳变。</p>
+<p>教训：时序稳定不能靠”堆叠框”，越聪明的方案越容易引入新问题，单帧最近邻最稳。</p>
+<h2 id="最终配置"><a href="#最终配置" class="headerlink" title="最终配置"></a>最终配置</h2><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">conf:</span> <span class="number">0.20</span></span><br><span class="line"><span class="attr">box_expand_x:</span> <span class="number">2.5</span></span><br><span class="line"><span class="attr">box_expand_x_lonely:</span> <span class="number">5.0</span></span><br><span class="line"><span class="attr">box_expand_y:</span> <span class="number">2.5</span></span><br><span class="line"><span class="attr">fill_mode:</span> <span class="string">solid</span></span><br><span class="line"><span class="attr">temporal_gap:</span> <span class="number">3</span></span><br></pre></td></tr></table></figure>
+
+<p><code>conf=0.20</code> 是召回优先，宁可多打。<code>temporal_gap=3</code> 表示最多用相邻 3 帧的检测结果填充漏检帧。全部参数通过 CLI 可调：<code>--conf/--box-expand-x/--box-expand-x-lonely/--fill-mode/--temporal-gap</code>。</p>
+<h2 id="能力边界在哪里"><a href="#能力边界在哪里" class="headerlink" title="能力边界在哪里"></a>能力边界在哪里</h2><p>第 7 轮缓解的那个第 3 秒困难样本没根治，要说清楚这是检测能力边界，不是代码问题。</p>
+<p>那个场景叠了五个不利因素：隔玻璃窗、侧后方角度、远距离、暗光、玻璃反光。NudeNet 完全漏检，靠相邻帧借框填充，位置偏，横向加宽缓解，不能根治。</p>
+<p>要从根本上提升这类漏检，最直接的路径是换更大的模型：NudeNet 640m（98MB），精度更高，对困难样本召回更好。官方 GitHub release 有重定向到登录页的问题，HuggingFace 上有镜像（<code>SimonJoz/nudenet</code>、<code>zhangsongbo365/nudenet_onnx</code>），<code>--model 640m.onnx</code> 加载即可。</p>
+<p>另一个生产上更稳的思路是段级保守打码：检测到裸露时间段后，整段都打，困难帧靠段内其他帧带进去，单帧逐帧判断本来就不稳。</p>
+<p>最后，NudeNet 是 AGPL-3.0，商用或分发需要法务过一遍。商用友好的替代是 EraX-Anti-NSFW（Apache-2.0），但没有 EXPOSED&#x2F;COVERED 区分，着装合规这个语义精度差一级。</p>
+<h2 id="几点收获"><a href="#几点收获" class="headerlink" title="几点收获"></a>几点收获</h2><ol>
+<li>遮挡类打码要用实心块，不要用马赛克。马赛克保留低频信息（肤色、轮廓），实心块才是真正不透。</li>
+<li>时序稳定靠”简单”，堆叠框只会引入跳变。单帧最近邻填充，框不变、位置不变，视觉上最稳。</li>
+<li>有并排语义的目标（左右乳房）需要单独处理”落单”情况，全局放大会误伤旁边区域。</li>
+<li>困难样本（多个不利因素叠加）是模型能力边界，工程上的兜底是段级打码，不是在单帧检测上死磕。</li>
+</ol>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+</article>
+
+  </main>
+
+  <!-- Window Popup (article iframe viewer) -->
+  <div class="window" id="hl-window">
+    <div class="window-content">
+      <iframe class="window-frame" id="hl-window-frame"></iframe>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ---- Loading overlay: fade out on page load ---- */
+    window.addEventListener('load', function() {
+      var loading = document.getElementById('hl-loading');
+      if (!loading) return;
+      loading.classList.add('fade-out');
+      setTimeout(function() {
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+      }, 400);
+    });
+
+    /* ---- _0kd page transition (globally callable) ---- */
+    window._0kd = function(callback) {
+      var el = document.getElementById('hl-0kd');
+      if (!el) return;
+      el.style.display = 'block';
+      el.style.animationPlayState = 'running';
+      setTimeout(function() {
+        if (typeof callback === 'function') callback();
+        setTimeout(function() {
+          el.style.animationPlayState = 'paused';
+          el.style.display = 'none';
+        }, 500);
+      }, 1000);
+    };
+
+    /* ---- Window popup controls (globally callable) ---- */
+    var _windowPrevUrl = null;
+
+    window.openWindow = function(url) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win || !frame) return;
+      _windowPrevUrl = window.location.href;   // remember where we came from
+      var sep = url.indexOf('?') === -1 ? '?' : '&';
+      frame.src = url + sep + 'window=true';
+      history.pushState({ hollowWindow: true }, '', url);
+      win.style.display = 'flex';
+    };
+
+    window.closeWindow = function(fromPopstate) {
+      var win   = document.getElementById('hl-window');
+      var frame = document.getElementById('hl-window-frame');
+      if (!win) return;
+      win.style.display = 'none';
+      if (frame) frame.src = '';
+      if (!fromPopstate) {
+        // Replace article URL with original page URL — no popstate, no navigation side-effects
+        history.replaceState(null, '', _windowPrevUrl || window.location.pathname);
+      }
+      _windowPrevUrl = null;
+    };
+
+    /* Close window on Escape key */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') window.closeWindow();
+    });
+
+    /* Close window when clicking backdrop (outside content) */
+    var winEl = document.getElementById('hl-window');
+    if (winEl) {
+      winEl.addEventListener('click', function(e) {
+        if (e.target === winEl) window.closeWindow();
+      });
+    }
+
+    /* Close window on browser back */
+    window.addEventListener('popstate', function() {
+      var win = document.getElementById('hl-window');
+      if (win && win.style.display !== 'none') closeWindow(true);
+    });
+  })();
+  </script>
+
+  
+<!-- HL Search Modal -->
+<div class="hl-search-overlay" id="hl-search-overlay" hidden>
+  <div class="hl-search-backdrop" id="hl-search-backdrop"></div>
+  <div class="hl-search-modal" role="dialog" aria-label="搜索">
+    <div class="hl-search-header">
+      <svg class="hl-search-icon-prefix" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="hl-search-input" id="hl-search-input"
+             type="search" placeholder="搜索文章…"
+             autocomplete="off" spellcheck="false" aria-label="搜索关键字">
+      <button class="hl-search-close" id="hl-search-close" title="关闭 (Esc)" aria-label="关闭搜索">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="hl-search-divider"></div>
+
+    <div class="hl-search-body" id="hl-search-body">
+      <div class="hl-search-hint" id="hl-search-hint">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>输入关键字开始搜索</span>
+      </div>
+      <div class="hl-search-results" id="hl-search-results" role="listbox" aria-label="搜索结果"></div>
+    </div>
+
+    <div class="hl-search-footer">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>↵</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/search.css">
+<script>window.__HL_SEARCH_PATH__ = '/search.json';</script>
+<script src="/js/search.js"></script>
+
+
+  <script src="/js/code-copy.js"></script>
+
+</body>
+</html>
